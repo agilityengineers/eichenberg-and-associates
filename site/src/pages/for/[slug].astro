@@ -1,9 +1,11 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { publicDb } from '../../lib/supabase';
+import { publicDb, SUPABASE_CONFIGURED } from '../../lib/supabase';
 import { GRID } from '../../lib/personas.js';
 export const prerender = false;                      // reads live CMS edits from Supabase
-const { slug } = Astro.params; const sb = publicDb();
+const { slug } = Astro.params;
+if (!SUPABASE_CONFIGURED) return new Response(null, { status: 404 });  // no project yet (local dev)
+const sb = publicDb();
 const { data: p } = await sb.from('landing_pages').select('*').eq('slug', slug).eq('published', true).maybeSingle();
 if (!p) return new Response(null, { status: 404 });
 const { data: qs } = await sb.from('form_questions').select('*').eq('page_slug', slug).order('step').order('position');
@@ -27,13 +29,13 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex');  // unlisted campaign URL
   </section>
 
   <section class="wrap grid" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
-    <div><p class="eyebrow">What you’re after</p><ul class="lp-list lp-list--check">{p.goals.map((g) => <li>{g}</li>)}</ul></div>
-    <div><p class="eyebrow">What you’re dealing with</p><ul class="lp-list lp-list--dash">{p.pains.map((g) => <li>{g}</li>)}</ul></div>
+    <div><p class="eyebrow">What you’re after</p><ul class="lp-list lp-list--check">{p.goals.map((g: string) => <li>{g}</li>)}</ul></div>
+    <div><p class="eyebrow">What you’re dealing with</p><ul class="lp-list lp-list--dash">{p.pains.map((g: string) => <li>{g}</li>)}</ul></div>
   </section>
 
   <section style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)"><div class="wrap grid" style="padding-top:clamp(56px,7vw,88px);padding-bottom:clamp(56px,7vw,88px)">
     <div><p class="eyebrow">The engagement</p><h2 class="h2" style="font-size:clamp(30px,3.6vw,46px);margin-bottom:16px">{p.offer.name}</h2><p class="lead" style="margin:0;font-size:18px;max-width:46ch">{p.offer.detail}</p>{p.show_price && <p style="margin:18px 0 0;font-size:15px;font-weight:600">{p.offer.price}</p>}</div>
-    <div style="display:grid;gap:12px">{p.messages.map((m) => <div class="quote" style="border-radius:10px"><p class="label" style="color:var(--teal);margin:0 0 8px;font-family:var(--sans)">{m.label}</p>{m.text}</div>)}</div>
+    <div style="display:grid;gap:12px">{p.messages.map((m: { label: string; text: string }) => <div class="quote" style="border-radius:10px"><p class="label" style="color:var(--teal);margin:0 0 8px;font-family:var(--sans)">{m.label}</p>{m.text}</div>)}</div>
   </div></section>
 
   <section id="form" class="wrap grid" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
@@ -49,8 +51,8 @@ Astro.response.headers.set('X-Robots-Tag', 'noindex');  // unlisted campaign URL
       </fieldset>
       <fieldset data-panel="2" hidden><legend class="h3" style="font-size:26px;margin-bottom:14px">Your situation</legend>
         {step2.map((q) => <div class="field"><label for={'q-' + q.key}>{q.label} {q.required && <span aria-hidden="true" style="color:var(--indigo)">*</span>}</label>
-          {q.type === 'select' ? <select id={'q-' + q.key} name={q.key} required={q.required}><option value="">Choose one</option>{(q.options || []).map((o) => <option>{o}</option>)}</select>
-          : q.type === 'radio' ? <div class="lp-radios" role="radiogroup">{(q.options || []).map((o, i) => <label><input type="radio" name={q.key} value={o} required={q.required && i === 0} /><span>{o}</span></label>)}</div>
+          {q.type === 'select' ? <select id={'q-' + q.key} name={q.key} required={q.required}><option value="">Choose one</option>{(q.options || []).map((o: string) => <option>{o}</option>)}</select>
+          : q.type === 'radio' ? <div class="lp-radios" role="radiogroup">{(q.options || []).map((o: string, i: number) => <label><input type="radio" name={q.key} value={o} required={q.required && i === 0} /><span>{o}</span></label>)}</div>
           : q.type === 'textarea' ? <textarea id={'q-' + q.key} name={q.key} rows="4" required={q.required}></textarea>
           : <input id={'q-' + q.key} name={q.key} type={q.type} required={q.required} />}
           <span class="err"></span></div>)}

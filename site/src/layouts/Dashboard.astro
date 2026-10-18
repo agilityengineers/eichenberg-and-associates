@@ -3,7 +3,7 @@ import '../styles/global.css';
 interface Props { title: string; eyebrow: string; active: string }
 const { title, eyebrow, active } = Astro.props;
 const nav = [['overview', 'Overview', '/dashboard'], ['inbox', 'Lead inbox', '/dashboard/inbox'], ['pipeline', 'Pipeline', '/dashboard/pipeline'], ['forms', 'Form builder', '/dashboard/forms'], ['partners', 'SI partners', '/dashboard/partners'], ['pages', 'Landing pages', '/dashboard/pages'], ['subscribers', 'Subscribers', '/dashboard/subscribers'], ['content', 'Content calendar', '/dashboard/content'], ['cms', 'Website content ↗', '/admin/']];
-const user = (Astro.locals as any).user;
+const user = Astro.locals.user;
 ---
 <!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" /><title>{title} · Dashboard</title>
 <link rel="icon" href="/favicon.svg" /><link rel="preconnect" href="https://fonts.googleapis.com" /><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" /></head>

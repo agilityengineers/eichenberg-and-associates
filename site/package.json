@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "node scripts/fix-routes.mjs",
     "dev": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
@@ -14,11 +13,11 @@
   "dependencies": {
     "astro": "^4.16.0",
     "@astrojs/netlify": "^5.5.0",
-    "@astrojs/sitemap": "^3.2.0",
+    "@astrojs/sitemap": "~3.2.1",
     "resend": "^4.0.0",
     "zod": "^3.23.8",
     "@supabase/supabase-js": "^2.45.0",
-    "@supabase/ssr": "^0.5.1",
+    "@supabase/ssr": "^0.12.7",
     "marked": "^14.1.0",
     "fast-xml-parser": "^4.5.0"
   },

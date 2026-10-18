@@ -3,7 +3,7 @@ import Base from '../../layouts/Base.astro';
 import Cta from '../../components/Cta.astro';
 import { getCollection } from 'astro:content';
 import { marked } from 'marked';
-export async function getStaticPaths() { return (await getCollection('customPages', ({ data }) => data.published || import.meta.env.DEV)).map((p) => ({ params: { slug: p.data.slug }, props: { p } })); }
+export async function getStaticPaths() { return (await getCollection('custom-pages', ({ data }) => data.published || import.meta.env.DEV)).map((p) => ({ params: { slug: p.slug }, props: { p } })); }
 const { p } = Astro.props;
 ---
 <Base title={p.data.title} description={p.data.description}>

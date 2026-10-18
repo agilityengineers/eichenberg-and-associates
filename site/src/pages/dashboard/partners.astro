@@ -1,7 +1,7 @@
 ---
 import Dashboard from '../../layouts/Dashboard.astro';
 export const prerender = false;
-const sb = (Astro.locals as any).sb;
+const sb = Astro.locals.sb;
 const { data: partners } = await sb.from('partners').select('*').order('status', { ascending: false }); const n = (s: number) => (partners || []).filter((p) => p.status >= s).length; const S = ['Contacted', 'Meeting', 'Active partner'], C = ['pill--grey', 'pill--indigo', 'pill--teal'];
 ---
 <Dashboard title="SI partner tracker" eyebrow="Go-to-market" active="partners">

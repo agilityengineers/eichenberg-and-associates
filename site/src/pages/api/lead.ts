@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { Resend } from 'resend';
-import { adminDb, publicDb } from '../../lib/supabase';
+import { adminDb, publicDb, SUPABASE_CONFIGURED } from '../../lib/supabase';
 import { rateLimit } from '../../lib/ratelimit';
 import { clean, escapeHtml } from '../../lib/sanitize';
 import { verifyTurnstile } from '../../lib/turnstile';
@@ -15,6 +15,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const fd = await request.formData(); if (fd.get('website')) return json({ ok: true });
   if (!(await verifyTurnstile(fd.get('cf-turnstile-response') as string | null, ip)).ok) return json({ error: 'Spam check failed. Please try again.' }, 400);
 
+  if (!SUPABASE_CONFIGURED) return json({ error: 'Lead storage is not configured.' }, 503);
   const slug = clean(fd.get('page_slug'), 60);
   const { data: page } = await publicDb().from('landing_pages').select('slug,eyebrow,magnet_title,magnet_url,booking_url').eq('slug', slug).eq('published', true).maybeSingle();
   if (!page) return json({ error: 'Unknown page.' }, 400);

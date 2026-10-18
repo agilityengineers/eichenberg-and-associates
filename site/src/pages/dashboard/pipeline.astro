@@ -1,8 +1,9 @@
 ---
 import Dashboard from '../../layouts/Dashboard.astro';
 export const prerender = false;
-const sb = (Astro.locals as any).sb;
+const sb = Astro.locals.sb;
 import { STAGES, STAGE_Q } from '../../lib/personas.js';
+const Q: Record<string, string> = STAGE_Q;
 const { data: deals } = await sb.from('deals').select('*, partners(firm)').order('next_due');
 const GRID: Record<string, string> = { nn: 'Can’t lead · Can’t do', nd: 'Can’t lead · Can do', ln: 'Can lead · Can’t do', ld: 'Can lead · Can do' };
 const cap = (fee: number) => fee ? Math.round(fee * 0.1 / 200) : 15;  // 10% of fee at $200/h
@@ -11,7 +12,7 @@ const cap = (fee: number) => fee ? Math.round(fee * 0.1 / 200) : 15;  // 10% of 
 
 
 <p class="note" style="margin:0 0 16px">Spend up to 10% of the proposed fee to win it. Assessment: 10–15 hours. Anchor: about 100 hours, over months. Drag a card between stages, or use the arrows.</p>
-<section class="cols">{STAGES.map((s, i) => <div class="col" data-stage={s}><h2>{s} <small>{(deals || []).filter((d) => d.stage === s).length}</small></h2><p class="q">{STAGE_Q[s]}</p>
+<section class="cols">{STAGES.map((s, i) => <div class="col" data-stage={s}><h2>{s} <small>{(deals || []).filter((d) => d.stage === s).length}</small></h2><p class="q">{Q[s]}</p>
   {(deals || []).filter((d) => d.stage === s).map((d) => <article class="deal" draggable="true" data-deal={d.id} style={d.offer && /assess/i.test(d.offer) ? 'border-left-color:var(--teal)' : ''}><div style="display:flex;justify-content:space-between;gap:8px"><strong style="font-size:14px">{d.company}</strong><span style="font-weight:600">{d.fee_estimate ? '$' + Math.round(d.fee_estimate / 1000) + 'K' : '—'}</span></div><span class="note">{d.contact}</span>
     <div style="display:flex;gap:6px;flex-wrap:wrap">{d.offer && <span class="pill pill--teal" style="font-size:11px">{d.offer}</span>}{d.source && <span class="pill pill--indigo" style="font-size:11px">{d.source}</span>}</div>
     <dl><dt>Go-live</dt><dd>{d.go_live || '—'}</dd><dt>Partner</dt><dd>{d.partners?.firm || '—'}</dd><dt>Grid</dt><dd>{GRID[d.grid] || '—'}</dd><dt>BD hours</dt><dd style={Number(d.bd_hours) > cap(d.fee_estimate) ? 'color:#B3261E' : ''}>{d.bd_hours} of {cap(d.fee_estimate)}h budget</dd></dl>

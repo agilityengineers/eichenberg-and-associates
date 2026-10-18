@@ -1,7 +1,7 @@
 ---
 import site from '../content/settings/site.json';
 import { getCollection } from 'astro:content';
-const extra = (await getCollection('customPages', ({ data }) => data.published && data.inNav)).map((p) => ({ label: p.data.title, href: '/p/' + p.data.slug }));
+const extra = (await getCollection('custom-pages', ({ data }) => data.published && data.inNav)).map((p) => ({ label: p.data.title, href: '/p/' + p.slug }));
 const navItems = [...site.nav, ...extra];
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 ---

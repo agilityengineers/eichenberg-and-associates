@@ -32,7 +32,6 @@ site/
    ├─ components/            # Header, Footer, Cta, ContactForm
    ├─ lib/                   # ratelimit, sanitize, turnstile
    ├─ pages/                 # one file per route (+ /api/contact, /api/newsletter)
-   │                         # -slug-.astro / -table-.ts files become [slug].astro / [table].ts on npm install
    ├─ pages/for/             # persona landing pages (SSR from Supabase)
    ├─ pages/dashboard/       # sales dashboard (auth-gated)
    └─ supabase/              # schema.sql + seed.ts
@@ -43,7 +42,7 @@ site/
 
 ```bash
 cd site
-npm install                  # also renames -slug-.astro → [slug].astro (see scripts/fix-routes.mjs)
+npm install
 cp .env.example .env        # fill in what you have; everything is optional locally
 npm run dev                  # http://localhost:4321
 ```

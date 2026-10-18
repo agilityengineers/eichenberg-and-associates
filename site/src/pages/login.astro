@@ -17,6 +17,7 @@ const supa = { url: import.meta.env.PUBLIC_SUPABASE_URL, key: import.meta.env.PU
     import('https://esm.sh/@supabase/supabase-js@2').then(({ createClient }) => {
       const sb = createClient(supa.url, supa.key);
       const f = document.getElementById('login'), st = document.getElementById('st');
+      if (!supa.url || !supa.key) st.textContent = 'Supabase is not configured (PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY).';
       f.addEventListener('submit', async (e) => { e.preventDefault(); st.textContent = 'Sending…';
         const { error } = await sb.auth.signInWithOtp({ email: f.email.value, options: { emailRedirectTo: location.origin + '/api/auth/callback?next=' + encodeURIComponent(next) } });
         st.textContent = error ? error.message : 'Check your inbox for the link.'; });

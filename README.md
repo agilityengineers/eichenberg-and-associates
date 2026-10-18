@@ -34,7 +34,7 @@ See `site/README.md` for setup, env vars, deployment and content editing.
 ## Packaging for GitHub
 1. Move `CLAUDE.md` into `site/` (repo root), then `cd site && git init && git add -A && git commit -m "Eichenberg & Associates site v1"`.
 2. Create an empty **private** repo on GitHub; `git remote add origin <url> && git branch -M main && git push -u origin main`.
-3. `npm install` runs `scripts/fix-routes.mjs`, which renames `-slug-.astro` / `-table-.ts` placeholders to Astro's `[slug].astro` / `[table].ts` (the export tool couldn't write square brackets). After the first install, commit the renamed files and delete the script + `postinstall` hook.
+3. ~~`npm install` runs `scripts/fix-routes.mjs`…~~ Done: the `-slug-.astro` / `-table-.ts` placeholders are now committed as `[slug].astro` / `[table].ts`, and the script + `postinstall` hook have been removed.
 4. Connect the repo to Netlify (base dir `site`), add env vars from `.env.example`, enable Identity + Git Gateway, run `supabase/schema.sql`, then `npm run seed`.
 5. `.gitignore` already excludes `node_modules`, `dist`, `.env*`. Never commit `.env`.
 

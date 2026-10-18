@@ -1,7 +1,7 @@
 ---
 import Dashboard from '../../layouts/Dashboard.astro';
 export const prerender = false;
-const sb = (Astro.locals as any).sb;
+const sb = Astro.locals.sb;
 const [{ data: deals }, { data: partners }, { data: subs }, { data: leads }, { data: measures }, { data: acts }] = await Promise.all([sb.from('deals').select('*'), sb.from('partners').select('status'), sb.from('subscribers').select('in_profile'), sb.from('leads').select('id,deal_id,created_at'), sb.from('measures').select('*'), sb.from('activities').select('hours,at')]);
 const q = new Date(); q.setMonth(q.getMonth() - 3);
 const actual: Record<string, number> = { exploration: (leads || []).filter((l) => new Date(l.created_at) > q).length, partners: (partners || []).filter((p) => p.status === 2).length, assess_to_anchor: 0, role_readiness: (deals || []).filter((d) => d.stage === 'Continuation' && /role/i.test(d.offer || '')).length, subscribers: (subs || []).filter((s) => s.in_profile === 'in').length };

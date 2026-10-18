@@ -36,7 +36,8 @@ const block = z.discriminatedUnion('type', [
   z.object({ type: z.literal('cta'), heading: z.string(), text: z.string().optional(), label: z.string().default('Start a conversation'), href: z.string().default('/contact') }),
 ]);
 const customPages = defineCollection({ type: 'content', schema: z.object({
-  title: z.string(), slug: z.string().regex(/^[a-z0-9-]+$/), description: z.string(), published: z.boolean().default(false), inNav: z.boolean().default(false), blocks: z.array(block),
+  // `slug` is set in front matter but is reserved by Astro (it becomes entry.slug), so it is not part of the schema.
+  title: z.string(), description: z.string(), published: z.boolean().default(false), inNav: z.boolean().default(false), blocks: z.array(block),
 })});
 
-export const collections = { services, insights, team, situations, testimonials, pages, customPages };
+export const collections = { services, insights, team, situations, testimonials, pages, 'custom-pages': customPages };
