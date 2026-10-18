@@ -12,7 +12,7 @@ const { items, errors } = await allPosts(limit);
 {import.meta.env.DEV && errors.length > 0 && <p class="note">Feed errors (dev only): {errors.join(' · ')}</p>}
 <style>
 .feed--cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.feed--list{display:grid;gap:10px}
-.feed__item{display:grid;gap:10px;align-content:start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 28px;color:var(--ink);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s}.feed--list .feed__item{background:#fff}
+.feed__item{display:grid;gap:10px;align-content:start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 28px;color:var(--ink);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s}.feed--list .feed__item{background:#fff;padding:28px 32px}
 .feed__item:hover{transform:translateY(-4px);box-shadow:0 20px 36px rgba(18,15,56,.1);color:var(--ink)}
 .feed__item h3{margin:0;font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.15}.feed--list .feed__item h3{font-size:28px}.feed__x{margin:0;font-size:15px;line-height:1.5;color:var(--muted)}
 </style>

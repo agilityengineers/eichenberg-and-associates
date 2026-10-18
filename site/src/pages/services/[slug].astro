@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Cta from '../../components/Cta.astro';
 import { getCollection } from 'astro:content';
+import { si } from '../../lib/si';
 export async function getStaticPaths() { return (await getCollection('services')).map((s) => ({ params: { slug: s.slug }, props: { s } })); }
 const { s } = Astro.props; const { Content } = await s.render();
 const ld = { '@context': 'https://schema.org', '@type': 'Service', name: s.data.title, description: s.data.lead, provider: { '@type': 'ProfessionalService', name: 'Eichenberg & Associates' }, serviceType: 'Organizational change management' };
@@ -10,9 +11,9 @@ const ld = { '@context': 'https://schema.org', '@type': 'Service', name: s.data.
   <section class="wrap grid" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,104px)">
     <div><p class="eyebrow eyebrow--teal">{s.data.when}</p><h1 class="display" style="font-size:clamp(44px,6.4vw,88px)">{s.data.title}</h1><p class="lead" style="margin-top:28px;max-width:40ch">{s.data.lead}</p>{s.data.showPrice && <p style="margin:24px 0 0;font-weight:600">{s.data.price}</p>}</div>
     <div style="display:grid;gap:28px;align-content:start">
-      <div><h2 class="label" style="margin:0 0 12px">Who it's for</h2><p style="margin:0;font-size:17px">{s.data.who}</p></div>
-      <div><h2 class="label" style="margin:0 0 12px">What you get</h2><ul style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:17px">{s.data.points.map((p) => <li>{p}</li>)}</ul></div>
-      <blockquote class="quote">{s.data.message}</blockquote>
+      <div><h2 class="label" style="margin:0 0 12px">Who it's for</h2><p style="margin:0;font-size:17px" set:html={si(s.data.who)} /></div>
+      <div><h2 class="label" style="margin:0 0 12px">What you get</h2><ul style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:17px">{s.data.points.map((p) => <li set:html={si(p)} />)}</ul></div>
+      <blockquote class="quote" set:html={si(s.data.message)} />
       <div style="font-size:17px;line-height:1.6;color:var(--muted)"><Content /></div>
       <a href="/contact" class="btn btn--navy" style="justify-self:start">{s.data.cta}</a>
     </div>

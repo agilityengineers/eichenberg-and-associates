@@ -2,9 +2,15 @@
 interface Props { title?: string; body?: string; label?: string; href?: string }
 const { title = 'Is your go-live 90 days out, or 12 months?', body = 'Either way, the first call is about one question: who can lead the change, and who can do the work? You place yourself on the grid. Then we decide whether to keep talking.', label = 'Start a conversation', href = '/contact' } = Astro.props;
 ---
-<section class="dark section">
-  <div class="wrap grid" style="align-items:end">
-    <h2 class="display" style="font-size:clamp(40px,6vw,80px)">{title}</h2>
-    <div style="display:grid;gap:20px"><p class="lead" style="margin:0">{body}</p><a href={href} class="btn btn--teal" style="justify-self:start">{label}</a></div>
+<section class="dark">
+  <div class="wrap cta">
+    <h2 class="cta__h">{title}</h2>
+    <div style="display:grid;gap:18px"><p class="cta__p">{body}</p><a href={href} class="btn btn--teal cta__btn">{label}</a></div>
   </div>
 </section>
+<style>
+.cta{padding-top:clamp(64px,8vw,96px);padding-bottom:clamp(64px,8vw,96px);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center}
+.cta__h{margin:0;font-family:var(--serif);font-weight:300;font-size:clamp(34px,4.6vw,60px);line-height:1.02;letter-spacing:-.02em;text-wrap:balance}
+.cta__p{margin:0;font-size:17px;line-height:1.55;color:rgba(255,255,255,.82)}
+.cta__btn{justify-self:start;padding:15px 24px}
+</style>

@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import c from '../../content/pages/services.json';
-import Cta from '../../components/Cta.astro';
+import { si } from '../../lib/si';
 import { getCollection } from 'astro:content';
 const services = (await getCollection('services')).sort((a, b) => a.data.order - b.data.order);
 const timeline = c.timeline.map((t) => [t.when, t.what]);
@@ -21,16 +21,15 @@ const timeline = c.timeline.map((t) => [t.when, t.what]);
   </section>
   {services.map((s, i) => <section id={s.slug} style={`border-top:1px solid var(--line);background:${i % 2 ? '#fff' : 'var(--paper)'}`}>
     <div class="wrap grid" data-reveal style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
-      <div><p class="eyebrow eyebrow--teal">{s.data.when}</p><h2 class="h2" style="font-size:clamp(36px,4.6vw,60px);margin-bottom:20px">{s.data.title}</h2><p class="lead" style="margin:0;max-width:40ch">{s.data.lead}</p>{s.data.showPrice && <p style="margin:24px 0 0;font-weight:600">{s.data.price}</p>}</div>
+      <div><p class="eyebrow eyebrow--teal">{s.data.when}</p><h2 class="h2" style="font-size:clamp(36px,4.6vw,60px);line-height:1.02;margin-bottom:20px">{s.data.title}</h2><p class="lead" style="margin:0;max-width:40ch">{s.data.lead}</p>{s.data.showPrice && <p style="margin:24px 0 0;font-weight:600">{s.data.price}</p>}</div>
       <div style="display:grid;gap:28px;align-content:start">
-        <div><h3 class="label" style="margin:0 0 12px">Who it's for</h3><p style="margin:0;font-size:17px">{s.data.who}</p></div>
-        <div><h3 class="label" style="margin:0 0 12px">What you get</h3><ul style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:17px">{s.data.points.map((p) => <li>{p}</li>)}</ul></div>
-        <blockquote class="quote">{s.data.message}</blockquote>
+        <div><h3 class="label" style="margin:0 0 12px">Who it's for</h3><p style="margin:0;font-size:17px" set:html={si(s.data.who)} /></div>
+        <div><h3 class="label" style="margin:0 0 12px">What you get</h3><ul style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:17px">{s.data.points.map((p) => <li set:html={si(p)} />)}</ul></div>
+        <blockquote class="quote" set:html={si(s.data.message)} />
         <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"><a href="/contact" class="btn btn--navy" style="padding:14px 22px;font-size:15px">{s.data.cta}</a><a href={`/services/${s.slug}`} class="link">Details →</a></div>
       </div>
     </div>
   </section>)}
-  <Cta />
 </Base>
 <style>
 .tlbox{background:#fff;border:1px solid var(--line);border-radius:10px;padding:clamp(22px,3vw,32px);animation:rise .7s .4s ease-out both}

@@ -2,15 +2,16 @@
 import Base from '../../layouts/Base.astro';
 import c from '../../content/pages/insights.json';
 import FeedList from '../../components/FeedList.astro';
+import { si } from '../../lib/si';
 ---
 <Base title={c.title} description={c.description}>
   <section class="wrap" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(40px,5vw,64px)">
-    <p class="eyebrow">{c.eyebrow}</p><h1 class="display" style="max-width:14ch">{c.heading}</h1>
-    <p class="lead" style="margin-top:28px">{c.lead}</p>
+    <p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="max-width:14ch;animation-delay:.1s">{c.heading}</h1>
+    <p class="lead rise" style="margin-top:28px;animation-delay:.3s" set:html={si(c.lead)} />
   </section>
   <section class="wrap grid" style="padding-bottom:clamp(64px,8vw,104px)">
     <FeedList limit={24} variant="list" />
-    <aside class="dark nl">
+    <aside class="dark nl rise" style="animation-delay:.4s">
       <p class="eyebrow">Newsletter</p><h2 class="h3" style="font-size:30px">{c.newsletterHeading}</h2>
       <p style="margin:0;color:rgba(255,255,255,.82)">{c.newsletterText} <span class="note">(PLACEHOLDER: lead magnet titles to be confirmed.)</span></p>
       <form id="nl" method="post" action="/api/newsletter" style="display:grid;gap:10px">
@@ -25,7 +26,7 @@ import FeedList from '../../components/FeedList.astro';
 </Base>
 <style>
 .post{padding:28px 32px;display:grid;gap:10px}.post h2{margin:0;font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.1}.post p{margin:0}
-.nl{padding:36px 32px;border-radius:6px;display:grid;gap:16px;position:relative}
+.nl{padding:36px 32px;border-radius:10px;display:grid;gap:16px;position:relative}.nl p{font-size:16px;line-height:1.55}
 .nl input{font:inherit;padding:12px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.06);color:#fff}
 </style>
 <script>

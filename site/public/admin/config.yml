@@ -20,7 +20,7 @@ collections:
           - { name: description, label: Default meta description, widget: text }
           - { name: email, label: Email }
           - { name: phone, label: Phone (display) }
-          - { name: phoneHref, label: Phone (tel: link, digits only) }
+          - { name: phoneHref, label: "Phone (tel: link, digits only)" }
           - { name: linkedin, label: LinkedIn URL }
           - { name: responseWindow, label: Reply window (e.g. two business days) }
           - name: nav
