@@ -1,0 +1,15 @@
+{
+  "order": 3,
+  "role": "Director, PMO · Portfolio view",
+  "headline": "You need an independent read your teams can’t give you.",
+  "trigger": "Several go-lives at once, or a recent program went live and stumbled.",
+  "pains": [
+    "Program teams grade their own readiness",
+    "Your metrics track scope, schedule, and budget, not adoption",
+    "Every program defines “ready” differently",
+    "No internal capacity to assess programs independently"
+  ],
+  "message": "Your programs grade their own readiness. An independent assessment gives you one standard across every go-live.",
+  "href": "/services/readiness-assessment",
+  "cta": "Assessments and Role Readiness"
+}

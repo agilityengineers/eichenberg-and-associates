@@ -1,0 +1,30 @@
+{
+  "name": "eichenberg-associates-site",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "node scripts/fix-routes.mjs",
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "seed": "tsx supabase/seed.ts"
+  },
+  "dependencies": {
+    "astro": "^4.16.0",
+    "@astrojs/netlify": "^5.5.0",
+    "@astrojs/sitemap": "^3.2.0",
+    "resend": "^4.0.0",
+    "zod": "^3.23.8",
+    "@supabase/supabase-js": "^2.45.0",
+    "@supabase/ssr": "^0.5.1",
+    "marked": "^14.1.0",
+    "fast-xml-parser": "^4.5.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.6.0",
+    "tsx": "^4.19.0"
+  }
+}

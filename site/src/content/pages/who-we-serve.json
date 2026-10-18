@@ -1,0 +1,27 @@
+{
+  "title": "Who we serve",
+  "description": "Mid-market companies ($100M–$1B) with a fixed go-live date, a reachable executive sponsor, and no large consulting firm already running change.",
+  "eyebrow": "Who we serve",
+  "heading": "Mid-market companies with a go-live date",
+  "lead": "Where the sponsor is reachable and a firm our size is the right fit. Here's the profile, and four situations we're built for.",
+  "facts": [
+    {
+      "label": "Company size",
+      "text": "Revenue: $100M–$1B. Employees: 500–5,000, with 250+ impacted by the go-live."
+    },
+    {
+      "label": "Industries",
+      "text": "Primary depth: Insurance. Additional experience: Manufacturing, pharmaceuticals, automotive."
+    },
+    {
+      "label": "Sponsor",
+      "text": "Executive sponsor owns the go-live and is reachable. No large consulting firm already running change."
+    },
+    {
+      "label": "Initiative",
+      "text": "Fixed go-live date with a seven-figure program behind it. ERP and MES rollouts, merger integrations, facility openings."
+    }
+  ],
+  "footer": "Running an implementation practice? There's a fifth situation.",
+  "footerLink": "See how we work with Systems Integrator (SI) partners →"
+}

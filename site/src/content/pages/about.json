@@ -1,0 +1,42 @@
+{
+  "title": "About Jennifer Eichenberg",
+  "description": "Founder and Change Management Lead. Since 2007, people readiness across ERP, PM and HR programs. WBENC certified.",
+  "mission": "To educate and guide organizations through transformational change, enabling them to achieve sustainable growth and competitive advantage.",
+  "vision": "To be the leading consultancy that empowers businesses to embrace change confidently and thrive in a dynamic marketplace.",
+  "values": [
+    {
+      "name": "Transparency",
+      "text": "We believe in open and honest communication, fostering trust and understanding."
+    },
+    {
+      "name": "Value Addition",
+      "text": "Our commitment is to consistently provide actionable insights and tangible benefits to our clients."
+    },
+    {
+      "name": "Continuous Learning",
+      "text": "We embrace innovation and knowledge, ensuring we stay ahead of industry trends to better serve our clients."
+    },
+    {
+      "name": "Empowerment",
+      "text": "We aim to equip organizations with the tools and knowledge to manage change independently and effectively."
+    }
+  ],
+  "how": [
+    {
+      "label": "System-agnostic",
+      "text": "Readiness across ERP, PM, and HR. Breadth is the expertise."
+    },
+    {
+      "label": "Senior lead, flexible bench",
+      "text": "Clients get a senior lead, with contract associates for production work."
+    },
+    {
+      "label": "Ready on day one",
+      "text": "A built OCM toolkit and AI-enabled delivery save roughly 150 build hours on an ERP project."
+    },
+    {
+      "label": "WBENC certified",
+      "text": "Helps clients and Systems Integrator (SI) partners meet supplier diversity goals."
+    }
+  ]
+}

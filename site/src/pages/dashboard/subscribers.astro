@@ -1,0 +1,14 @@
+---
+import Dashboard from '../../layouts/Dashboard.astro';
+export const prerender = false;
+const sb = (Astro.locals as any).sb;
+const { data: subs } = await sb.from('subscribers').select('*').order('created_at', { ascending: false }); const inP = (subs || []).filter((s) => s.in_profile === 'in').length; const C: Record<string, string> = { in: 'pill--teal', partner: 'pill--indigo', unknown: 'pill--grey', out: 'pill--red' };
+---
+<Dashboard title="Newsletter subscribers" eyebrow="Content engine" active="subscribers">
+
+
+<section class="kpis"><div class="kpi"><p class="k">Subscribers</p><p class="v">{(subs || []).length}</p></div><div class="kpi"><p class="k">In target profile</p><p class="v">{inP} <small style="font-size:15px;color:var(--faint);font-family:var(--sans)">/ 150 by year end</small></p></div><div class="kpi"><p class="k">From lead magnets</p><p class="v">{(subs || []).filter((s) => s.source && s.source !== 'Insights page').length}</p></div></section>
+<section class="panel" style="margin-top:20px;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Email</th><th>Source</th><th>Profile (click to cycle)</th><th>Joined</th></tr></thead><tbody>
+{(subs || []).map((s) => <tr><td>{s.email}</td><td class="note">{s.source}</td><td><button class={'pill ' + (C[s.in_profile] || 'pill--grey')} data-action="patch" data-table="subscribers" data-id={s.id} data-field="in_profile" data-cycle="unknown|in|out|partner" data-current={s.in_profile}>{({ in: 'In profile', out: 'Out of profile', unknown: 'Unknown', partner: 'SI partner' })[s.in_profile] || s.in_profile}</button></td><td class="note">{new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td></tr>)}
+</tbody></table></div><p class="note" style="padding:14px 18px;margin:0;border-top:1px solid rgba(18,15,56,.08)">The list here mirrors your email provider (Buttondown / Resend audience). Profile tagging is yours; it feeds the “150 in profile” measure.</p></section>
+</Dashboard>

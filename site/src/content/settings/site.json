@@ -1,0 +1,33 @@
+{
+  "name": "Eichenberg & Associates",
+  "tagline": "Trained isn't ready.",
+  "positioning": "Your Systems Integrator (SI) knows the system. We know your people.",
+  "description": "Change management for mid-market go-lives. Readiness across ERP, PM and HR, led by a senior practitioner on a fixed fee.",
+  "email": "jennifer@eichenbergassociates.com",
+  "phone": "+1 (734) 620-4162",
+  "phoneHref": "+17346204162",
+  "linkedin": "https://www.linkedin.com/in/jennifer-eichenberg",
+  "responseWindow": "two business days",
+  "nav": [
+    {
+      "label": "Services",
+      "href": "/services"
+    },
+    {
+      "label": "Who we serve",
+      "href": "/who-we-serve"
+    },
+    {
+      "label": "For SI partners",
+      "href": "/partners"
+    },
+    {
+      "label": "About",
+      "href": "/about"
+    },
+    {
+      "label": "Insights",
+      "href": "/insights"
+    }
+  ]
+}

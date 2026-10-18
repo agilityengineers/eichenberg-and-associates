@@ -1,0 +1,15 @@
+{
+  "order": 2,
+  "role": "COO, Program sponsor · Within 90 days",
+  "headline": "Every dashboard is green. Your gut says otherwise.",
+  "trigger": "Go-live is within 90 days and a pilot, UAT, or dress rehearsal shows cracks.",
+  "pains": [
+    "Training completion is high, but nobody has proven people can do the job",
+    "Managers and the project team tell you different stories",
+    "Everyone reporting on readiness has a stake in the answer",
+    "Too late to start a full OCM program from scratch"
+  ],
+  "message": "Training completion tells you who clicked through. It doesn’t tell you who can do the job on day one.",
+  "href": "/services/readiness-assessment",
+  "cta": "Readiness Assessment"
+}

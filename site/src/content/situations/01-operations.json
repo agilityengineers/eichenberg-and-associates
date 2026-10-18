@@ -1,0 +1,15 @@
+{
+  "order": 1,
+  "role": "VP, Operations · Executive sponsor",
+  "headline": "You own the date and the people risk.",
+  "trigger": "Program funded, Systems Integrator (SI) selected, go-live date set 6–12 months out.",
+  "pains": [
+    "The Systems Integrator (SI) plan covers cutover; people readiness is a line item for training sessions",
+    "Status reports are green, but you can’t see whether operations is ready",
+    "Internal HR and L&D don’t have capacity for a program this size",
+    "SMEs in design sessions rebuild today’s workarounds in the new system"
+  ],
+  "message": "Your Systems Integrator (SI) will get the system live. Who’s making sure your people can run the operation on day one?",
+  "href": "/services/ocm-leadership",
+  "cta": "OCM Leadership and Role Readiness"
+}

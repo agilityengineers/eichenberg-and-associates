@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import ContactForm from '../components/ContactForm.astro';
+import site from '../content/settings/site.json';
+import c from '../content/pages/contact.json';
+---
+<Base title={c.title} description={c.description}>
+  <section class="wrap grid" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px);gap:56px">
+    <div>
+      <p class="eyebrow">{c.eyebrow}</p><h1 class="display" style="font-size:clamp(44px,6.4vw,88px)">{c.heading}</h1>
+      <p class="lead" style="margin-top:28px;max-width:46ch">{c.lead}</p>
+      <dl class="dl" style="margin-top:40px;grid-template-columns:1fr;gap:20px">
+        <div><dt class="label" style="margin-bottom:6px">Email</dt><dd><a href={`mailto:${site.email}`}>{site.email}</a></dd></div>
+        <div><dt class="label" style="margin-bottom:6px">Phone</dt><dd><a href={`tel:${site.phoneHref}`}>{site.phone}</a></dd></div>
+        <div><dt class="label" style="margin-bottom:6px">LinkedIn</dt><dd><a href={site.linkedin} target="_blank" rel="noopener">linkedin.com/in/jennifer-eichenberg</a></dd></div>
+      </dl>
+    </div>
+    <ContactForm />
+  </section>
+</Base>

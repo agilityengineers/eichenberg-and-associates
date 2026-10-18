@@ -1,0 +1,46 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import site from '../content/settings/site.json';
+import '../styles/global.css';
+interface Props { title: string; description: string; image?: string; type?: string; jsonLd?: Record<string, unknown> | Record<string, unknown>[] }
+const { title, description, image = '/images/og-default.png', type = 'website', jsonLd } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const fullTitle = title.includes('Eichenberg') ? title : `${title} · Eichenberg & Associates`;
+const org = { '@context': 'https://schema.org', '@type': 'ProfessionalService', name: site.name, url: Astro.site?.toString(), email: site.email, telephone: site.phone, description: site.description, logo: new URL('/images/logo-color.png', Astro.site).toString(), sameAs: [site.linkedin], areaServed: 'US', knowsAbout: ['Organizational change management', 'ERP go-live readiness', 'Merger integration'] };
+const ld = [org].concat(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []);
+const plausible = import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN;
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{fullTitle}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="sitemap" href="/sitemap-index.xml" />
+  <meta property="og:type" content={type} />
+  <meta property="og:site_name" content={site.name} />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content={new URL(image, Astro.site)} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#120F38" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Albert+Sans:wght@400;500;600;700&family=Poppins:wght@500;600&display=swap" rel="stylesheet" />
+  <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+  {plausible && <script defer data-domain={plausible} src="https://plausible.io/js/script.outbound-links.js"></script>}
+  <slot name="head" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <Header />
+  <main id="main"><slot /></main>
+  <script src="../scripts/motion.ts"></script>
+  <Footer />
+</body>
+</html>

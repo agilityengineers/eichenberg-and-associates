@@ -1,0 +1,16 @@
+---
+import Dashboard from '../../layouts/Dashboard.astro';
+export const prerender = false;
+const sb = (Astro.locals as any).sb;
+const { data: pages } = await sb.from('landing_pages').select('*').order('slug'); const slug = Astro.url.searchParams.get('page') || pages?.[0]?.slug; const p = pages?.find((x) => x.slug === slug);
+---
+<Dashboard title="Copy, booking link, lead magnet" eyebrow="Landing pages" active="pages">
+
+
+<section class="two"><div class="side-list">{(pages || []).map((x) => <a href={'/dashboard/pages?page=' + x.slug} aria-current={x.slug === slug ? 'page' : undefined}><strong style="font-size:14px">{x.eyebrow}</strong><small>/for/{x.slug} · {x.published ? 'published' : 'draft'}</small></a>)}</div>
+{p && <form class="panel panel--pad" data-save="landing_pages" data-json="goals,pains,messages,offer" style="display:grid;gap:14px"><input type="hidden" name="slug" value={p.slug} /><h2 class="h3" style="font-size:24px">{p.eyebrow} <small class="note" style="font-family:var(--sans)">(internal: {p.persona})</small></h2>
+  <div class="fieldset"><label>Eyebrow (audience)</label><input name="eyebrow" value={p.eyebrow} /></div><div class="fieldset"><label>Frame</label><input name="frame" value={p.frame} /></div><div class="fieldset"><label>Headline</label><input name="headline" value={p.headline} /></div><div class="fieldset"><label>Situation subhead</label><textarea name="situation" rows="2">{p.situation}</textarea></div>
+  <div class="fieldset"><label>Goals (JSON list)</label><textarea name="goals" rows="4">{JSON.stringify(p.goals, null, 1)}</textarea></div><div class="fieldset"><label>Pain points (JSON list)</label><textarea name="pains" rows="4">{JSON.stringify(p.pains, null, 1)}</textarea></div><div class="fieldset"><label>Messages (JSON: label, text)</label><textarea name="messages" rows="4">{JSON.stringify(p.messages, null, 1)}</textarea></div><div class="fieldset"><label>Offer (JSON: name, detail, price)</label><textarea name="offer" rows="3">{JSON.stringify(p.offer, null, 1)}</textarea></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px"><div class="fieldset"><label>Button label</label><input name="cta" value={p.cta} /></div><div class="fieldset"><label>Lead magnet title</label><input name="magnet_title" value={p.magnet_title} /></div><div class="fieldset"><label>Lead magnet PDF URL</label><input name="magnet_url" value={p.magnet_url} placeholder="Upload to Supabase Storage, paste URL" /></div><div class="fieldset"><label>Calendly event URL</label><input name="booking_url" value={p.booking_url} placeholder="https://calendly.com/…" /></div></div>
+  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><label style="display:inline-flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" name="show_price" checked={p.show_price} />Show fee range</label><label style="display:inline-flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" name="published" checked={p.published} />Published (unlisted URL)</label><a href={'/for/' + p.slug} target="_blank" rel="noopener" class="note" style="font-weight:600">Preview ↗</a><button class="btn btn--teal" type="submit" style="margin-left:auto;padding:10px 16px;font-size:14px">Save</button><span role="status" class="note"></span></div></form>}</section>
+</Dashboard>

@@ -1,0 +1,61 @@
+---
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+---
+<form id="contact" class="cf" method="post" action="/api/contact" novalidate>
+  <div class="cf__row">
+    <div class="field"><label for="c-name">Name <span aria-hidden="true" style="color:var(--indigo)">*</span></label><input id="c-name" name="name" autocomplete="name" required maxlength="120" /><span class="err" id="e-name"></span></div>
+    <div class="field"><label for="c-email">Work email <span aria-hidden="true" style="color:var(--indigo)">*</span></label><input id="c-email" name="email" type="email" autocomplete="email" required maxlength="200" /><span class="err" id="e-email"></span></div>
+  </div>
+  <div class="cf__row">
+    <div class="field"><label for="c-company">Company</label><input id="c-company" name="company" autocomplete="organization" maxlength="160" /></div>
+    <div class="field"><label for="c-role">Your role</label><input id="c-role" name="role" autocomplete="organization-title" maxlength="120" /></div>
+  </div>
+  <div class="field">
+    <label for="c-situation">Where are you? <span aria-hidden="true" style="color:var(--indigo)">*</span></label>
+    <select id="c-situation" name="situation" required>
+      <option value="">Choose one</option>
+      <option value="funded">Program funded, Systems Integrator (SI) selected, go-live 6–12 months out</option>
+      <option value="90days">Go-live within 90 days and cracks are showing</option>
+      <option value="portfolio">Several go-lives at once</option>
+      <option value="merger">Deal closed; integration lead named</option>
+      <option value="partner">I'm an SI partner with a won deal</option>
+      <option value="other">Something else</option>
+    </select><span class="err" id="e-situation"></span>
+  </div>
+  <div class="field"><label for="c-msg">What's the go-live, and who owns the date?</label><textarea id="c-msg" name="message" rows="5" maxlength="4000"></textarea></div>
+  <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp" />
+  {siteKey && <div class="cf-turnstile" data-sitekey={siteKey} data-theme="light"></div>}
+  <button type="submit" class="btn btn--navy" style="justify-self:start">Send</button>
+  <p class="note" role="status" aria-live="polite" id="cf-status">Protected by Cloudflare Turnstile. No marketing emails without your say-so.</p>
+</form>
+{siteKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+<style>
+.cf{background:#fff;border:1px solid var(--line);padding:clamp(24px,3vw,40px);display:grid;gap:18px;border-radius:6px;position:relative}
+.cf__row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.hp{position:absolute;left:-9999px}
+.cf.sent > :not(#cf-status){display:none}
+.cf.sent #cf-status{font-family:var(--serif);font-size:24px;color:var(--navy)}
+</style>
+<script>
+  const form = document.getElementById('contact') as HTMLFormElement;
+  const status = document.getElementById('cf-status')!;
+  const show = (id: string, msg: string) => { const el = document.getElementById('e-' + id)!; el.textContent = msg; (form.elements.namedItem(id) as HTMLElement)?.setAttribute('aria-invalid', String(!!msg)); };
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form); let ok = true;
+    show('name', ''); show('email', ''); show('situation', '');
+    if (!String(fd.get('name') || '').trim()) { show('name', 'Please add your name.'); ok = false; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(fd.get('email') || ''))) { show('email', 'Enter a valid work email.'); ok = false; }
+    if (!fd.get('situation')) { show('situation', 'Pick the closest match.'); ok = false; }
+    if (!ok) { (form.querySelector('[aria-invalid="true"]') as HTMLElement)?.focus(); return; }
+    status.textContent = 'Sending…';
+    try {
+      const r = await fetch('/api/contact', { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+      form.classList.add('sent');
+      status.textContent = "Thanks. We've got it. Expect a reply within two business days.";
+      (window as any).plausible?.('Contact submitted', { props: { situation: fd.get('situation') } });
+    } catch (err: any) { status.textContent = err.message + ' You can also email jennifer@eichenbergassociates.com.'; }
+  });
+</script>

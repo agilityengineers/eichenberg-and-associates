@@ -1,0 +1,25 @@
+{
+  "title": "Services",
+  "description": "Three offers around one go-live: Project Role Readiness at kickoff, phased OCM Leadership through delivery, and a Readiness Assessment when go-live is 90 days or less away.",
+  "eyebrow": "Services",
+  "heading": "Three offers around one go-live",
+  "lead": "Which offer fits depends on where you are. Role Readiness at kickoff. Anchor leadership through delivery. A Readiness Assessment when go-live is 90 days or less away.",
+  "timeline": [
+    {
+      "when": "Kickoff",
+      "what": "Project Role Readiness"
+    },
+    {
+      "when": "Delivery",
+      "what": "OCM Leadership + associates"
+    },
+    {
+      "when": "≤ 90 days out",
+      "what": "Readiness Assessment"
+    },
+    {
+      "when": "Go-live + 90 days",
+      "what": "Check-in, next initiative"
+    }
+  ]
+}

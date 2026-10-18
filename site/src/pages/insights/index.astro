@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import c from '../../content/pages/insights.json';
+import FeedList from '../../components/FeedList.astro';
+const posts = (await getCollection('insights', ({ data }) => !data.draft || import.meta.env.DEV)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+---
+<Base title={c.title} description={c.description}>
+  <section class="wrap" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(40px,5vw,64px)">
+    <p class="eyebrow">{c.eyebrow}</p><h1 class="display" style="max-width:14ch">{c.heading}</h1>
+    <p class="lead" style="margin-top:28px">{c.lead}</p>
+  </section>
+  <section class="wrap grid" style="padding-bottom:clamp(64px,8vw,104px)">
+    <FeedList limit={24} variant="list" />
+    <aside class="dark nl">
+      <p class="eyebrow">Newsletter</p><h2 class="h3" style="font-size:30px">{c.newsletterHeading}</h2>
+      <p style="margin:0;color:rgba(255,255,255,.82)">{c.newsletterText} <span class="note">(PLACEHOLDER: lead magnet titles to be confirmed.)</span></p>
+      <form id="nl" method="post" action="/api/newsletter" style="display:grid;gap:10px">
+        <label for="nl-email" style="font-size:13px;font-weight:500">Work email</label>
+        <input id="nl-email" name="email" type="email" required placeholder="you@company.com" />
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
+        <button type="submit" class="btn btn--teal" style="padding:13px 20px">Subscribe</button>
+        <p role="status" aria-live="polite" id="nl-status" style="margin:0;font-size:14px;color:var(--teal);min-height:1.4em"></p>
+      </form>
+    </aside>
+  </section>
+</Base>
+<style>
+.post{padding:28px 32px;display:grid;gap:10px}.post h2{margin:0;font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.1}.post p{margin:0}
+.nl{padding:36px 32px;border-radius:6px;display:grid;gap:16px;position:relative}
+.nl input{font:inherit;padding:12px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.06);color:#fff}
+</style>
+<script>
+  const f = document.getElementById('nl') as HTMLFormElement; const s = document.getElementById('nl-status')!;
+  f.addEventListener('submit', async (e) => { e.preventDefault(); s.textContent = 'Subscribing…';
+    const r = await fetch('/api/newsletter', { method: 'POST', body: new FormData(f) }); const j = await r.json();
+    s.textContent = r.ok ? 'Subscribed. Watch for the next post.' : (j.error || 'Could not subscribe.'); if (r.ok) f.reset(); });
+</script>

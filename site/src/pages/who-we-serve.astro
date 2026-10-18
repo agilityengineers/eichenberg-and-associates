@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import c from '../content/pages/who-we-serve.json';
+import Cta from '../components/Cta.astro';
+import { getCollection } from 'astro:content';
+const sits = (await getCollection('situations')).sort((a, b) => a.data.order - b.data.order);
+---
+<Base title={c.title} description={c.description}>
+  <section class="dark">
+    <div class="wrap" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
+      <p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="max-width:14ch;animation-delay:.1s">{c.heading}</h1>
+      <p class="lead" style="margin-top:28px">{c.lead}</p>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.12)"><dl class="wrap dl icp" style="padding-top:32px;padding-bottom:32px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">{c.facts.map((f) => <div><dt class="label" style="color:var(--teal)">{f.label}</dt><dd>{f.text}</dd></div>)}</dl></div>
+  </section>
+  <section class="wrap" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
+    <div style="display:grid;gap:12px">{sits.map((s) => <article class="cell sit card" data-reveal>
+      <div><p class="label" style="margin:0 0 14px">{s.data.role}</p><h2 class="h2" style="font-size:clamp(28px,3.4vw,40px);margin-bottom:16px">{s.data.headline}</h2><p style="margin:0;color:var(--muted)"><strong style="color:var(--ink)">The trigger:</strong> {s.data.trigger}</p></div>
+      <div style="display:grid;gap:22px;align-content:start">
+        <div><h3 class="label" style="margin:0 0 10px">What you're dealing with</h3><ul style="margin:0;padding-left:20px;display:grid;gap:6px">{s.data.pains.map((p) => <li>{p}</li>)}</ul></div>
+        <p class="sit__msg">{s.data.message}</p>
+        <a href={s.data.href} style="font-weight:600;font-size:15px">{s.data.cta} →</a>
+      </div>
+    </article>)}</div>
+    <p class="lead" style="margin:40px 0 0;font-size:17px;max-width:70ch">{c.footer} <a href="/partners" class="link">{c.footerLink}</a></p>
+  </section>
+  <Cta />
+</Base>
+<style>
+.icp dd{font-size:16px;color:rgba(255,255,255,.88)}
+.sit{border:1px solid var(--line);padding:clamp(32px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px 48px}
+.sit__msg{margin:0;padding:18px 22px;border-left:2px solid var(--teal);background:var(--paper);font-family:var(--serif);font-size:20px;line-height:1.35}
+</style>

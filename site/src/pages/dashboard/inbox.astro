@@ -1,0 +1,16 @@
+---
+import Dashboard from '../../layouts/Dashboard.astro';
+export const prerender = false;
+const sb = (Astro.locals as any).sb;
+const { data: leads } = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(200);
+const { data: pages } = await sb.from('landing_pages').select('slug,eyebrow'); const label = (s: string) => (pages || []).find((p) => p.slug === s)?.eyebrow || s || 'Contact form';
+const GRID: Record<string, string> = { nn: 'Can’t lead · Can’t do', nd: 'Can’t lead · Can do', ln: 'Can lead · Can’t do', ld: 'Can lead · Can do' };
+---
+<Dashboard title="Form submissions" eyebrow="Lead inbox" active="inbox">
+
+
+<section class="panel" style="overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Received</th><th>Lead</th><th>Page</th><th>Grid</th><th>Answers</th><th></th></tr></thead><tbody>
+{(leads || []).map((l) => <tr><td style="white-space:nowrap;color:var(--muted)">{new Date(l.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td><td><strong style="display:block">{l.name}</strong><span class="note">{[l.title, l.company].filter(Boolean).join(', ')}</span><br /><a href={'mailto:' + l.email} style="font-size:13px">{l.email}</a></td><td><span class="pill pill--indigo">{label(l.page_slug)}</span></td><td class="note" style="white-space:nowrap">{GRID[l.grid] || '—'}</td><td class="note" style="max-width:320px">{Object.entries(l.answers || {}).map(([k, v]) => <div><b>{k}:</b> {String(v)}</div>)}</td><td style="white-space:nowrap">{l.deal_id ? <a href="/dashboard/pipeline" class="pill pill--teal">In pipeline ✓</a> : <button class="btn-sm" data-action="convert" data-id={l.id} data-company={l.company || l.name} data-contact={l.name + (l.title ? ', ' + l.title : '')} data-grid={l.grid}>Add to pipeline</button>}</td></tr>)}
+{!(leads || []).length && <tr><td colspan="6" class="note" style="padding:40px;text-align:center">No submissions yet.</td></tr>}
+</tbody></table></div></section>
+</Dashboard>

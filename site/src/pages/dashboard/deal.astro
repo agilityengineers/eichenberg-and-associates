@@ -1,0 +1,18 @@
+---
+import Dashboard from '../../layouts/Dashboard.astro';
+export const prerender = false;
+const sb = (Astro.locals as any).sb;
+const id = Astro.url.searchParams.get('id'); const { data: d } = await sb.from('deals').select('*').eq('id', id).single(); const { data: partners } = await sb.from('partners').select('id,firm');
+if (!d) return Astro.redirect('/dashboard/pipeline');
+---
+<Dashboard title="Edit deal" eyebrow="Pipeline" active="pipeline">
+
+
+<form class="panel panel--pad" data-save="deals" style="display:grid;gap:14px;max-width:720px"><input type="hidden" name="id" value={d.id} />
+  <div class="fieldset"><label>Company</label><input name="company" value={d.company} /></div><div class="fieldset"><label>Contact</label><input name="contact" value={d.contact} /></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px"><div class="fieldset"><label>Offer</label><input name="offer" list="offers" value={d.offer} /><datalist id="offers"><option>Readiness Assessment</option><option>Anchor</option><option>Anchor + Role Readiness</option><option>Role Readiness</option><option>Subcontract anchor</option><option>White-label assessment</option></datalist></div><div class="fieldset"><label>Fee estimate ($)</label><input name="fee_estimate" type="number" value={d.fee_estimate} /></div><div class="fieldset"><label>Go-live</label><input name="go_live" type="date" value={d.go_live} /></div>
+  <div class="fieldset"><label>Source</label><input name="source" list="src" value={d.source} /><datalist id="src"><option>Partner</option><option>Signal</option><option>Content</option></datalist></div><div class="fieldset"><label>SI partner</label><select name="partner_id" style="font:inherit;padding:10px 12px;border:1px solid rgba(18,15,56,.15);border-radius:6px"><option value="">—</option>{(partners || []).map((p) => <option value={p.id} selected={p.id === d.partner_id}>{p.firm}</option>)}</select></div><div class="fieldset"><label>BD hours spent</label><input name="bd_hours" type="number" step="0.5" value={d.bd_hours} /></div></div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px"><div class="fieldset"><label>Next step</label><input name="next_step" value={d.next_step} /></div><div class="fieldset"><label>Due</label><input name="next_due" type="date" value={d.next_due} /></div></div>
+  <div class="fieldset"><label>Notes</label><textarea name="notes" rows="4">{d.notes}</textarea></div>
+  <div style="display:flex;gap:12px;align-items:center"><button class="btn btn--teal" type="submit" style="padding:12px 20px;font-size:15px">Save</button><a href="/dashboard/pipeline" class="note">Back to pipeline</a><span role="status" class="note"></span></div></form>
+</Dashboard>

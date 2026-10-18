@@ -1,0 +1,79 @@
+{
+  "title": "Eichenberg & Associates — Change management for mid-market go-lives",
+  "gap": {
+    "eyebrow": "The gap",
+    "heading": "Your Systems Integrator (SI) will get the system live. Who's making sure your people can run the operation on day one?",
+    "paragraphs": [
+      "Training completion tells you who clicked through. It doesn't tell you who can do the job on day one.",
+      "The SI plan covers cutover; people readiness is a line item for training sessions. Status reports are green, but you can't see whether operations is ready."
+    ],
+    "closing": "The SI brings system expertise. We bring people expertise."
+  },
+  "offers": {
+    "eyebrow": "What we offer",
+    "heading": "Three offers around one go-live",
+    "link": "All services →"
+  },
+  "who": {
+    "eyebrow": "Who this is for",
+    "heading": "Mid-market companies with a go-live date",
+    "lead": "Where the sponsor is reachable and a firm our size is the right fit.",
+    "link": "Is this you? →",
+    "facts": [
+      {
+        "label": "Company size",
+        "text": "$100M–$1B in revenue. 500–5,000 employees, with 250+ affected by the go-live."
+      },
+      {
+        "label": "Industries",
+        "text": "Primary depth: insurance. Also manufacturing, pharmaceuticals and automotive."
+      },
+      {
+        "label": "Sponsor",
+        "text": "An executive owns the go-live and is reachable. No large consulting firm already running change."
+      },
+      {
+        "label": "Initiative",
+        "text": "Fixed go-live date and a seven-figure program. ERP and HR rollouts, merger integrations, facility openings."
+      }
+    ]
+  },
+  "approach": {
+    "eyebrow": "How an engagement runs",
+    "heading": "Phased OCM leadership. Fixed fee by phase.",
+    "phases": [
+      {
+        "num": "Phase 1",
+        "name": "Prepare",
+        "text": "Role Readiness modules get SMEs, the project team, managers and sponsors ready before Systems Integrator (SI) design sessions start."
+      },
+      {
+        "num": "Phase 2",
+        "name": "Act",
+        "text": "Readiness work through build and test, with associate production inside the engagement and a Readiness Assessment at 90 days or less."
+      },
+      {
+        "num": "Phase 3",
+        "name": "Sustain",
+        "text": "Go-live plus 90 days: a check-in on adoption, and planning for the next initiative."
+      }
+    ],
+    "footnote": "Sponsor access and go/no-go criteria in every contract. A 90-day check-in after every engagement."
+  },
+  "testimonials": {
+    "eyebrow": "From clients and audiences"
+  },
+  "partners": {
+    "eyebrow": "For SI partners",
+    "heading": "When adoption stalls, the client blames the implementation. A readiness check protects your go-live and your relationship.",
+    "text": "Offer OCM without building a practice. You cover the system; we cover the people. Subcontracted anchor lead, or white-label assessments and modules.",
+    "link": "What we cover, what you cover →"
+  },
+  "cta": {
+    "eyebrow": "The first call",
+    "heading": "Who can lead it? Who can do it?",
+    "text": "Place yourself on the grid. That's how the first conversation closes, and it tells us both whether to continue to Discovery.",
+    "prompt": "Pick the quadrant that sounds like you.",
+    "label": "Start a conversation"
+  }
+}

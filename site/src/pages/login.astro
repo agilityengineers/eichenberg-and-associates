@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+export const prerender = false;
+const next = Astro.url.searchParams.get('next') || '/dashboard';
+const supa = { url: import.meta.env.PUBLIC_SUPABASE_URL, key: import.meta.env.PUBLIC_SUPABASE_ANON_KEY };
+---
+<Base title="Sign in" description="Dashboard sign-in">
+  <section class="wrap" style="max-width:480px;padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
+    <p class="eyebrow">Sales dashboard</p><h1 class="display" style="font-size:clamp(36px,5vw,56px)">Sign in</h1>
+    <form id="login" style="display:grid;gap:14px;margin-top:28px" class="field">
+      <label for="email">Email</label><input id="email" type="email" required placeholder="jennifer@eichenbergassociates.com" />
+      <button class="btn btn--navy" type="submit">Email me a sign-in link</button>
+      <p id="st" class="note" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+  <script define:vars={{ next, supa }}>
+    import('https://esm.sh/@supabase/supabase-js@2').then(({ createClient }) => {
+      const sb = createClient(supa.url, supa.key);
+      const f = document.getElementById('login'), st = document.getElementById('st');
+      f.addEventListener('submit', async (e) => { e.preventDefault(); st.textContent = 'Sending…';
+        const { error } = await sb.auth.signInWithOtp({ email: f.email.value, options: { emailRedirectTo: location.origin + '/api/auth/callback?next=' + encodeURIComponent(next) } });
+        st.textContent = error ? error.message : 'Check your inbox for the link.'; });
+    });
+  </script>
+</Base>

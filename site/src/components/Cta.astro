@@ -1,0 +1,10 @@
+---
+interface Props { title?: string; body?: string; label?: string; href?: string }
+const { title = 'Is your go-live 90 days out, or 12 months?', body = 'Either way, the first call is about one question: who can lead the change, and who can do the work? You place yourself on the grid. Then we decide whether to keep talking.', label = 'Start a conversation', href = '/contact' } = Astro.props;
+---
+<section class="dark section">
+  <div class="wrap grid" style="align-items:end">
+    <h2 class="display" style="font-size:clamp(40px,6vw,80px)">{title}</h2>
+    <div style="display:grid;gap:20px"><p class="lead" style="margin:0">{body}</p><a href={href} class="btn btn--teal" style="justify-self:start">{label}</a></div>
+  </div>
+</section>
