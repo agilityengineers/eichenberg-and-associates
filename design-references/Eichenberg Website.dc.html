@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Albert+Sans:wght@400;500;600;700&family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+body{margin:0;background:#F6F5F0;color:#120F38;font-family:'Albert Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#343C97;text-decoration:none}a:hover{color:#120F38}
+*,*:before,*:after{box-sizing:border-box}
+input,select,textarea,button{font:inherit}
+input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid #14B6A1;outline-offset:2px}
+input[type=range]{accent-color:#14B6A1}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes wordIn{from{opacity:0;transform:translateY(.4em) rotate(2deg)}to{opacity:1;transform:none}}
+@keyframes driftL{0%{transform:translate(-14%,4%)}100%{transform:translate(0,0)}}
+@keyframes driftR{0%{transform:translate(14%,-4%)}100%{transform:translate(0,0)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes rowIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+@keyframes dim{to{opacity:.32;filter:grayscale(1)}}
+@keyframes dropIn{0%{opacity:0;transform:translateY(40px) rotate(-3deg) scale(.96)}60%{opacity:1;transform:translateY(-6px) rotate(.5deg) scale(1.01)}100%{opacity:1;transform:none}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes sweep{from{background-position:200% 0}to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column">
+
+<a href="#main" style="position:absolute;left:-9999px;top:8px;background:#120F38;color:#fff;padding:8px 12px">Skip to content</a>
+
+<header style="position:sticky;top:0;z-index:50;background:rgba(246,245,240,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(18,15,56,.1)">
+  <div style="height:3px;background:linear-gradient(90deg,#343C97,#14B6A1);width:{{ scrollPct }};transition:width .1s linear"></div>
+  <nav aria-label="Primary" style="max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <a href="#/" aria-label="Eichenberg & Associates home" style="display:flex;align-items:center;gap:16px;color:#120F38">
+      <img src="assets/mark-color.png" alt="" width="51" height="56" style="display:block;height:56px;width:auto" style-hover="animation:bob .9s ease-in-out infinite">
+      <span style="display:flex;flex-direction:column;line-height:1">
+        <span style="font-weight:600;letter-spacing:.22em;font-size:22px">EICHENBERG</span>
+        <span style="font-weight:500;letter-spacing:.32em;font-size:12.5px;margin-top:6px;color:#343C97">&amp; ASSOCIATES</span>
+      </span>
+    </a>
+    <ul style="list-style:none;margin:0;padding:0;display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+        <li><a href="{{ n.href }}" aria-current="{{ n.current }}" style="display:inline-block;padding:8px 12px;font-size:14px;font-weight:500;color:#120F38;border-radius:6px;border-bottom:2px solid {{ n.underline }};transition:background .2s" style-hover="background:rgba(52,60,151,.08)">{{ n.label }}</a></li>
+      </sc-for>
+      <li><a href="#/contact" style="display:inline-block;white-space:nowrap;margin-left:8px;padding:10px 18px;font-size:14px;font-weight:600;color:#fff;background:#120F38;border-radius:6px;transition:background .2s,transform .2s" style-hover="background:#343C97;color:#fff;transform:translateY(-1px)">Start a conversation</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main" style="flex:1">
+
+<!-- ================= HOME ================= -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div style="animation:fadeIn .5s ease-out both">
+<section data-screen-label="Home hero" style="background:#120F38;color:#fff;position:relative;overflow:hidden;isolation:isolate">
+  <div style="position:absolute;inset:0;z-index:0">
+    <image-slot id="hero-bg" shape="rect" fit="cover" src="{{ heroBgSrc }}" placeholder="Drop a hero background image (admin-editable in the CMS)" style="width:100%;height:100%;--image-slot-bg:transparent"></image-slot>
+  </div>
+  <div aria-hidden="true" style="position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(100deg,rgba(18,15,56,{{ heroTintA }}) 0%,rgba(18,15,56,{{ heroTintB }}) 55%,rgba(18,15,56,.35) 100%)"></div>
+  <img src="assets/mark-half-left-white.png" alt="" aria-hidden="true" style="position:absolute;left:50%;top:-6%;height:118%;margin-left:-28vw;opacity:.05;pointer-events:none;z-index:1;animation:driftL 2.4s cubic-bezier(.2,.7,.2,1) both">
+  <img src="assets/mark-half-right-teal.png" alt="" aria-hidden="true" style="position:absolute;left:50%;top:-6%;height:118%;margin-left:-4vw;opacity:.1;pointer-events:none;z-index:1;animation:driftR 2.4s cubic-bezier(.2,.7,.2,1) both">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px clamp(56px,7vw,96px);position:relative;z-index:2;pointer-events:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:48px;align-items:center">
+    <div style="pointer-events:auto">
+      <p style="margin:0 0 28px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1;animation:rise .7s ease-out both">Change management for mid-market go‑lives</p>
+      <h1 style="margin:0;font-family:Poppins,'Albert Sans',system-ui,sans-serif;font-weight:600;font-size:clamp(44px,6.4vw,88px);line-height:1.04;letter-spacing:-.02em;text-wrap:balance">
+        <span style="display:inline-block;animation:wordIn .8s .1s cubic-bezier(.2,.7,.2,1) both"><span style="color:#14B6A1">Change</span> is inevitable,</span><br>
+        <span style="display:inline-block;animation:wordIn .8s .35s cubic-bezier(.2,.7,.2,1) both"><span style="color:#14B6A1">Success</span> isn't.</span>
+      </h1>
+      <p style="margin:26px 0 0;font-size:clamp(17px,1.5vw,20px);line-height:1.55;max-width:50ch;color:#fff;animation:rise .7s .6s ease-out both">Eichenberg &amp; Associates provide a seamless approach that leads your company through the successful adoption of change.</p>
+      <p aria-live="polite" style="margin:18px 0 0;font-family:Newsreader,Georgia,serif;font-style:italic;font-size:clamp(18px,1.8vw,22px);line-height:1.35;max-width:44ch;min-height:2.7em;color:rgba(255,255,255,.85)">{{ rotatingLine }}</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:32px;animation:rise .7s .85s ease-out both">
+        <a href="#/contact" style="display:inline-block;white-space:nowrap;padding:16px 26px;background:#14B6A1;color:#120F38;font-weight:600;border-radius:6px;font-size:16px;transition:transform .2s,background .2s" style-hover="background:#fff;color:#120F38;transform:translateY(-2px)">Start Building Your Success Today</a>
+        <a href="#/services" style="display:inline-block;white-space:nowrap;padding:16px 26px;border:1px solid rgba(255,255,255,.4);color:#fff;font-weight:500;border-radius:6px;font-size:16px;transition:border-color .2s" style-hover="border-color:#fff;color:#fff">See the three offers</a>
+      </div>
+    </div>
+
+    <div aria-hidden="true" style="position:relative;max-width:460px;justify-self:center;align-self:end;margin-top:clamp(120px,22vw,300px);width:100%;padding:0 6% 34px;pointer-events:auto;animation:floatY 7s 3s ease-in-out infinite">
+      <div style="background:#fff;color:#120F38;border-radius:10px;padding:22px 22px 18px;box-shadow:0 30px 60px rgba(0,0,0,.35)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#120F38">Go-live readiness</span><span style="font-size:12px;font-weight:600;color:#fff;background:#14B6A1;padding:4px 10px;border-radius:99px">All green</span></div>
+        <sc-for list="{{ dashRows }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid rgba(18,15,56,.08);animation:rowIn .5s {{ r.delay }} ease-out both">
+            <span style="font-size:15px;font-weight:500">{{ r.label }}</span>
+            <span style="display:flex;align-items:center;gap:8px;font-size:14px;color:#120F38;font-weight:600"><span style="width:10px;height:10px;border-radius:50%;background:#14B6A1;display:inline-block"></span>{{ r.val }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#14B6A1;color:#120F38;border-radius:10px;padding:22px 24px;box-shadow:0 24px 50px rgba(0,0,0,.35);animation:dropIn .9s 2.7s cubic-bezier(.2,.8,.2,1) both">
+        <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#120F38">Every dashboard is green. Her gut says otherwise.</p>
+        <p style="margin:0;font-family:Newsreader,Georgia,serif;font-size:clamp(20px,2vw,24px);line-height:1.25">Who can do the job on day one<span style="display:inline-block;animation:blink 1.2s 3.6s ease-in-out infinite">?</span></p>
+      </div>
+    </div>
+  </div>
+  <div style="border-top:1px solid rgba(255,255,255,.12);margin-top:36px;position:relative;z-index:2;background:rgba(18,15,56,.55);backdrop-filter:blur(6px)">
+    <ul style="list-style:none;margin:0 auto;padding:22px 24px;max-width:1240px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px 32px">
+      <li style="font-size:14px;line-height:1.45;color:rgba(255,255,255,.75)"><strong style="display:block;color:#fff;font-weight:600">System-agnostic</strong>Readiness across ERP, PM, and HR</li>
+      <li style="font-size:14px;line-height:1.45;color:rgba(255,255,255,.75)"><strong style="display:block;color:#fff;font-weight:600">Senior lead, flexible bench</strong>A senior lead, with contract associates for production work</li>
+      <li style="font-size:14px;line-height:1.45;color:rgba(255,255,255,.75)"><strong style="display:block;color:#fff;font-weight:600">Ready on day one</strong>A built OCM toolkit saves roughly 150 build hours on an ERP project</li>
+      <li style="font-size:14px;line-height:1.45;color:rgba(255,255,255,.75)"><strong style="display:block;color:#fff;font-weight:600">WBENC certified</strong>Helps clients and Systems Integrator (<abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr>) partners meet supplier diversity goals</li>
+    </ul>
+  </div>
+</section>
+
+<section data-screen-label="Home marquee" aria-label="Key messages" style="background:#14B6A1;color:#120F38;overflow:hidden;padding:18px 0;border-bottom:1px solid rgba(18,15,56,.15)">
+  <div style="display:flex;width:max-content;animation:marquee 60s linear infinite" style-hover="animation-play-state:paused">
+    <sc-for list="{{ marquee }}" as="m" hint-placeholder-count="10">
+      <span style="font-family:Newsreader,Georgia,serif;font-size:22px;white-space:nowrap;padding:0 28px;display:inline-flex;align-items:center;gap:28px">{{ m }}<span style="width:6px;height:6px;border-radius:50%;background:#120F38;display:inline-block;opacity:.6"></span></span>
+    </sc-for>
+  </div>
+</section>
+
+<section data-screen-label="Home problem" style="max-width:1240px;margin:0 auto;padding:clamp(72px,9vw,120px) 24px">
+  <div data-reveal style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;align-items:start;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+    <div>
+      <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">The gap</p>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(34px,4.4vw,56px);line-height:1.05;letter-spacing:-.015em;text-wrap:balance">Your <abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr> will get the system live. Who's making sure your people can run the operation on day one?</h2>
+    </div>
+    <div style="display:grid;gap:22px;padding-top:8px">
+      <p style="margin:0;font-size:19px;line-height:1.55;color:#4A4868">Training completion tells you who clicked through. It doesn't tell you who can do the job on day one.</p>
+      <p style="margin:0;font-size:19px;line-height:1.55;color:#4A4868">The <abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr> plan covers cutover; people readiness is a line item for training sessions. Status reports are green, but you can't see whether operations is ready.</p>
+      <p style="margin:0;font-size:19px;line-height:1.55;color:#120F38;font-weight:500">The <abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr> brings system expertise. We bring people expertise.</p>
+    </div>
+  </div>
+  <dl data-reveal style="margin:clamp(56px,7vw,88px) 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px;opacity:0;transform:translateY(28px);transition:opacity .8s .1s ease,transform .8s .1s cubic-bezier(.2,.7,.2,1)">
+    <div style="padding:24px 24px 24px 0;border-top:2px solid #120F38"><dt style="font-family:Newsreader,Georgia,serif;font-size:clamp(44px,5vw,64px);line-height:1;letter-spacing:-.02em">{{ nSince }}</dt><dd style="margin:10px 0 0;font-size:15px;color:#4A4868">Every engagement since, inside ERP, PM and HR programs</dd></div>
+    <div style="padding:24px 24px 24px 0;border-top:2px solid #343C97"><dt style="font-family:Newsreader,Georgia,serif;font-size:clamp(44px,5vw,64px);line-height:1;letter-spacing:-.02em">~{{ nHours }}</dt><dd style="margin:10px 0 0;font-size:15px;color:#4A4868">Build hours a built OCM toolkit saves on an ERP project</dd></div>
+    <div style="padding:24px 24px 24px 0;border-top:2px solid #14B6A1"><dt style="font-family:Newsreader,Georgia,serif;font-size:clamp(44px,5vw,64px);line-height:1;letter-spacing:-.02em">≤{{ nDays }}</dt><dd style="margin:10px 0 0;font-size:15px;color:#4A4868">Days before go-live for a Readiness Assessment</dd></div>
+    <div style="padding:24px 24px 24px 0;border-top:2px solid #120F38"><dt style="font-family:Newsreader,Georgia,serif;font-size:clamp(44px,5vw,64px);line-height:1;letter-spacing:-.02em">3</dt><dd style="margin:10px 0 0;font-size:15px;color:#4A4868">Phases, fixed fee by phase: Prepare, Act, Sustain</dd></div>
+  </dl>
+</section>
+
+<section data-screen-label="Home offers" style="background:#fff;border-top:1px solid rgba(18,15,56,.08);border-bottom:1px solid rgba(18,15,56,.08)">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(72px,9vw,120px) 24px">
+    <div data-reveal style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:40px;align-items:end;margin-bottom:40px;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+      <div>
+        <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">What we offer</p>
+        <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(34px,4.4vw,56px);line-height:1.05;letter-spacing:-.015em">Three offers around one go-live</h2>
+      </div>
+      <div style="background:#F6F5F0;border:1px solid rgba(18,15,56,.1);border-radius:10px;padding:22px 24px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <label for="golive" style="font-size:14px;font-weight:600">Where is your go-live?</label>
+          <span aria-live="polite" style="font-family:Newsreader,Georgia,serif;font-size:22px;color:#343C97">{{ monthsLabel }}</span>
+        </div>
+        <input id="golive" type="range" min="0" max="12" step="1" value="{{ months }}" onChange="{{ onMonths }}" onInput="{{ onMonths }}" aria-valuetext="{{ monthsLabel }}" style="width:100%;margin:14px 0 8px;cursor:pointer">
+        <div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A889C;font-weight:600"><span>Go-live + 90 days</span><span>≤ 90 days</span><span>Kickoff · 12 months</span></div>
+        <p style="margin:14px 0 0;font-size:15px;line-height:1.45;color:#120F38;min-height:2.9em">{{ monthsAdvice }}</p>
+      </div>
+    </div>
+    <div data-reveal style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;opacity:0;transform:translateY(28px);transition:opacity .8s .15s ease,transform .8s .15s cubic-bezier(.2,.7,.2,1)">
+      <sc-for list="{{ offers }}" as="o" hint-placeholder-count="3">
+        <article style="background:{{ o.bg }};border:1px solid {{ o.border }};border-radius:10px;padding:34px 30px 30px;display:flex;flex-direction:column;gap:16px;min-height:360px;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s,background .4s,border-color .4s;box-shadow:{{ o.shadow }}" style-hover="transform:translateY(-6px);box-shadow:0 24px 40px rgba(18,15,56,.12)">
+          <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:#14B6A1;display:flex;justify-content:space-between;gap:8px"><span>{{ o.when }}</span><span style="color:#343C97;opacity:{{ o.pillOpacity }};transition:opacity .4s">Fits now</span></p>
+          <h3 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:32px;line-height:1.1;letter-spacing:-.01em">{{ o.name }}</h3>
+          <p style="margin:0;font-size:16px;line-height:1.55;color:#4A4868;flex:1">{{ o.desc }}</p>
+          <sc-if value="{{ showPricing }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:14px;font-weight:600;color:#120F38">{{ o.price }}</p></sc-if>
+          <a href="{{ o.href }}" style="font-weight:600;font-size:15px;color:#343C97">Learn more →</a>
+        </article>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Home who" style="max-width:1240px;margin:0 auto;padding:clamp(72px,9vw,120px) 24px">
+  <div data-reveal style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;align-items:start;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+    <div>
+      <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">Who this is for</p>
+      <h2 style="margin:0 0 20px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(34px,4.4vw,56px);line-height:1.05;letter-spacing:-.015em;text-wrap:balance">Mid-market companies with a go-live date</h2>
+      <p style="margin:0 0 28px;font-size:18px;line-height:1.55;color:#4A4868;max-width:48ch">Where the sponsor is reachable and a firm our size is the right fit.</p>
+      <a href="#/who-we-serve" style="font-weight:600;font-size:15px;border-bottom:2px solid #14B6A1;padding-bottom:2px">Is this you? →</a>
+    </div>
+    <dl style="margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px 32px">
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97;margin-bottom:10px">Company size</dt><dd style="margin:0;font-size:17px;line-height:1.5">$100M–$1B in revenue. 500–5,000 employees, with 250+ affected by the go-live.</dd></div>
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97;margin-bottom:10px">Industries</dt><dd style="margin:0;font-size:17px;line-height:1.5">Primary depth: insurance. Also manufacturing, pharmaceuticals and automotive.</dd></div>
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97;margin-bottom:10px">Sponsor</dt><dd style="margin:0;font-size:17px;line-height:1.5">An executive owns the go-live and is reachable. No large consulting firm already running change.</dd></div>
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97;margin-bottom:10px">Initiative</dt><dd style="margin:0;font-size:17px;line-height:1.5">Fixed go-live date and a seven-figure program. ERP and HR rollouts, merger integrations, facility openings.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section data-screen-label="Home approach" style="background:#343C97;color:#fff;position:relative;overflow:hidden">
+  <img src="assets/mark-half-right-teal.png" alt="" aria-hidden="true" style="position:absolute;right:-4%;bottom:-20%;height:110%;opacity:.12;pointer-events:none">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(72px,9vw,120px) 24px;position:relative">
+    <div data-reveal style="opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+    <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1">How an engagement runs</p>
+    <h2 style="margin:0 0 56px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(34px,4.4vw,56px);line-height:1.05;letter-spacing:-.015em;max-width:20ch;text-wrap:balance">Phased OCM leadership. Fixed fee by phase.</h2>
+    </div>
+    <ol style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:40px 32px">
+      <sc-for list="{{ phases }}" as="p" hint-placeholder-count="3">
+        <li data-reveal style="border-top:1px solid rgba(255,255,255,.35);padding-top:22px;opacity:0;transform:translateY(28px);transition:opacity .8s {{ p.delay }} ease,transform .8s {{ p.delay }} cubic-bezier(.2,.7,.2,1)">
+          <span style="display:block;font-family:Newsreader,Georgia,serif;font-size:15px;color:#14B6A1;margin-bottom:12px">{{ p.num }}</span>
+          <h3 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:34px;line-height:1.05">{{ p.name }}</h3>
+          <p style="margin:0;font-size:16px;line-height:1.55;color:rgba(255,255,255,.85)">{{ p.desc }}</p>
+        </li>
+      </sc-for>
+    </ol>
+    <p style="margin:48px 0 0;font-size:15px;color:rgba(255,255,255,.75)">Sponsor access and go/no-go criteria in every contract. A 90-day check-in after every engagement.</p>
+  </div>
+</section>
+
+<sc-if value="{{ showHomeFeed }}" hint-placeholder-val="{{ true }}">
+<section data-screen-label="Home insights feed" style="background:#fff;border-top:1px solid rgba(18,15,56,.08);border-bottom:1px solid rgba(18,15,56,.08)">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,96px) 24px">
+    <div style="display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap;margin-bottom:32px">
+      <div><p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">Latest insights</p><h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(34px,4.4vw,56px);line-height:1.05;letter-spacing:-.015em">Readiness, one post a month</h2></div>
+      <a href="#/insights" style="font-weight:600;font-size:15px;border-bottom:2px solid #14B6A1;padding-bottom:2px">All insights →</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+      <sc-for list="{{ homeFeed }}" as="p" hint-placeholder-count="3">
+        <a href="{{ p.link }}" target="_blank" rel="noopener" style="display:grid;gap:10px;align-content:start;background:#F6F5F0;border:1px solid rgba(18,15,56,.1);border-radius:10px;padding:26px 28px;color:#120F38;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s" style-hover="transform:translateY(-4px);box-shadow:0 20px 36px rgba(18,15,56,.1);color:#120F38">
+          <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#14B6A1">{{ p.tag }}</p>
+          <h3 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:24px;line-height:1.15">{{ p.title }}</h3>
+          <p style="margin:0;font-size:15px;line-height:1.5;color:#4A4868">{{ p.excerpt }}</p>
+          <p style="margin:0;font-size:13px;color:#8A889C">{{ p.meta }}</p>
+        </a>
+      </sc-for>
+    </div>
+    <p style="margin:20px 0 0;font-size:13px;color:#8A889C">{{ feedStatus }}</p>
+  </div>
+</section>
+</sc-if>
+
+<section data-screen-label="Home testimonials" style="max-width:1240px;margin:0 auto;padding:clamp(72px,9vw,120px) 24px">
+  <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">From clients and audiences</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;margin-top:32px">
+    <sc-for list="{{ quotes }}" as="q" hint-placeholder-count="3">
+      <figure data-reveal style="margin:0;display:flex;flex-direction:column;gap:18px;padding:0 0 0 24px;border-left:2px solid #14B6A1;opacity:0;transform:translateY(28px);transition:opacity .8s {{ q.delay }} ease,transform .8s {{ q.delay }} cubic-bezier(.2,.7,.2,1)">
+        <blockquote style="margin:0;font-family:Newsreader,Georgia,serif;font-size:22px;line-height:1.35;color:#120F38">{{ q.text }}</blockquote>
+        <figcaption style="font-size:14px;color:#4A4868"><strong style="display:block;color:#120F38;font-weight:600">{{ q.name }}</strong>{{ q.title }}</figcaption>
+      </figure>
+    </sc-for>
+  </div>
+  <p style="margin:32px 0 0;font-size:13px;color:#8A889C">Testimonials carried over from the current site. Confirm each is current before launch.</p>
+</section>
+
+<section data-screen-label="Home partners" style="background:#fff;border-top:1px solid rgba(18,15,56,.08)">
+  <div data-reveal style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,96px) 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:40px;align-items:center;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+    <div>
+      <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">For <abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr> partners</p>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(30px,3.6vw,44px);line-height:1.1;letter-spacing:-.015em;text-wrap:balance">When adoption stalls, the client blames the implementation. A readiness check protects your go-live and your relationship.</h2>
+    </div>
+    <div style="display:grid;gap:18px">
+      <p style="margin:0;font-size:17px;line-height:1.55;color:#4A4868">Offer OCM without building a practice. You cover the system; we cover the people. Subcontracted anchor lead, or white-label assessments and modules.</p>
+      <a href="#/partners" style="font-weight:600;font-size:15px;border-bottom:2px solid #14B6A1;padding-bottom:2px;justify-self:start">What we cover, what you cover →</a>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Home grid CTA" style="background:#120F38;color:#fff">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(72px,9vw,120px) 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;align-items:center">
+    <div data-reveal style="opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+      <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1">The first call</p>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(40px,5.6vw,76px);line-height:1;letter-spacing:-.02em;text-wrap:balance">Who can lead it? Who can do it?</h2>
+      <p style="margin:24px 0 0;font-size:18px;line-height:1.55;color:rgba(255,255,255,.82);max-width:46ch">Place yourself on the grid. That's how the first conversation closes, and it tells us both whether to continue to Discovery.</p>
+      <p aria-live="polite" style="margin:24px 0 0;font-family:Newsreader,Georgia,serif;font-size:clamp(22px,2.4vw,30px);line-height:1.25;color:#14B6A1;min-height:2.5em">{{ gridResult }}</p>
+      <a href="#/contact" style="display:inline-block;margin-top:24px;padding:16px 26px;background:#14B6A1;color:#120F38;font-weight:600;border-radius:6px;font-size:16px;transition:transform .2s,background .2s" style-hover="background:#fff;color:#120F38;transform:translateY(-2px)">Start a conversation</a>
+    </div>
+    <div role="group" aria-label="Who can lead it, who can do it grid" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;max-width:520px;width:100%;justify-self:center;min-width:0">
+      <sc-for list="{{ gridCells }}" as="g" hint-placeholder-count="4">
+        <button type="button" onClick="{{ g.onClick }}" aria-pressed="{{ g.pressed }}" style="aspect-ratio:1.15;min-width:0;text-align:left;padding:20px;border-radius:10px;border:1px solid {{ g.border }};background:{{ g.bg }};color:{{ g.color }};cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;transition:background .35s,transform .35s cubic-bezier(.2,.7,.2,1),border-color .35s;transform:{{ g.scale }}" style-hover="transform:translateY(-4px)">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;opacity:.7">{{ g.tag }}</span>
+          <span style="font-family:Newsreader,Georgia,serif;font-size:clamp(18px,2vw,24px);line-height:1.15">{{ g.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+</section>
+</div>
+</sc-if>
+
+<!-- ================= SERVICES ================= -->
+<sc-if value="{{ isServices }}" hint-placeholder-val="{{ false }}">
+<div style="animation:fadeIn .5s ease-out both">
+<section data-screen-label="Services hero" style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px clamp(40px,5vw,64px)">
+  <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97;animation:rise .7s ease-out both">Services</p>
+  <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(44px,7vw,96px);line-height:1;letter-spacing:-.02em;max-width:14ch;text-wrap:balance;animation:wordIn .8s .1s cubic-bezier(.2,.7,.2,1) both">Three offers around one go-live</h1>
+  <p style="margin:28px 0 0;font-size:19px;line-height:1.55;color:#4A4868;max-width:56ch;animation:rise .7s .3s ease-out both">Which offer fits depends on where you are. Role Readiness at kickoff. Anchor leadership through delivery. A Readiness Assessment when go-live is 90 days or less away.</p>
+</section>
+<section data-screen-label="Services timeline" style="max-width:1240px;margin:0 auto;padding:0 24px clamp(64px,8vw,96px)">
+  <div style="background:#fff;border:1px solid rgba(18,15,56,.1);border-radius:10px;padding:clamp(22px,3vw,32px);animation:rise .7s .4s ease-out both">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <label for="golive2" style="font-size:15px;font-weight:600">Where is your go-live?</label>
+      <span aria-live="polite" style="font-family:Newsreader,Georgia,serif;font-size:26px;color:#343C97">{{ monthsLabel }}</span>
+    </div>
+    <input id="golive2" type="range" min="0" max="12" step="1" value="{{ months }}" onChange="{{ onMonths }}" onInput="{{ onMonths }}" aria-valuetext="{{ monthsLabel }}" style="width:100%;margin:16px 0 18px;cursor:pointer">
+    <ol style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+      <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="4">
+        <li style="padding:18px 18px;border-radius:8px;background:{{ t.bg }};color:{{ t.color }};border:1px solid {{ t.border }};transition:background .4s,color .4s,border-color .4s">
+          <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:{{ t.tagColor }};margin-bottom:8px">{{ t.when }}</span>
+          <span style="display:block;font-size:17px;font-weight:500">{{ t.what }}</span>
+        </li>
+      </sc-for>
+    </ol>
+    <p style="margin:18px 0 0;font-size:15px;line-height:1.45;color:#120F38">{{ monthsAdvice }}</p>
+  </div>
+</section>
+
+<sc-for list="{{ services }}" as="s" hint-placeholder-count="3">
+<section id="{{ s.id }}" data-screen-label="{{ s.name }}" style="border-top:1px solid rgba(18,15,56,.1);background:{{ s.bg }}">
+  <div data-reveal style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,104px) 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+    <div>
+      <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1">{{ s.when }}</p>
+      <h2 style="margin:0 0 20px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(36px,4.6vw,60px);line-height:1.02;letter-spacing:-.015em">{{ s.name }}</h2>
+      <p style="margin:0;font-size:19px;line-height:1.5;color:#4A4868;max-width:40ch">{{ s.lead }}</p>
+      <sc-if value="{{ showPricing }}" hint-placeholder-val="{{ false }}"><p style="margin:24px 0 0;font-size:15px;font-weight:600">{{ s.price }}</p></sc-if>
+    </div>
+    <div style="display:grid;gap:28px;align-content:start">
+      <div>
+        <h3 style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97">Who it's for</h3>
+        <p style="margin:0;font-size:17px;line-height:1.55">{{ s.who }}</p>
+      </div>
+      <div>
+        <h3 style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97">What you get</h3>
+        <ul style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:17px;line-height:1.5">
+          <sc-for list="{{ s.points }}" as="pt" hint-placeholder-count="3"><li>{{ pt }}</li></sc-for>
+        </ul>
+      </div>
+      <blockquote style="margin:0;padding:20px 24px;background:#120F38;color:#fff;font-family:Newsreader,Georgia,serif;font-size:21px;line-height:1.35;border-radius:8px">{{ s.message }}</blockquote>
+      <a href="#/contact" style="justify-self:start;display:inline-block;padding:14px 22px;background:#120F38;color:#fff;font-weight:600;border-radius:6px;font-size:15px;transition:background .2s,transform .2s" style-hover="background:#343C97;color:#fff;transform:translateY(-2px)">{{ s.cta }}</a>
+    </div>
+  </div>
+</section>
+</sc-for>
+</div>
+</sc-if>
+
+<!-- ================= WHO WE SERVE ================= -->
+<sc-if value="{{ isWho }}" hint-placeholder-val="{{ false }}">
+<div style="animation:fadeIn .5s ease-out both">
+<section data-screen-label="Who hero" style="background:#120F38;color:#fff;position:relative;overflow:hidden">
+  <img src="assets/mark-half-left-white.png" alt="" aria-hidden="true" style="position:absolute;right:6%;top:-10%;height:120%;opacity:.07;pointer-events:none;animation:driftL 2s cubic-bezier(.2,.7,.2,1) both">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px;position:relative">
+    <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1;animation:rise .7s ease-out both">Who we serve</p>
+    <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(44px,7vw,96px);line-height:1;letter-spacing:-.02em;max-width:14ch;text-wrap:balance;animation:wordIn .8s .1s cubic-bezier(.2,.7,.2,1) both">Mid-market companies with a go-live date</h1>
+    <p style="margin:28px 0 0;font-size:19px;line-height:1.55;color:rgba(255,255,255,.82);max-width:56ch;animation:rise .7s .3s ease-out both">Where the sponsor is reachable and a firm our size is the right fit. Here's the profile, and four situations we're built for.</p>
+  </div>
+  <div style="border-top:1px solid rgba(255,255,255,.12);position:relative">
+    <dl style="margin:0 auto;max-width:1240px;padding:32px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:28px 32px">
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#14B6A1;margin-bottom:10px">Company size</dt><dd style="margin:0;font-size:16px;line-height:1.5;color:rgba(255,255,255,.88)">Revenue: $100M–$1B. Employees: 500–5,000, with 250+ impacted by the go-live.</dd></div>
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#14B6A1;margin-bottom:10px">Industries</dt><dd style="margin:0;font-size:16px;line-height:1.5;color:rgba(255,255,255,.88)">Primary depth: Insurance. Additional experience: Manufacturing, pharmaceuticals, automotive.</dd></div>
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#14B6A1;margin-bottom:10px">Sponsor</dt><dd style="margin:0;font-size:16px;line-height:1.5;color:rgba(255,255,255,.88)">Executive sponsor owns the go-live and is reachable. No large consulting firm already running change.</dd></div>
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#14B6A1;margin-bottom:10px">Initiative</dt><dd style="margin:0;font-size:16px;line-height:1.5;color:rgba(255,255,255,.88)">Fixed go-live date with a seven-figure program behind it. ERP and MES rollouts, merger integrations, facility openings.</dd></div>
+    </dl>
+  </div>
+</section>
+<section data-screen-label="Who situations" style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,104px) 24px">
+  <div style="display:grid;gap:12px">
+    <sc-for list="{{ situations }}" as="s" hint-placeholder-count="4">
+      <article data-reveal style="background:#fff;border:1px solid rgba(18,15,56,.1);border-radius:10px;padding:clamp(32px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px 48px;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1),box-shadow .35s" style-hover="box-shadow:0 24px 40px rgba(18,15,56,.1)">
+        <div>
+          <p style="margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:#343C97">{{ s.role }}</p>
+          <h2 style="margin:0 0 16px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(28px,3.4vw,40px);line-height:1.08;letter-spacing:-.01em;text-wrap:balance">{{ s.headline }}</h2>
+          <p style="margin:0;font-size:16px;line-height:1.55;color:#4A4868"><strong style="color:#120F38;font-weight:600">The trigger:</strong> {{ s.trigger }}</p>
+        </div>
+        <div style="display:grid;gap:22px;align-content:start">
+          <div>
+            <h3 style="margin:0 0 10px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97">What you're dealing with</h3>
+            <ul style="margin:0;padding-left:20px;display:grid;gap:6px;font-size:16px;line-height:1.5"><sc-for list="{{ s.pains }}" as="p" hint-placeholder-count="3"><li>{{ p }}</li></sc-for></ul>
+          </div>
+          <p style="margin:0;padding:18px 22px;border-left:2px solid #14B6A1;background:#F6F5F0;font-family:Newsreader,Georgia,serif;font-size:20px;line-height:1.35">{{ s.message }}</p>
+          <a href="{{ s.href }}" style="font-weight:600;font-size:15px;color:#343C97">{{ s.cta }} →</a>
+        </div>
+      </article>
+    </sc-for>
+  </div>
+  <p style="margin:40px 0 0;font-size:17px;line-height:1.55;color:#4A4868;max-width:70ch">Running an implementation practice? There's a fifth situation. <a href="#/partners" style="font-weight:600;border-bottom:2px solid #14B6A1">See how we work with Systems Integrator (<abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr>) partners →</a></p>
+</section>
+</div>
+</sc-if>
+
+<!-- ================= PARTNERS ================= -->
+<sc-if value="{{ isPartners }}" hint-placeholder-val="{{ false }}">
+<div style="animation:fadeIn .5s ease-out both">
+<section data-screen-label="Partners hero" style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px clamp(40px,5vw,64px)">
+  <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97;animation:rise .7s ease-out both">For Systems Integrator (<abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr>) partners</p>
+  <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(44px,7vw,96px);line-height:1;letter-spacing:-.02em;max-width:16ch;text-wrap:balance;animation:wordIn .8s .1s cubic-bezier(.2,.7,.2,1) both">Your firm sells software and configuration. Not change.</h1>
+  <p style="margin:28px 0 0;font-size:19px;line-height:1.55;color:#4A4868;max-width:58ch;animation:rise .7s .3s ease-out both">OCM gets scoped thin to win the deal, then exposed late. When adoption stalls, the client blames the implementation. A readiness check protects your go-live and your relationship.</p>
+</section>
+<section data-screen-label="Partners chart" style="max-width:1240px;margin:0 auto;padding:0 24px clamp(64px,8vw,104px)">
+  <h2 style="margin:0 0 24px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">What we cover, what you cover</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px">
+    <div data-reveal style="background:#343C97;color:#fff;padding:36px 32px;border-radius:10px;position:relative;overflow:hidden;opacity:0;transform:translateX(-28px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1)">
+      <img src="assets/mark-half-left-white.png" alt="" aria-hidden="true" style="position:absolute;right:-8px;top:-10%;height:120%;opacity:.1;pointer-events:none">
+      <h3 style="margin:0 0 20px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:32px;position:relative">You cover</h3>
+      <ul style="margin:0;padding-left:20px;display:grid;gap:10px;font-size:17px;line-height:1.5;position:relative">
+        <li>The system</li><li>Software and configuration</li><li>Cutover</li><li>Technical delivery and the follow-on work</li>
+      </ul>
+    </div>
+    <div data-reveal style="background:#120F38;color:#fff;padding:36px 32px;border-radius:10px;position:relative;overflow:hidden;opacity:0;transform:translateX(28px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1)">
+      <img src="assets/mark-half-right-teal.png" alt="" aria-hidden="true" style="position:absolute;left:-8px;top:-10%;height:120%;opacity:.18;pointer-events:none">
+      <h3 style="margin:0 0 20px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:32px;color:#14B6A1;position:relative">We cover</h3>
+      <ul style="margin:0;padding-left:20px;display:grid;gap:10px;font-size:17px;line-height:1.5;position:relative">
+        <li>Your people and their readiness to perform on day one</li><li>Subcontracted anchor lead through Prepare, Act, Sustain</li><li>White-label Readiness Assessments</li><li>White-label Project Role Readiness modules</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin:28px 0 0;font-size:13px;color:#8A889C">Placeholder: the full “what we cover, what you cover” chart is in preparation. Replace this two-column summary with the final version.</p>
+</section>
+<section data-screen-label="Partners why" style="background:#fff;border-top:1px solid rgba(18,15,56,.08)">
+  <div data-reveal style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,104px) 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:40px;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+    <div><h3 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:28px">Offer OCM without building a practice</h3><p style="margin:0;font-size:16px;line-height:1.55;color:#4A4868">Offer clients more than technical delivery, and position your firm for the follow-on work.</p></div>
+    <div><h3 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:28px">One vetted senior lead</h3><p style="margin:0;font-size:16px;line-height:1.55;color:#4A4868">Vetting individual contractors takes time you don't have. You get a senior lead, with contract associates for production work.</p></div>
+    <div><h3 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:28px">System-agnostic, by design</h3><p style="margin:0;font-size:16px;line-height:1.55;color:#4A4868">NetSuite, Dynamics, Epicor, Workday. The <abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr> covers the system. Readiness is the expertise.</p></div>
+    <div><h3 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:28px">WBENC certified</h3><p style="margin:0;font-size:16px;line-height:1.55;color:#4A4868">Helps clients and <abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr> partners meet supplier diversity goals.</p></div>
+  </div>
+</section>
+<section data-screen-label="Partners CTA" style="background:#120F38;color:#fff">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,96px) 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+    <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(34px,4.6vw,60px);line-height:1.02;letter-spacing:-.02em;text-wrap:balance">Start with a free session.</h2>
+    <div style="display:grid;gap:18px"><p style="margin:0;font-size:17px;line-height:1.55;color:rgba(255,255,255,.82)">Bring a won deal with thin OCM coverage, or a go-live trending at risk. We'll map who covers what.</p><a href="#/contact" style="justify-self:start;display:inline-block;padding:15px 24px;background:#14B6A1;color:#120F38;font-weight:600;border-radius:6px;transition:transform .2s,background .2s" style-hover="background:#fff;color:#120F38;transform:translateY(-2px)">Book a partner session</a></div>
+  </div>
+</section>
+</div>
+</sc-if>
+
+<!-- ================= ABOUT ================= -->
+<sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+<div style="animation:fadeIn .5s ease-out both">
+<section data-screen-label="About hero" style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;align-items:start">
+  <div>
+    <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97;animation:rise .7s ease-out both">About</p>
+    <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(44px,6.4vw,88px);line-height:1;letter-spacing:-.02em;text-wrap:balance;animation:wordIn .8s .1s cubic-bezier(.2,.7,.2,1) both">Jennifer Eichenberg</h1>
+    <p style="margin:12px 0 28px;font-size:15px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#343C97;animation:rise .7s .25s ease-out both">Founder · Change Management Lead</p>
+    <div style="animation:rise .7s .4s ease-out both">
+    <p style="margin:0 0 18px;font-size:19px;line-height:1.55;color:#4A4868">Change is hard for everyone—even when the change is positive or long overdue. Our role is to help move people along on the journey so that when the change happens, people are ready—they know why they are doing it, what to do, how to do it and when to do it.</p>
+    <p style="margin:0 0 18px;font-size:19px;line-height:1.55;color:#4A4868">Since 2007, every engagement has come through a prime contractor or staffing agency, inside ERP, PM and HR programs. Roles are written around a system. That's exactly why the practice now sells the outcome directly: trained isn't ready, and the Systems Integrator (<abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr>) already knows the system.</p>
+    <p style="margin:0;font-size:19px;line-height:1.55;color:#4A4868">Clients get a senior lead, with contract associates for production work, a built OCM toolkit, and a fixed fee by phase.</p>
+    <p style="margin:24px 0 0;font-size:13px;color:#8A889C">Placeholder: full bio, credentials and certifications to be confirmed by Jennifer.</p>
+    </div>
+  </div>
+  <div style="aspect-ratio:4/5;background:#E6E4DC;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#8A889C;font-size:14px;text-align:center;padding:24px;position:relative;overflow:hidden;animation:rise .8s .3s ease-out both">
+    <img src="assets/mark-color.png" alt="" aria-hidden="true" style="position:absolute;inset:auto -10% -20% auto;width:70%;opacity:.12">
+    <span style="position:relative">Placeholder: portrait of Jennifer Eichenberg</span>
+  </div>
+</section>
+<section data-screen-label="About values" style="background:#120F38;color:#fff">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,104px) 24px">
+    <div data-reveal style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;margin-bottom:56px;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+      <div><p style="margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1">Mission</p><p style="margin:0;font-family:Newsreader,Georgia,serif;font-size:clamp(24px,2.6vw,32px);line-height:1.3">To educate and guide organizations through transformational change, enabling them to achieve sustainable growth and competitive advantage.</p></div>
+      <div><p style="margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1">Vision</p><p style="margin:0;font-family:Newsreader,Georgia,serif;font-size:clamp(24px,2.6vw,32px);line-height:1.3">To be the leading consultancy that empowers businesses to embrace change confidently and thrive in a dynamic marketplace.</p></div>
+    </div>
+    <p style="margin:0 0 24px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1">Values</p>
+    <dl style="margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px">
+      <sc-for list="{{ values }}" as="v" hint-placeholder-count="4">
+        <div data-reveal style="border-top:1px solid rgba(255,255,255,.3);padding-top:18px;opacity:0;transform:translateY(28px);transition:opacity .8s {{ v.delay }} ease,transform .8s {{ v.delay }} cubic-bezier(.2,.7,.2,1)"><dt style="font-family:Newsreader,Georgia,serif;font-size:28px;margin-bottom:10px">{{ v.name }}</dt><dd style="margin:0;font-size:16px;line-height:1.55;color:rgba(255,255,255,.85)">{{ v.desc }}</dd></div>
+      </sc-for>
+    </dl>
+  </div>
+</section>
+<section data-screen-label="About how" data-reveal style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,104px) 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:40px;opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)">
+  <div><p style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97">System-agnostic</p><p style="margin:0;font-size:17px;line-height:1.55">Readiness across ERP, PM, and HR. Breadth is the expertise.</p></div>
+  <div><p style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97">Senior lead, flexible bench</p><p style="margin:0;font-size:17px;line-height:1.55">Clients get a senior lead, with contract associates for production work.</p></div>
+  <div><p style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97">Ready on day one</p><p style="margin:0;font-size:17px;line-height:1.55">A built OCM toolkit and AI-enabled delivery save roughly 150 build hours on an ERP project.</p></div>
+  <div><p style="margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97">WBENC certified</p><p style="margin:0;font-size:17px;line-height:1.55">Helps clients and <abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr> partners meet supplier diversity goals.</p></div>
+</section>
+</div>
+</sc-if>
+
+<!-- ================= INSIGHTS ================= -->
+<sc-if value="{{ isInsights }}" hint-placeholder-val="{{ false }}">
+<div style="animation:fadeIn .5s ease-out both">
+<section data-screen-label="Insights hero" style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px clamp(40px,5vw,64px)">
+  <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97;animation:rise .7s ease-out both">Insights</p>
+  <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(44px,7vw,96px);line-height:1;letter-spacing:-.02em;max-width:14ch;text-wrap:balance;animation:wordIn .8s .1s cubic-bezier(.2,.7,.2,1) both">Readiness, one post a month</h1>
+  <p style="margin:28px 0 0;font-size:19px;line-height:1.55;color:#4A4868;max-width:56ch;animation:rise .7s .3s ease-out both">Plain-language writing on people readiness for go-live sponsors, PMO leaders and Systems Integrator (<abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr>) partners.</p>
+</section>
+<section data-screen-label="Insights list" style="max-width:1240px;margin:0 auto;padding:0 24px clamp(64px,8vw,104px);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;align-items:start">
+  <div style="display:grid;gap:10px">
+    <sc-for list="{{ posts }}" as="p" hint-placeholder-count="3">
+      <a href="{{ p.link }}" target="_blank" rel="noopener" style="background:#fff;border:1px solid rgba(18,15,56,.1);border-radius:10px;padding:28px 32px;display:grid;gap:10px;color:#120F38;animation:rise .7s {{ p.delay }} ease-out both;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s" style-hover="transform:translateY(-4px);box-shadow:0 20px 36px rgba(18,15,56,.1);color:#120F38">
+        <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#14B6A1">{{ p.tag }}</p>
+        <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:28px;line-height:1.1">{{ p.title }}</h2>
+        <p style="margin:0;font-size:15px;line-height:1.5;color:#4A4868">{{ p.excerpt }}</p>
+        <p style="margin:0;font-size:14px;color:#8A889C">{{ p.meta }}</p>
+      </a>
+    </sc-for>
+    <p style="margin:6px 0 0;font-size:13px;color:#8A889C">{{ feedStatus }}</p>
+    <sc-for list="{{ noop }}" as="x" hint-placeholder-count="0"><span></span>
+    </sc-for>
+  </div>
+  <aside style="background:#120F38;color:#fff;padding:36px 32px;border-radius:10px;display:grid;gap:16px;animation:rise .7s .4s ease-out both">
+    <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#14B6A1">Newsletter</p>
+    <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:30px;line-height:1.1">Get the monthly post by email</h2>
+    <p style="margin:0;font-size:16px;line-height:1.55;color:rgba(255,255,255,.82)">One email a month. Plus two guides when you join. <span style="color:#8A889C">(Placeholder: lead magnet titles to be confirmed.)</span></p>
+    <form onSubmit="{{ onNewsletter }}" style="display:grid;gap:10px">
+      <label for="nl-email" style="font-size:13px;font-weight:500">Work email</label>
+      <input id="nl-email" name="email" type="email" required placeholder="you@company.com" style="width:100%;min-width:0;padding:12px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.06);color:#fff">
+      <button type="submit" style="padding:13px 20px;background:#14B6A1;color:#120F38;font-weight:600;border:0;border-radius:6px;cursor:pointer;transition:background .2s" style-hover="background:#fff">Subscribe</button>
+      <p role="status" aria-live="polite" style="margin:0;font-size:14px;color:#14B6A1;min-height:1.4em">{{ newsletterMsg }}</p>
+    </form>
+  </aside>
+</section>
+</div>
+</sc-if>
+
+
+<!-- ================= PRIVACY ================= -->
+<sc-if value="{{ isPrivacy }}" hint-placeholder-val="{{ false }}">
+<div style="animation:fadeIn .5s ease-out both">
+<article data-screen-label="Privacy Policy" style="max-width:780px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px clamp(64px,8vw,104px)">
+  <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">Privacy Policy</p>
+  <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(36px,5vw,64px);line-height:1;letter-spacing:-.02em;text-wrap:balance">What we collect, and why</h1>
+  <p style="margin:16px 0 0;font-size:13px;color:#8A889C">Last updated: PLACEHOLDER (date) · Draft for legal review before publishing.</p>
+  <div style="margin-top:40px;display:grid;gap:28px">
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Who we are</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">Eichenberg &amp; Associates (“we,” “us”) provides change management services. This policy explains what information we collect through this website, how we use it, and the choices you have. Questions: <a href="mailto:jennifer@eichenbergassociates.com">jennifer@eichenbergassociates.com</a>.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">What we collect</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868"><strong>Information you give us.</strong> When you use the contact form or a landing-page form, we collect what you enter: name, work email, company, title, your situation, and your answers to the questions on that page, including your place on the “who can lead it, who can do it” grid.</p><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868"><strong>Newsletter.</strong> If you subscribe or request a guide, we store your email address and the source of the signup.</p><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868"><strong>Technical data.</strong> Our forms are protected by Cloudflare Turnstile, which may process your IP address and browser signals to tell people from bots. We store a one-way hash of your IP address with form submissions for abuse prevention. We use cookieless analytics (Plausible) that count visits without identifying you.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">How we use it</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">To reply to your inquiry and, if you choose, to schedule a call. To send you the guide you requested and, if you subscribed, the monthly newsletter. To run our sales process: your submission is stored in our private dashboard and may be tracked through the stages of a conversation with us. To keep the site secure and understand how it is used.</p><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">We do not sell your information. We do not send marketing email without your say-so.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Who we share it with</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">Service providers that run the site on our behalf: hosting (Netlify), database (Supabase), email delivery (Resend), spam protection (Cloudflare), scheduling (Calendly, when you book), newsletter delivery (PLACEHOLDER: provider), and analytics (Plausible). Each processes data only as needed to provide its service. We may disclose information if required by law.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">How long we keep it</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">Inquiry and lead records are kept while a conversation is active and for up to PLACEHOLDER (e.g. 36 months) afterward, then deleted or anonymized. Newsletter addresses are kept until you unsubscribe. Every newsletter includes an unsubscribe link.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Your choices and rights</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">You can ask us to access, correct, or delete the information we hold about you, or to stop contacting you, at any time by emailing <a href="mailto:jennifer@eichenbergassociates.com">jennifer@eichenbergassociates.com</a>. Depending on where you live, you may have additional rights under laws such as the GDPR or state privacy laws; we will honor valid requests.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Cookies</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">This site does not use advertising or tracking cookies. Essential cookies are used only to keep the administrator signed in to the private dashboard.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Security</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">Data is transmitted over HTTPS and stored with access limited to Eichenberg &amp; Associates. No method of transmission or storage is completely secure; if a breach affects your information we will notify you as required by law.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Children</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">This site is for business audiences and is not directed to anyone under 18. We do not knowingly collect information from children.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Changes</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">We may update this policy. The date at the top shows the latest revision; material changes will be noted on this page.</p></section>
+  </div>
+</article>
+</div>
+</sc-if>
+
+<!-- ================= TERMS ================= -->
+<sc-if value="{{ isTerms }}" hint-placeholder-val="{{ false }}">
+<div style="animation:fadeIn .5s ease-out both">
+<article data-screen-label="Terms of Service" style="max-width:780px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px clamp(64px,8vw,104px)">
+  <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97">Terms of Service</p>
+  <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(36px,5vw,64px);line-height:1;letter-spacing:-.02em;text-wrap:balance">The ground rules for using this site</h1>
+  <p style="margin:16px 0 0;font-size:13px;color:#8A889C">Last updated: PLACEHOLDER (date) · Draft for legal review before publishing.</p>
+  <div style="margin-top:40px;display:grid;gap:28px">
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Acceptance</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">By using this website you agree to these Terms of Service. If you do not agree, please do not use the site. These terms govern the website only; consulting engagements are governed by a separate written agreement.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Use of the site</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">You may use the site for lawful business purposes. You agree not to misuse it: no scraping, automated submissions, attempts to access the private dashboard or other systems, or interference with the site's operation. We may block access that violates these terms.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Information, not advice</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">Content on this site, including articles, guides, and the results of any self-assessment such as the “who can lead it, who can do it” grid, is general information about change management. It is not professional advice for your specific program and does not create a client relationship. Decisions about your go-live remain yours.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Forms and scheduling</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">Submitting a form is a request for a conversation, not a commitment by either party. Scheduling tools and other embedded services are provided by third parties under their own terms.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Intellectual property</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">The site, its text, design, logo, and materials are owned by Eichenberg &amp; Associates or used under license. You may view and share links freely and print pages for personal business use. Any other reproduction or commercial use requires our written permission. Names and marks of other companies belong to their owners.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Testimonials</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">Testimonials reflect individual experiences and are not a guarantee of results.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Third-party links</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">Links to other websites are provided for convenience. We are not responsible for their content or practices.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Disclaimer and limitation of liability</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">The site is provided “as is” without warranties of any kind. To the fullest extent permitted by law, Eichenberg &amp; Associates is not liable for any indirect, incidental, or consequential damages arising from use of the site or reliance on its content.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Governing law</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">These terms are governed by the laws of the State of PLACEHOLDER (e.g. Michigan), United States, without regard to conflict-of-law rules.</p></section>
+    <section><h2 style="margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15">Changes and contact</h2><p style="margin:0 0 12px;font-size:17px;line-height:1.6;color:#4A4868">We may update these terms; continued use after changes means you accept them. Questions: <a href="mailto:jennifer@eichenbergassociates.com">jennifer@eichenbergassociates.com</a>.</p></section>
+  </div>
+</article>
+</div>
+</sc-if>
+
+<!-- ================= CONTACT ================= -->
+<sc-if value="{{ isContact }}" hint-placeholder-val="{{ false }}">
+<div style="animation:fadeIn .5s ease-out both">
+<section data-screen-label="Contact" style="max-width:1240px;margin:0 auto;padding:clamp(64px,8vw,112px) 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:56px;align-items:start">
+  <div>
+    <p style="margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#343C97;animation:rise .7s ease-out both">Contact</p>
+    <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:300;font-size:clamp(44px,6.4vw,88px);line-height:1;letter-spacing:-.02em;text-wrap:balance;animation:wordIn .8s .1s cubic-bezier(.2,.7,.2,1) both">Start a conversation</h1>
+    <p style="margin:28px 0 0;font-size:19px;line-height:1.55;color:#4A4868;max-width:46ch;animation:rise .7s .3s ease-out both">The first call is exploration: what are the reasons to talk? Tell us where your go-live is and who owns it, and we'll reply within two business days.</p>
+    <p style="margin:6px 0 0;font-size:13px;color:#8A889C">Assumption: two-business-day response window. Confirm.</p>
+    <dl style="margin:40px 0 0;display:grid;gap:20px;animation:rise .7s .45s ease-out both">
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97;margin-bottom:6px">Email</dt><dd style="margin:0;font-size:17px"><a href="mailto:jennifer@eichenbergassociates.com">jennifer@eichenbergassociates.com</a></dd></div>
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97;margin-bottom:6px">Phone</dt><dd style="margin:0;font-size:17px"><a href="tel:+17346204162">+1 (734) 620-4162</a></dd></div>
+      <div><dt style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#343C97;margin-bottom:6px">LinkedIn</dt><dd style="margin:0;font-size:17px"><a href="https://www.linkedin.com/in/jennifer-eichenberg" target="_blank" rel="noopener">linkedin.com/in/jennifer-eichenberg</a></dd></div>
+    </dl>
+  </div>
+  <form onSubmit="{{ onContact }}" noValidate style="background:#fff;border:1px solid rgba(18,15,56,.1);padding:clamp(24px,3vw,40px);display:grid;gap:18px;border-radius:10px;min-width:0;position:relative;animation:rise .8s .3s ease-out both;box-shadow:0 30px 60px rgba(18,15,56,.08)">
+    <sc-if value="{{ contactSent }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="padding:24px;background:#F6F5F0;border-radius:8px;animation:dropIn .7s cubic-bezier(.2,.8,.2,1) both">
+        <p style="margin:0 0 8px;font-family:Newsreader,Georgia,serif;font-size:28px">Thanks. We've got it.</p>
+        <p style="margin:0;font-size:16px;color:#4A4868">Expect a reply within two business days. If your go-live is inside 90 days, say so in a reply and we'll move faster.</p>
+      </div>
+    </sc-if>
+    <sc-if value="{{ contactNotSent }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px">
+      <div style="display:grid;gap:6px;min-width:0"><label for="c-name" style="font-size:14px;font-weight:500">Name <span aria-hidden="true" style="color:#343C97">*</span></label><input id="c-name" name="name" autoComplete="name" required style="width:100%;min-width:0;padding:12px 14px;border:1px solid {{ err.nameBorder }};border-radius:6px"><span style="font-size:13px;color:#B3261E">{{ err.name }}</span></div>
+      <div style="display:grid;gap:6px;min-width:0"><label for="c-email" style="font-size:14px;font-weight:500">Work email <span aria-hidden="true" style="color:#343C97">*</span></label><input id="c-email" name="email" type="email" autoComplete="email" required style="width:100%;min-width:0;padding:12px 14px;border:1px solid {{ err.emailBorder }};border-radius:6px"><span style="font-size:13px;color:#B3261E">{{ err.email }}</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px">
+      <div style="display:grid;gap:6px;min-width:0"><label for="c-company" style="font-size:14px;font-weight:500">Company</label><input id="c-company" name="company" autoComplete="organization" style="width:100%;min-width:0;padding:12px 14px;border:1px solid rgba(18,15,56,.25);border-radius:6px"></div>
+      <div style="display:grid;gap:6px;min-width:0"><label for="c-role" style="font-size:14px;font-weight:500">Your role</label><input id="c-role" name="role" autoComplete="organization-title" style="width:100%;min-width:0;padding:12px 14px;border:1px solid rgba(18,15,56,.25);border-radius:6px"></div>
+    </div>
+    <div style="display:grid;gap:6px;min-width:0">
+      <label for="c-situation" style="font-size:14px;font-weight:500">Where are you? <span aria-hidden="true" style="color:#343C97">*</span></label>
+      <select id="c-situation" name="situation" required style="width:100%;min-width:0;padding:12px 14px;border:1px solid {{ err.situationBorder }};border-radius:6px;background:#fff">
+        <option value="">Choose one</option>
+        <option value="funded">Program funded, Systems Integrator (SI) selected, go-live 6–12 months out</option>
+        <option value="90days">Go-live within 90 days and cracks are showing</option>
+        <option value="portfolio">Several go-lives at once</option>
+        <option value="merger">Deal closed; integration lead named</option>
+        <option value="partner">I'm an SI partner with a won deal</option>
+        <option value="other">Something else</option>
+      </select>
+      <span style="font-size:13px;color:#B3261E">{{ err.situation }}</span>
+    </div>
+    <div style="display:grid;gap:6px;min-width:0"><label for="c-msg" style="font-size:14px;font-weight:500">What's the go-live, and who owns the date?</label><textarea id="c-msg" name="message" rows="5" style="width:100%;min-width:0;padding:12px 14px;border:1px solid rgba(18,15,56,.25);border-radius:6px;resize:vertical"></textarea></div>
+    <input type="text" name="website" tabIndex="-1" autoComplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+    <button type="submit" style="padding:15px 24px;background:#120F38;color:#fff;font-weight:600;border:0;border-radius:6px;cursor:pointer;justify-self:start;transition:background .2s,transform .2s" style-hover="background:#343C97;transform:translateY(-2px)">Send</button>
+    <p style="margin:0;font-size:13px;color:#8A889C">Protected by Cloudflare Turnstile in production. No marketing emails without your say-so.</p>
+    </sc-if>
+  </form>
+</section>
+</div>
+</sc-if>
+
+</main>
+
+<footer style="background:#120F38;color:#fff;border-top:1px solid rgba(255,255,255,.1);position:relative;overflow:hidden">
+  <img src="assets/mark-half-right-teal.png" alt="" aria-hidden="true" style="position:absolute;right:-2%;bottom:-30%;height:120%;opacity:.08;pointer-events:none">
+  <div style="max-width:1240px;margin:0 auto;padding:56px 24px 32px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:40px;position:relative">
+    <div style="display:grid;gap:16px;align-content:start">
+      <img src="assets/logo-white.png" alt="Eichenberg & Associates" style="width:160px;height:auto">
+      <p style="margin:0;font-size:15px;line-height:1.5;color:rgba(255,255,255,.72);max-width:30ch">Trained isn't ready. We make sure your people can actually perform on day one.</p>
+      <p style="margin:0;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#14B6A1;font-weight:600">WBENC certified</p>
+    </div>
+    <nav aria-label="Footer services"><h2 style="margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.6)">Services</h2><ul style="list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:15px"><li><a href="#/services" style="color:#fff" style-hover="color:#14B6A1">Project Role Readiness</a></li><li><a href="#/services" style="color:#fff" style-hover="color:#14B6A1">OCM Leadership (Anchor)</a></li><li><a href="#/services" style="color:#fff" style-hover="color:#14B6A1">Readiness Assessment</a></li><li><a href="#/partners" style="color:#fff" style-hover="color:#14B6A1">For <abbr title="Systems Integrator" style="text-decoration:underline dotted;text-underline-offset:3px;cursor:help">SI</abbr> partners</a></li></ul></nav>
+    <nav aria-label="Footer firm"><h2 style="margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.6)">Firm</h2><ul style="list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:15px"><li><a href="#/who-we-serve" style="color:#fff" style-hover="color:#14B6A1">Who we serve</a></li><li><a href="#/about" style="color:#fff" style-hover="color:#14B6A1">About</a></li><li><a href="#/insights" style="color:#fff" style-hover="color:#14B6A1">Insights</a></li><li><a href="#/contact" style="color:#fff" style-hover="color:#14B6A1">Contact</a></li></ul></nav>
+    <div><h2 style="margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.6)">Contact</h2><ul style="list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:15px"><li><a href="mailto:jennifer@eichenbergassociates.com" style="color:#fff" style-hover="color:#14B6A1">jennifer@eichenbergassociates.com</a></li><li><a href="tel:+17346204162" style="color:#fff" style-hover="color:#14B6A1">+1 (734) 620-4162</a></li><li><a href="https://www.linkedin.com/in/jennifer-eichenberg" style="color:#fff" style-hover="color:#14B6A1" target="_blank" rel="noopener">LinkedIn</a></li></ul></div>
+  </div>
+  <div style="max-width:1240px;margin:0 auto;padding:20px 24px 32px;border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.6);position:relative">
+    <span>© 2026 Eichenberg &amp; Associates</span>
+    <span style="display:flex;gap:16px"><a href="#/privacy" style="color:rgba(255,255,255,.6)">Privacy Policy</a><a href="#/terms" style="color:rgba(255,255,255,.6)">Terms of Service</a></span>
+  </div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showPricing&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Content&quot;},&quot;showHomeFeed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Insights feed&quot;},&quot;homeFeedCount&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;min&quot;:1,&quot;max&quot;:6,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Insights feed&quot;},&quot;feedUrls&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Insights feed&quot;}}">
+class Component extends DCLogic {
+  state = { feed: [], feedStatus: '', page: 'home', sent: false, err: {}, nlMsg: '', msgIdx: 0, months: 9, grid: null, nHours: 0, nDays: 0, nSince: 1990, scrollPct: 0 };
+  async loadFeeds() {
+    const urls = String(this.props.feedUrls ?? '').split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+    if (!urls.length) { this.setState({ feed: [], feedStatus: 'No feeds configured. Add RSS URLs (standard RSS/Atom or rss.app) in Tweaks → Insights feed.' }); return; }
+    this.setState({ feedStatus: 'Loading feeds…' });
+    const items = [];
+    for (const u of urls) {
+      try {
+        const r = await fetch(u.startsWith('http') ? u : u, { mode: 'cors' }); const txt = await r.text();
+        const parsed = this.parseFeed(txt, u); items.push(...parsed);
+      } catch (e) { console.warn('[feed]', u, e); }
+    }
+    items.sort((a, b) => b.date - a.date);
+    this.setState({ feed: items, feedStatus: items.length ? `${items.length} posts from ${urls.length} feed${urls.length > 1 ? 's' : ''} · refreshed just now` : 'Feeds configured but no posts loaded (check the URL, or CORS in the prototype — production fetches server-side).' });
+  }
+  parseFeed(txt, src) {
+    const host = (() => { try { return new URL(src).hostname.replace(/^www\./, ''); } catch { return 'feed'; } })();
+    const strip = s => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const out = [];
+    try {
+      if (txt.trim().startsWith('{')) { // JSON Feed (rss.app offers this too)
+        const j = JSON.parse(txt); (j.items || []).forEach(it => out.push({ title: it.title, link: it.url || it.external_url, excerpt: strip(it.summary || it.content_text || it.content_html).slice(0, 160), date: new Date(it.date_published || 0), source: j.title || host }));
+      } else {
+        const doc = new DOMParser().parseFromString(txt, 'text/xml'); const feedTitle = doc.querySelector('channel > title, feed > title')?.textContent?.trim();
+        doc.querySelectorAll('item, entry').forEach(it => { const q = s => it.querySelector(s)?.textContent?.trim(); const linkEl = it.querySelector('link'); const link = q('link') || linkEl?.getAttribute('href') || q('guid');
+          out.push({ title: q('title'), link, excerpt: strip(q('description') || q('summary') || q('content') || it.getElementsByTagNameNS('*', 'encoded')[0]?.textContent).slice(0, 160), date: new Date(q('pubDate') || q('published') || q('updated') || it.getElementsByTagNameNS('*', 'date')[0]?.textContent || 0), source: feedTitle || host }); });
+      }
+    } catch (e) { console.warn('[feed parse]', e); }
+    return out.filter(x => x.title && x.link);
+  }
+  componentDidUpdate(prev) { if (prev.feedUrls !== this.props.feedUrls) this.loadFeeds(); }
+  componentDidMount() {
+    this.loadFeeds();
+    this._onHash = () => { const raw = location.hash.replace(/^#\/?/, '') || 'home'; const [p, sub] = raw.split('/'); this.setState({ page: p, err: {} }); window.scrollTo(0, 0); setTimeout(() => { this._observe(); if (sub) { const el = document.getElementById(sub); if (el) { window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 72, behavior: 'smooth' }); el.querySelectorAll('[data-reveal]').forEach(n => { n.style.opacity = 1; n.style.transform = 'none'; }); } } }, 80); };
+    window.addEventListener('hashchange', this._onHash); this._onHash();
+    this._timer = setInterval(() => this.setState(s => ({ msgIdx: (s.msgIdx + 1) % 5 })), 4200);
+    this._onScroll = () => { const d = document.documentElement; const pct = Math.round((d.scrollTop / Math.max(1, d.scrollHeight - d.clientHeight)) * 100); if (pct !== this.state.scrollPct) this.setState({ scrollPct: pct }); };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this._io = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'none'; this._io.unobserve(e.target); } }); }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    this._observe();
+    this._count('nHours', 0, 150, 1400); this._count('nDays', 0, 90, 1200); this._count('nSince', 1990, 2007, 1600);
+  }
+  componentDidUpdate() { this._observe(); }
+  componentWillUnmount() { window.removeEventListener('hashchange', this._onHash); window.removeEventListener('scroll', this._onScroll); clearInterval(this._timer); this._io && this._io.disconnect(); }
+  _observe() { if (!this._io) return; document.querySelectorAll('[data-reveal]:not([data-obs])').forEach(el => { el.setAttribute('data-obs', '1'); this._io.observe(el); }); }
+  _count(key, from, to, ms) {
+    const start = performance.now(); const tick = (t) => { const k = Math.min(1, (t - start) / ms); const e = 1 - Math.pow(1 - k, 3); this.setState({ [key]: Math.round(from + (to - from) * e) }); if (k < 1) requestAnimationFrame(tick); };
+    setTimeout(() => requestAnimationFrame(tick), 400);
+  }
+  renderVals() {
+    const page = this.state.page, showPricing = this.props.showPricing ?? false;
+    const heroBgSrc = (this.props.heroBackgroundUrl ?? 'assets/hero-bg.jpg').trim();
+    const tint = Math.min(1, Math.max(0, Number(this.props.heroTint ?? 0.62)));
+    const heroTintA = heroBgSrc ? tint.toFixed(2) : '1', heroTintB = heroBgSrc ? Math.max(0, tint - 0.15).toFixed(2) : '1';
+    const pages = ['home','services','who-we-serve','partners','about','insights','contact','privacy','terms'];
+    const labels = { services:'Services', 'who-we-serve':'Who we serve', partners:'For SI partners', about:'About', insights:'Insights' };
+    const navItems = Object.keys(labels).map(k => ({ href:'#/'+k, label:labels[k], current: page===k ? 'page' : undefined, underline: page===k ? '#14B6A1' : 'transparent' }));
+    const messages = [
+      '“Your Systems Integrator (SI) knows the system. We know your people.”',
+      'Training completion tells you who clicked through. It doesn’t tell you who can do the job on day one.',
+      'Your Systems Integrator (SI) will get the system live. Who’s making sure your people can run the operation on day one?',
+      'Your programs grade their own readiness. An independent assessment gives you one standard across every go-live.',
+      'Integration plans cover systems and contracts. Synergies depend on whether two workforces actually work as one.',
+    ];
+    const rotatingLine = React.createElement('span', { key: this.state.msgIdx, style: { display: 'inline-block', animation: 'rise .7s cubic-bezier(.2,.7,.2,1) both' } }, messages[this.state.msgIdx]);
+    const marquee = [...messages, 'Trained isn’t ready.', 'Every dashboard is green. Her gut says otherwise.', 'Day 1 is fixed. Two workforces aren’t one yet.', 'When adoption stalls, the client blames the implementation.', 'The Systems Integrator (SI) brings system expertise. We bring people expertise.'];
+    const dashRows = [
+      { label:'Training completion', val:'98%', delay:'.6s' }, { label:'UAT sign-off', val:'Passed', delay:'1.0s' }, { label:'Cutover plan', val:'Approved', delay:'1.4s' }, { label:'Program status', val:'Green', delay:'1.8s' },
+    ];
+    // go-live slider: months out (12 = kickoff, 0 = go-live + 90 days)
+    const m = this.state.months;
+    const stage = m >= 7 ? 'kickoff' : m >= 4 ? 'delivery' : m >= 1 ? 'assess' : 'after';
+    const monthsLabel = m === 0 ? 'Go-live + 90 days' : m <= 3 ? `${m * 30} days out` : `${m} months out`;
+    const monthsAdvice = { kickoff:'Program funded, Systems Integrator (SI) selected, date set. Start with Project Role Readiness at kickoff, inside a phased OCM Leadership engagement: Prepare first.', delivery:'You’re in delivery. OCM Leadership runs the Act phase, with contract associates for production work and a Readiness Assessment coming at 90 days or less.', assess:'90 days or less before go-live: a 3–4 week Readiness Assessment. Know, with evidence, whether people can perform. It leads into gap-closure work.', after:'Go-live plus 90 days: the Sustain check-in. A read on adoption, and planning for the next initiative.' }[stage];
+    const fit = { kickoff:['role','ocm'], delivery:['ocm'], assess:['assess'], after:[] }[stage];
+    const mk = (id, when, name, desc, price, href) => { const on = fit.includes(id); return { id, when, name, desc, price, href, bg: on ? '#F6F5F0' : '#fff', border: on ? '#14B6A1' : 'rgba(18,15,56,.12)', shadow: on ? '0 18px 36px rgba(20,182,161,.18)' : 'none', pillOpacity: on ? 1 : 0 }; };
+    const offers = [
+      mk('role','At kickoff','Project Role Readiness','Role modules for SMEs, the project team, managers and sponsors at kickoff. Your SMEs start design sessions with the Systems Integrator (SI) soon. Do they know not to rebuild today’s workarounds?','Fixed fee, $15–20K','#/services/role-readiness'),
+      mk('ocm','Through delivery','OCM Leadership','Phased OCM leadership for a go-live: Prepare, Act, Sustain. One accountable senior lead, with contract associates for production work. Fixed fee by phase.','Fixed fee by phase, $100–150K','#/services/ocm-leadership'),
+      mk('assess','90 days or less to go-live','Readiness Assessment','A 3–4 week diagnostic 90 days or less before go-live. Know, with evidence, whether people can perform. Make a go/no-go call you can defend.','Fixed fee, $15–20K','#/services/readiness-assessment'),
+    ];
+    const tl = (id, when, what) => { const on = stage === id; return { when, what, bg: on ? '#120F38' : '#F6F5F0', color: on ? '#fff' : '#120F38', border: on ? '#120F38' : 'rgba(18,15,56,.1)', tagColor: '#14B6A1' }; };
+    const timeline = [ tl('kickoff','Kickoff','Project Role Readiness'), tl('delivery','Delivery','OCM Leadership + associates'), tl('assess','≤ 90 days out','Readiness Assessment'), tl('after','Go-live + 90 days','Check-in, next initiative') ];
+    const phases = [
+      { num:'Phase 1', name:'Prepare', desc:'Role Readiness modules get SMEs, the project team, managers and sponsors ready before Systems Integrator (SI) design sessions start.', delay:'0s' },
+      { num:'Phase 2', name:'Act', desc:'Readiness work through build and test, with associate production inside the engagement and a Readiness Assessment at 90 days or less.', delay:'.15s' },
+      { num:'Phase 3', name:'Sustain', desc:'Go-live plus 90 days: a check-in on adoption, and planning for the next initiative.', delay:'.3s' },
+    ];
+    const services = [
+      { id:'role-readiness', when:'At kickoff', name:'Project Role Readiness', bg:'#F6F5F0', price:'Fixed fee, $15–20K', lead:'Role modules for SMEs, the project team, managers and sponsors at kickoff.', who:'Executive sponsors with a funded program and a selected Systems Integrator (SI). PMO directors who want every program team to get the same start. Integration leads whose teams are designing how the combined company will work.', points:['Modules for SMEs, the project team, managers and sponsors','Delivered in the Prepare phase, before Systems Integrator (SI) design sessions','How governance works, what resistance looks like, and each role in both'], message:'Your SMEs start design sessions with the Systems Integrator (SI) soon. Do they know not to rebuild today’s workarounds?', cta:'Ask about Role Readiness' },
+      { id:'ocm-leadership', when:'Through delivery', name:'OCM Leadership', bg:'#fff', price:'Fixed fee by phase, $100–150K', lead:'Phased OCM leadership for a go-live: Prepare, Act, Sustain. Fixed fee by phase.', who:'VPs of Operations who own the date and the people risk and want one accountable OCM lead they trust, not a team to manage. VPs of Integration with a Day 1 and a Day 100 to hit.', points:['One senior lead, with contract associates for production work','A built OCM toolkit and AI-enabled delivery, saving roughly 150 build hours on an ERP project','Sponsor access and go/no-go criteria in the contract','A 90-day check-in after go-live'], message:'Integration plans cover systems and contracts. Synergies depend on whether two workforces actually work as one.', cta:'Scope an engagement' },
+      { id:'readiness-assessment', when:'90 days or less to go-live', name:'Readiness Assessment', bg:'#F6F5F0', price:'Fixed fee, $15–20K', lead:'A 3–4 week diagnostic 90 days or less before go-live. Leads into gap-closure work.', who:'COOs and program sponsors whose dashboards are green but whose gut says otherwise. PMO directors who need an independent read their teams can’t give them.', points:['Evidence of whether people can perform before go-live','Gaps found while there’s still time and budget to close them','Facts for the steering committee, not assurances','One standard across every go-live'], message:'Your programs grade their own readiness. An independent assessment gives you one standard across every go-live.', cta:'Book an assessment' },
+    ];
+    const situations = [
+      { role:'VP, Operations · Executive sponsor', headline:'You own the date and the people risk.', trigger:'Program funded, Systems Integrator (SI) selected, go-live date set 6–12 months out.', pains:['The Systems Integrator (SI) plan covers cutover; people readiness is a line item for training sessions','Status reports are green, but you can’t see whether operations is ready','Internal HR and L&D don’t have capacity for a program this size','SMEs in design sessions rebuild today’s workarounds in the new system'], message:'Your Systems Integrator (SI) will get the system live. Who’s making sure your people can run the operation on day one?', href:'#/services', cta:'OCM Leadership and Role Readiness' },
+      { role:'COO, Program sponsor · Within 90 days', headline:'Every dashboard is green. Your gut says otherwise.', trigger:'Go-live is within 90 days and a pilot, UAT, or dress rehearsal shows cracks.', pains:['Training completion is high, but nobody has proven people can do the job','Managers and the project team tell you different stories','Everyone reporting on readiness has a stake in the answer','Too late to start a full OCM program from scratch'], message:'Training completion tells you who clicked through. It doesn’t tell you who can do the job on day one.', href:'#/services', cta:'Readiness Assessment' },
+      { role:'Director, PMO · Portfolio view', headline:'You need an independent read your teams can’t give you.', trigger:'Several go-lives at once, or a recent program went live and stumbled.', pains:['Program teams grade their own readiness','Your metrics track scope, schedule, and budget, not adoption','Every program defines “ready” differently','No internal capacity to assess programs independently'], message:'Your programs grade their own readiness. An independent assessment gives you one standard across every go-live.', href:'#/services', cta:'Assessments and Role Readiness' },
+      { role:'VP, Integration · Post-merger', headline:'Day 1 is fixed. Two workforces aren’t one yet.', trigger:'Deal closed, often a PE-backed add-on, and an integration lead is named.', pains:['The deal timeline leaves no room for a slow business case','Finance, legal, and IT have integration owners. Employees don’t.','Anxious employees fill communication gaps with rumor','Acquired-company managers aren’t equipped to lead the change'], message:'Integration plans cover systems and contracts. Synergies depend on whether two workforces actually work as one.', href:'#/services', cta:'OCM Leadership to Day 1 and Day 100' },
+    ];
+    const values = [
+      { name:'Transparency', desc:'We believe in open and honest communication, fostering trust and understanding.', delay:'0s' },
+      { name:'Value Addition', desc:'Our commitment is to consistently provide actionable insights and tangible benefits to our clients.', delay:'.1s' },
+      { name:'Continuous Learning', desc:'We embrace innovation and knowledge, ensuring we stay ahead of industry trends to better serve our clients.', delay:'.2s' },
+      { name:'Empowerment', desc:'We aim to equip organizations with the tools and knowledge to manage change independently and effectively.', delay:'.3s' },
+    ];
+    const quotes = [
+      { text:'“Unlike many consultants, Jennifer is unafraid to ‘roll up her sleeves’ and do the work, lead by doing and demonstrates focused creativity to accomplish the short-term task at hand, while keeping an eye on successful delivery of the long-term objectives.”', name:'Brian Miller', title:'Assistant Director – New Business, Front-End Operations', delay:'0s' },
+      { text:'“Jennifer designed and delivered training for a key enterprise initiative. The 1,000+ training surveys revealed that the content met the learning objectives while indicating Jennifer was well-received by attendees.”', name:'Dennis Uhnavy', title:'Director, Human Performance', delay:'.15s' },
+      { text:'“Jennifer’s strategy included the development of playbooks which provided repeatable content, templates, and tools to onboard new teams to the system modules. This approach not only simplified the implementation it provided consistency in timing and messaging.”', name:'Deb Maki', title:'Senior Operational Excellence, Business Process and Change Management Leader', delay:'.3s' },
+    ];
+    const fmtDate = d => d && !isNaN(d) ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const placeholders = [
+      { tag:'Placeholder post', title:'Trained isn’t ready: what training completion doesn’t tell you', excerpt:'Placeholder · Title and body to be written', meta:'Appears here once the first post is published', link:'#/insights' },
+      { tag:'Placeholder post', title:'Who can lead it, who can do it: the grid for your first readiness conversation', excerpt:'Placeholder · Title and body to be written', meta:'Appears here once published', link:'#/insights' },
+      { tag:'Placeholder post', title:'90 days out: what a Readiness Assessment looks at', excerpt:'Placeholder · Title and body to be written', meta:'Appears here once published', link:'#/insights' },
+    ];
+    const feed = (this.state.feed || []).map(x => ({ tag: x.source, title: x.title, excerpt: x.excerpt, meta: fmtDate(x.date), link: x.link }));
+    const all = feed.length ? feed : placeholders;
+    const posts = all.slice(0, 12).map((p, i) => ({ ...p, delay: (i * 0.08 + 0.1).toFixed(2) + 's' }));
+    const homeFeed = all.slice(0, Math.max(1, Math.min(6, Number(this.props.homeFeedCount ?? 3))));
+    const showHomeFeed = this.props.showHomeFeed ?? true;
+    const feedStatus = this.state.feedStatus || '';
+    // Who can lead it / who can do it grid
+    const g = this.state.grid;
+    const cells = [
+      { id:'nn', tag:'Can’t lead it · Can’t do it', label:'We need someone to lead the change and do the work.', result:'Continue to Discovery.' },
+      { id:'nd', tag:'Can’t lead it · Can do it', label:'We have hands, but no one to lead it.', result:'Continue to Discovery.' },
+      { id:'ln', tag:'Can lead it · Can’t do it', label:'We have a leader, but no capacity to do the work.', result:'Continue to Discovery.' },
+      { id:'ld', tag:'Can lead it · Can do it', label:'We can lead it and do it ourselves.', result:'Stay in touch, ask for a referral.' },
+    ];
+    const gridCells = cells.map(c => { const on = g === c.id; return { ...c, pressed: on, onClick: () => this.setState({ grid: on ? null : c.id }), bg: on ? '#14B6A1' : 'rgba(255,255,255,.06)', color: on ? '#120F38' : '#fff', border: on ? '#14B6A1' : 'rgba(255,255,255,.25)', scale: on ? 'scale(1.03)' : 'none' }; });
+    const sel = cells.find(c => c.id === g);
+    const gridResult = sel ? sel.result : 'Pick the quadrant that sounds like you.';
+    const err = this.state.err; const b = (k) => err[k] ? '#B3261E' : 'rgba(18,15,56,.25)';
+    return {
+      navItems, offers, phases, timeline, services, situations, values, quotes, posts, showPricing, rotatingLine, marquee, dashRows, heroBgSrc, heroTintA, heroTintB,
+      months: m, monthsLabel, monthsAdvice, onMonths: (e) => this.setState({ months: Number(e.target.value) }),
+      gridCells, gridResult,
+      nHours: this.state.nHours, nDays: this.state.nDays, nSince: this.state.nSince, scrollPct: this.state.scrollPct + '%',
+      homeFeed, showHomeFeed, feedStatus, noop: [],
+      isHome: page==='home' || !pages.includes(page), isServices: page==='services', isWho: page==='who-we-serve', isPartners: page==='partners', isAbout: page==='about', isInsights: page==='insights', isContact: page==='contact', isPrivacy: page==='privacy', isTerms: page==='terms',
+      contactSent: this.state.sent, contactNotSent: !this.state.sent,
+      err: { ...err, nameBorder: b('name'), emailBorder: b('email'), situationBorder: b('situation') },
+      newsletterMsg: this.state.nlMsg,
+      onNewsletter: (e) => { e.preventDefault(); this.setState({ nlMsg: 'Subscribed. Watch for the next post.' }); },
+      onContact: (e) => {
+        e.preventDefault(); const f = new FormData(e.target); const er = {};
+        if (!String(f.get('name')||'').trim()) er.name = 'Please add your name.';
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(f.get('email')||''))) er.email = 'Enter a valid work email.';
+        if (!f.get('situation')) er.situation = 'Pick the closest match.';
+        if (f.get('website')) return;
+        if (Object.keys(er).length) { this.setState({ err: er }); return; }
+        this.setState({ sent: true, err: {} });
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
