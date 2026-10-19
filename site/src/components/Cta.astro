@@ -1,11 +1,13 @@
 ---
+import { setting } from '../lib/content';
 interface Props { title?: string; body?: string; label?: string; href?: string }
-const { title = 'Is your go-live 90 days out, or 12 months?', body = 'Either way, the first call is about one question: who can lead the change, and who can do the work? You place yourself on the grid. Then we decide whether to keep talking.', label = 'Start a conversation', href = '/contact' } = Astro.props;
+const d = await setting('cta');
+const { title = d.heading, body = d.text, label = d.label, href = d.href } = Astro.props;
 ---
 <section class="dark">
   <div class="wrap cta">
     <h2 class="cta__h">{title}</h2>
-    <div style="display:grid;gap:18px"><p class="cta__p">{body}</p><a href={href} class="btn btn--teal cta__btn">{label}</a></div>
+    <div style="display:grid;gap:18px">{body && <p class="cta__p">{body}</p>}<a href={href} class="btn btn--teal cta__btn">{label}</a></div>
   </div>
 </section>
 <style>

@@ -1,20 +1,57 @@
 ---
 import Dashboard from '../../layouts/Dashboard.astro';
-export const prerender = false;
-const sb = Astro.locals.sb;
-const [{ data: deals }, { data: partners }, { data: subs }, { data: leads }, { data: measures }, { data: acts }] = await Promise.all([sb.from('deals').select('*'), sb.from('partners').select('status'), sb.from('subscribers').select('in_profile'), sb.from('leads').select('id,deal_id,created_at'), sb.from('measures').select('*'), sb.from('activities').select('hours,at')]);
-const q = new Date(); q.setMonth(q.getMonth() - 3);
-const actual: Record<string, number> = { exploration: (leads || []).filter((l) => new Date(l.created_at) > q).length, partners: (partners || []).filter((p) => p.status === 2).length, assess_to_anchor: 0, role_readiness: (deals || []).filter((d) => d.stage === 'Continuation' && /role/i.test(d.offer || '')).length, subscribers: (subs || []).filter((s) => s.in_profile === 'in').length };
-const proposed = (deals || []).reduce((a, d) => a + Number(d.fee_estimate || 0), 0); const wk = new Date(); wk.setDate(wk.getDate() - 7); const hours = (acts || []).filter((a) => new Date(a.at) > wk).reduce((a, x) => a + Number(x.hours), 0);
-const fmt = (n: number) => '$' + Math.round(n / 1000) + 'K';
+import { q } from '../../lib/db';
+import { getSettings } from '../../lib/settings';
+import { money, tripwireStatus, LEVEL_COLOR } from '../../lib/dashboard';
+const s = await getSettings();
+const signedFrom = Math.max(0, Number(s.signedFromStage || 4) - 1);
+const [deals, [counts]] = await Promise.all([
+  q('select company, offer, stage, fee_estimate from deals'),
+  q(`select (select count(*) from leads where created_at >= date_trunc('quarter', now()))::int as quarter_leads,
+            (select count(*) from leads l left join deals d on d.id = l.deal_id where l.created_at > now() - interval '7 days' and (l.deal_id is null or d.stage = 0))::int as new_leads,
+            (select count(*) from partners where status = 2)::int as active, (select count(*) from subscribers where in_profile = 'in')::int as in_profile`),
+]);
+const signed = deals.filter((d) => d.stage >= signedFrom);
+const signedSum = signed.reduce((a, d) => a + Number(d.fee_estimate || 0), 0);
+const proposed = deals.reduce((a, d) => a + Number(d.fee_estimate || 0), 0);
+const share = s.bridge.revenue > 0 ? Math.round((s.bridge.income / s.bridge.revenue) * 100) + '%' : '—';
+const assessed = signed.filter((d) => /assess/i.test(d.offer || '')), anchors = new Set(signed.filter((d) => /anchor/i.test(d.offer || '')).map((d) => d.company));
+const actual: Record<string, [string, number]> = {
+  exploration: [String(counts.quarter_leads), counts.quarter_leads],
+  partners: [String(counts.active), counts.active],
+  assess_to_anchor: [`${assessed.filter((d) => anchors.has(d.company)).length} of ${assessed.length}`, assessed.filter((d) => anchors.has(d.company)).length],
+  role_readiness: [String(signed.filter((d) => /role/i.test(d.offer || '')).length), signed.filter((d) => /role/i.test(d.offer || '')).length],
+  subscribers: [String(counts.in_profile), counts.in_profile],
+};
+const color: Record<string, string> = { partners: 'var(--teal)', subscribers: 'var(--teal)' };
+const pct = (a: number, b: number) => Math.min(100, Math.round((a / (b || 1)) * 100)) + '%';
+const trips = await tripwireStatus(s);
+const kpis = [
+  { k: s.kept.label, v: money(s.kept.value), sub: `Signed so far: ${money(signedSum)}${signed.length ? ' (' + signed.slice(0, 3).map((d) => d.company).join(', ') + (signed.length > 3 ? '…' : '') + ')' : ''}` },
+  { k: 'Proposed in pipeline', v: money(proposed), sub: `${deals.length} deals across five stages` },
+  { k: 'New leads this week', v: String(counts.new_leads), sub: 'Awaiting Exploration call' },
+  { k: 'Bridge income share', v: share, sub: 'Tripwire at a third of the year' },
+];
 ---
 <Dashboard title="What 2027 needs to prove" eyebrow="Measures" active="overview">
-
-
-<section class="kpis"><div class="kpi"><p class="k">Kept, 2027 plan</p><p class="v">$380K</p><p class="s">From the growth strategy</p></div><div class="kpi"><p class="k">Proposed in pipeline</p><p class="v">{fmt(proposed)}</p><p class="s">{(deals || []).length} deals across five stages</p></div><div class="kpi"><p class="k">New leads</p><p class="v">{(leads || []).filter((l) => !l.deal_id).length}</p><p class="s">Not yet in the pipeline</p></div><div class="kpi"><p class="k">BD hours, 7 days</p><p class="v">{hours}</p><p class="s">Target 20–25 between engagements; tripwire under 8</p></div></section>
-<section class="panel panel--pad" style="margin-top:20px"><h2 class="h3" style="font-size:26px;margin-bottom:6px">Measures vs targets</h2><p class="note" style="margin:0 0 16px">Targets from the strategy deck. Actuals from leads, deals, partners and subscribers.</p>
-  {(measures || []).map((m) => <div style="display:grid;grid-template-columns:minmax(160px,1.4fr) minmax(120px,1fr) minmax(140px,2fr);gap:16px;align-items:center;padding:12px 0;border-top:1px solid rgba(18,15,56,.08)"><span style="font-weight:500">{m.label}</span><span class="note">Target: {m.target}</span><div style="display:flex;align-items:center;gap:12px"><div class="bar" style="flex:1"><div style={`width:${Math.min(100, Math.round((actual[m.key] / Number(m.target_num || 1)) * 100))}%`}></div></div><strong style="min-width:48px;text-align:right">{actual[m.key]}</strong></div></div>)}
-</section>
-<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:20px"><div class="panel panel--pad" style="background:var(--indigo);color:#fff;border:0"><h2 class="h3" style="font-size:24px;margin-bottom:14px">Five learning questions</h2><ol style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:15px"><li>Do assessments lead to anchors?</li><li>Does Role Readiness sell when it’s attached?</li><li>Where is the mid-market anchor price ceiling?</li><li>What does the toolkit actually save in hours?</li><li>Which channels produce wins?</li></ol></div>
-<div class="panel panel--pad"><h2 class="h3" style="font-size:24px;margin-bottom:14px">Bridge-work tripwires</h2><ul style="margin:0;padding:0;list-style:none;display:grid;gap:10px;font-size:14px"><li><strong>Business development under 8 hours a week for a month</strong><br /><span class="note">{hours}h this week</span></li><li><strong>Bridge income above a third of the year’s revenue</strong><br /><span class="note">Log bridge invoices in Activities (kind = bridge)</span></li><li><strong>Six months on one engagement with no move to fixed fee</strong></li></ul></div></section>
+  <div style="display:grid;gap:20px">
+    <section class="kpis">{kpis.map((x) => <div class="kpi"><p class="k">{x.k}</p><p class="v">{x.v}</p><p class="s">{x.sub}</p></div>)}</section>
+    <section class="panel panel--pad">
+      <h2 class="ph2" style="font-size:26px;margin-bottom:6px">What 2027 needs to prove</h2>
+      <p style="margin:0 0 20px;font-size:14px;color:var(--muted)">Measures and targets from the growth strategy. Actuals update from the pipeline, partner tracker and subscriber list.</p>
+      <div style="display:grid;gap:14px">{s.measures.map((m) => { const [label, n] = actual[m.key] || ['—', 0]; return <div class="ms"><span class="ms__m">{m.label}</span><span class="ms__t">Target: {m.target}</span><div class="ms__b"><div class="bar" style="flex:1"><div style={`width:${pct(n, Number(m.targetNum))};background:${color[m.key] || 'var(--indigo)'}`}></div></div><span>{label}</span></div></div>; })}</div>
+    </section>
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+      <div class="panel panel--pad" style="background:var(--indigo);color:#fff;border:0"><h2 class="ph2" style="margin-bottom:14px">Five learning questions</h2><ol style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:15px;line-height:1.45">{s.learningQuestions.map((x) => <li>{x}</li>)}</ol></div>
+      <div class="panel panel--pad"><h2 class="ph2" style="margin-bottom:14px">Bridge-work tripwires</h2>
+        <ul style="margin:0;padding:0;list-style:none;display:grid;gap:10px">{trips.map((t) => <li style="display:flex;gap:12px;align-items:start;font-size:14px;line-height:1.45"><span style={`flex:none;width:10px;height:10px;border-radius:50%;background:${LEVEL_COLOR[t.level] || LEVEL_COLOR.clear};margin-top:5px`}></span><span><strong>{t.rule}</strong>{t.status && <><br /><span class="muted">{t.status}</span></>}</span></li>)}</ul>
+        <form data-save="activities" data-method="POST" data-reload class="logbd"><label for="bd-h">Log BD time</label><input id="bd-h" name="hours" type="number" min="0.25" step="0.25" required class="inp" placeholder="Hours" style="width:90px" /><input name="note" class="inp" placeholder="What (optional)" style="flex:1;min-width:140px" aria-label="What" /><button class="dbtn dbtn--sm" type="submit">Add</button><span role="status" class="faint" style="font-size:12px"></span></form>
+      </div>
+    </section>
+  </div>
 </Dashboard>
+<style>
+.ms{display:grid;grid-template-columns:minmax(160px,1.4fr) minmax(120px,1fr) minmax(140px,2fr);gap:16px;align-items:center;padding:12px 0;border-top:1px solid rgba(18,15,56,.08)}
+.ms__m{font-size:15px;font-weight:500}.ms__t{font-size:13px;color:var(--muted)}.ms__b{display:flex;align-items:center;gap:12px}.ms__b>span{font-size:14px;font-weight:600;min-width:64px;text-align:right}
+.logbd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid rgba(18,15,56,.08)}.logbd label{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+</style>

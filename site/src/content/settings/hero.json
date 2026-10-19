@@ -13,5 +13,61 @@
   "backgroundVideo": "",
   "backgroundAlt": "A senior change lead standing among an operations team at their desks in a city office on go-live morning",
   "tint": 0.62,
-  "showDashboard": true
+  "showDashboard": true,
+  "rotating": [
+    "“Your Systems Integrator (SI) knows the system. We know your people.”",
+    "Training completion tells you who clicked through. It doesn’t tell you who can do the job on day one.",
+    "Your Systems Integrator (SI) will get the system live. Who’s making sure your people can run the operation on day one?",
+    "Your programs grade their own readiness. An independent assessment gives you one standard across every go-live.",
+    "Integration plans cover systems and contracts. Synergies depend on whether two workforces actually work as one."
+  ],
+  "marqueeExtra": [
+    "Trained isn’t ready.",
+    "Every dashboard is green. Her gut says otherwise.",
+    "Day 1 is fixed. Two workforces aren’t one yet.",
+    "When adoption stalls, the client blames the implementation.",
+    "The Systems Integrator (SI) brings system expertise. We bring people expertise."
+  ],
+  "card": {
+    "title": "Go-live readiness",
+    "pill": "All green",
+    "rows": [
+      {
+        "label": "Training completion",
+        "value": "98%"
+      },
+      {
+        "label": "UAT sign-off",
+        "value": "Passed"
+      },
+      {
+        "label": "Cutover plan",
+        "value": "Approved"
+      },
+      {
+        "label": "Program status",
+        "value": "Green"
+      }
+    ],
+    "quoteLabel": "Every dashboard is green. Her gut says otherwise.",
+    "quoteText": "Who can do the job on day one?"
+  },
+  "proof": [
+    {
+      "title": "System-agnostic",
+      "text": "Readiness across ERP, PM, and HR"
+    },
+    {
+      "title": "Senior lead, flexible bench",
+      "text": "A senior lead, with contract associates for production work"
+    },
+    {
+      "title": "Ready on day one",
+      "text": "A built OCM toolkit saves roughly 150 build hours on an ERP project"
+    },
+    {
+      "title": "WBENC certified",
+      "text": "Helps clients and Systems Integrator (SI) partners meet supplier diversity goals"
+    }
+  ]
 }

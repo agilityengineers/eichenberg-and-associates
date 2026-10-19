@@ -1,24 +1,24 @@
 ---
 import Base from '../layouts/Base.astro';
-import c from '../content/pages/who-we-serve.json';
+import { getDocs, page } from '../lib/content';
 import { si } from '../lib/si';
-import { getCollection } from 'astro:content';
-const sits = (await getCollection('situations')).sort((a, b) => a.data.order - b.data.order);
+const c = await page('who-we-serve');
+const sits = await getDocs('situations');
 ---
 <Base title={c.title} description={c.description}>
   <section class="dark" style="position:relative;overflow:hidden">
     <img src="/images/mark-half-left-white.png" alt="" aria-hidden="true" class="who__mark" />
     <div class="wrap" style="position:relative;padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
       <p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="max-width:14ch;animation-delay:.1s">{c.heading}</h1>
-      <p class="lead" style="margin-top:28px">{c.lead}</p>
+      <p class="lead rise" style="margin-top:28px;animation-delay:.3s" set:html={si(c.lead)} />
     </div>
-    <div style="position:relative;border-top:1px solid rgba(255,255,255,.12)"><dl class="wrap dl icp" style="padding-top:32px;padding-bottom:32px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">{c.facts.map((f) => <div><dt class="label" style="color:var(--teal)">{f.label}</dt><dd>{f.text}</dd></div>)}</dl></div>
+    <div style="position:relative;border-top:1px solid rgba(255,255,255,.12)"><dl class="wrap dl icp" style="padding-top:32px;padding-bottom:32px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">{c.facts.map((f: { label: string; text: string }) => <div><dt class="label" style="color:var(--teal)">{f.label}</dt><dd set:html={si(f.text)} /></div>)}</dl></div>
   </section>
   <section class="wrap" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
     <div style="display:grid;gap:12px">{sits.map((s) => <article class="cell sit card" data-reveal>
-      <div><p class="label" style="margin:0 0 14px;letter-spacing:.24em">{s.data.role}</p><h2 class="h2" style="font-size:clamp(28px,3.4vw,40px);line-height:1.08;margin-bottom:16px">{s.data.headline}</h2><p style="margin:0;color:var(--muted)"><strong style="color:var(--ink)">The trigger:</strong> <Fragment set:html={si(s.data.trigger)} /></p></div>
+      <div><p class="label" style="margin:0 0 14px;letter-spacing:.24em">{s.data.role}</p><h2 class="h2" style="font-size:clamp(28px,3.4vw,40px);line-height:1.08;margin-bottom:16px">{s.data.headline}</h2><p style="margin:0;font-size:16px;line-height:1.55;color:var(--muted)"><strong style="color:var(--ink)">{c.triggerLabel}</strong> <Fragment set:html={si(s.data.trigger)} /></p></div>
       <div style="display:grid;gap:22px;align-content:start">
-        <div><h3 class="label" style="margin:0 0 10px">What you're dealing with</h3><ul style="margin:0;padding-left:20px;display:grid;gap:6px">{s.data.pains.map((p) => <li set:html={si(p)} />)}</ul></div>
+        <div><h3 class="label" style="margin:0 0 10px">{c.painsLabel}</h3><ul style="margin:0;padding-left:20px;display:grid;gap:6px;font-size:16px;line-height:1.5">{(s.data.pains || []).map((p: string) => <li set:html={si(p)} />)}</ul></div>
         <p class="sit__msg" set:html={si(s.data.message)} />
         <a href={s.data.href} style="font-weight:600;font-size:15px">{s.data.cta} →</a>
       </div>
@@ -28,7 +28,7 @@ const sits = (await getCollection('situations')).sort((a, b) => a.data.order - b
 </Base>
 <style>
 .who__mark{position:absolute;right:6%;top:-10%;height:120%;width:auto;opacity:.07;pointer-events:none;animation:driftL 2s cubic-bezier(.2,.7,.2,1) both}
-.icp dd{font-size:16px;color:rgba(255,255,255,.88)}
+.icp dd{font-size:16px;line-height:1.5;color:rgba(255,255,255,.88)}
 .sit{border:1px solid var(--line);padding:clamp(32px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px 48px}.sit:hover{transform:none;box-shadow:0 24px 40px rgba(18,15,56,.1)}
 .sit__msg{margin:0;padding:18px 22px;border-left:2px solid var(--teal);background:var(--paper);font-family:var(--serif);font-size:20px;line-height:1.35}
 </style>

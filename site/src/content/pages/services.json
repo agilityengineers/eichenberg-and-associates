@@ -21,5 +21,8 @@
       "when": "Go-live + 90 days",
       "what": "Check-in, next initiative"
     }
-  ]
+  ],
+  "whoLabel": "Who it's for",
+  "getLabel": "What you get",
+  "detailsLabel": "Details →"
 }

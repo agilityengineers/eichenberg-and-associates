@@ -5,5 +5,26 @@
   "heading": "Start a conversation",
   "lead": "The first call is exploration: what are the reasons to talk? Tell us where your go-live is and who owns it, and we'll reply within two business days.",
   "successHeading": "Thanks. We've got it.",
-  "successText": "Expect a reply within two business days. If your go-live is inside 90 days, say so in a reply and we'll move faster."
+  "successText": "Expect a reply within two business days. If your go-live is inside 90 days, say so in a reply and we'll move faster.",
+  "emailLabel": "Email",
+  "phoneLabel": "Phone",
+  "linkedinLabel": "LinkedIn",
+  "linkedinText": "linkedin.com/in/jennifer-eichenberg",
+  "form": {
+    "name": "Name",
+    "email": "Work email",
+    "company": "Company",
+    "role": "Your role",
+    "situation": "Where are you?",
+    "choose": "Choose one",
+    "message": "What's the go-live, and who owns the date?",
+    "submit": "Send",
+    "note": "Protected by Cloudflare Turnstile. No marketing emails without your say-so.",
+    "sending": "Sending…",
+    "nameError": "Please add your name.",
+    "emailError": "Enter a valid work email.",
+    "situationError": "Pick the closest match.",
+    "failure": "Something went wrong.",
+    "fallback": "You can also email"
+  }
 }

@@ -1,32 +1,32 @@
 ---
 import Base from '../layouts/Base.astro';
-import c from '../content/pages/about.json';
-import { getCollection } from 'astro:content';
-import { marked } from 'marked';
+import { getDocs, md, page } from '../lib/content';
 import { si, siRaw } from '../lib/si';
-const [jen] = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
-const bio = await marked.parse(siRaw(jen.body));
-const PH = '<div class="ph"><img src="/images/mark-color.png" alt="" aria-hidden="true" /><span>PLACEHOLDER: portrait of Jennifer Eichenberg</span></div>';
-const values = c.values.map((v) => [v.name, v.text]);
-const ld = { '@context': 'https://schema.org', '@type': 'Person', name: jen.data.name, jobTitle: jen.data.role, worksFor: { '@type': 'Organization', name: 'Eichenberg & Associates' }, sameAs: ['https://www.linkedin.com/in/jennifer-eichenberg'] };
+import { escapeHtml } from '../lib/sanitize';
+const c = await page('about');
+const [person] = await getDocs('team');
+const name = person?.data.name || '', role = person?.data.role || '';
+const bio = md(siRaw(person?.body || ''));
+const PH = `<div class="ph"><img src="/images/mark-color.png" alt="" aria-hidden="true" /><span>${escapeHtml(c.portraitPlaceholder || '')}</span></div>`;
+const ld = { '@context': 'https://schema.org', '@type': 'Person', name, jobTitle: role, worksFor: { '@type': 'Organization', name: 'Eichenberg & Associates' } };
 ---
 <Base title={c.title} description={c.description} jsonLd={ld}>
   <section class="wrap grid" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
-    <div><p class="eyebrow rise">About</p><h1 class="display word" style="font-size:clamp(44px,6.4vw,88px);animation-delay:.1s">{jen.data.name}</h1><p class="rise" style="margin:12px 0 28px;font-size:15px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--indigo);animation-delay:.25s">{jen.data.role}</p><div class="bio rise" style="animation-delay:.4s" set:html={bio} /></div>
-    <div class="portrait rise" style="animation-duration:.8s;animation-delay:.3s">{jen.data.photo ? <img src={jen.data.photo} alt={`Portrait of ${jen.data.name}`} width="800" height="1000" loading="lazy" onerror={`this.outerHTML=${JSON.stringify(PH)}`} /> : <Fragment set:html={PH} />}</div>
+    <div><p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="font-size:clamp(44px,6.4vw,88px);animation-delay:.1s">{name}</h1><p class="rise" style="margin:12px 0 28px;font-size:15px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--indigo);animation-delay:.25s">{role}</p><div class="bio rise" style="animation-delay:.4s" set:html={bio} /></div>
+    <div class="portrait rise" style="animation-duration:.8s;animation-delay:.3s">{person?.data.photo ? <img src={person.data.photo} alt={`Portrait of ${name}`} width="800" height="1000" loading="lazy" onerror={`this.outerHTML=${JSON.stringify(PH)}`} /> : <Fragment set:html={PH} />}</div>
   </section>
   <section class="dark"><div class="wrap" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
     <div class="grid" data-reveal style="margin-bottom:56px">
-      <div><p class="eyebrow" style="margin-bottom:14px">Mission</p><p class="mv">{c.mission}</p></div>
-      <div><p class="eyebrow" style="margin-bottom:14px">Vision</p><p class="mv">{c.vision}</p></div>
+      <div><p class="eyebrow" style="margin-bottom:14px">{c.missionLabel}</p><p class="mv">{c.mission}</p></div>
+      <div><p class="eyebrow" style="margin-bottom:14px">{c.visionLabel}</p><p class="mv">{c.vision}</p></div>
     </div>
-    <p class="eyebrow" style="margin-bottom:24px">Values</p>
-    <dl class="vals">{values.map(([n, d], i) => <div data-reveal style={`transition-delay:${i * .1}s`}><dt>{n}</dt><dd>{d}</dd></div>)}</dl>
+    <p class="eyebrow" style="margin-bottom:24px">{c.valuesLabel}</p>
+    <dl class="vals">{c.values.map((v: { name: string; text: string }, i: number) => <div data-reveal style={`transition-delay:${i * .1}s`}><dt>{v.name}</dt><dd>{v.text}</dd></div>)}</dl>
   </div></section>
-  <section class="wrap how" data-reveal style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">{c.how.map((h) => <div><p class="label">{h.label}</p><p class="how__t" set:html={si(h.text)} /></div>)}</section>
+  <section class="wrap how" data-reveal style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">{c.how.map((h: { label: string; text: string }) => <div><p class="label">{h.label}</p><p class="how__t" set:html={si(h.text)} /></div>)}</section>
 </Base>
 <style>
-.bio :global(p){margin:0 0 18px;font-size:19px;line-height:1.55;color:var(--muted)}
+.bio :global(p){margin:0 0 18px;font-size:19px;line-height:1.55;color:var(--muted)}.bio :global(p:last-child){margin-bottom:0}
 .portrait img,.portrait :global(.ph){aspect-ratio:4/5;width:100%;object-fit:cover;border-radius:10px}
 .portrait :global(.ph){background:#E6E4DC;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:14px;text-align:center;padding:24px;position:relative;overflow:hidden}
 .portrait :global(.ph img){position:absolute;inset:auto -10% -20% auto;width:70%;height:auto;aspect-ratio:auto;opacity:.12;border-radius:0}.portrait :global(.ph span){position:relative}

@@ -5,5 +5,13 @@
   "heading": "Readiness, one post a month",
   "lead": "Plain-language writing on people readiness for go-live sponsors, PMO leaders and Systems Integrator (SI) partners.",
   "newsletterHeading": "Get the monthly post by email",
-  "newsletterText": "One email a month. Plus two guides when you join."
+  "newsletterText": "One email a month. Plus two guides when you join.",
+  "newsletterEyebrow": "Newsletter",
+  "newsletterNote": "(PLACEHOLDER: lead magnet titles to be confirmed.)",
+  "emailLabel": "Work email",
+  "emailPlaceholder": "you@company.com",
+  "subscribeLabel": "Subscribe",
+  "subscribing": "Subscribing…",
+  "subscribed": "Subscribed. Watch for the next post.",
+  "subscribeError": "Could not subscribe."
 }

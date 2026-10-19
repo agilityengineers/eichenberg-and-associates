@@ -1,123 +1,193 @@
 ---
-import Base from '../../layouts/Base.astro';
-import { publicDb, SUPABASE_CONFIGURED } from '../../lib/supabase';
-import { GRID } from '../../lib/personas.js';
-export const prerender = false;                      // reads live CMS edits from Supabase
+// Persona landing page. Copy and step-2 questions come from Dashboard → Landing pages / Form builder.
+import Landing from '../../layouts/Landing.astro';
+import { dbConfigured, one, q } from '../../lib/db';
+import { page, setting } from '../../lib/content';
+import { si } from '../../lib/si';
+import { env } from '../../lib/env';
+if (!dbConfigured()) return new Response(null, { status: 404 });
 const { slug } = Astro.params;
-if (!SUPABASE_CONFIGURED) return new Response(null, { status: 404 });  // no project yet (local dev)
-const sb = publicDb();
-const { data: p } = await sb.from('landing_pages').select('*').eq('slug', slug).eq('published', true).maybeSingle();
+const p = await one('select * from landing_pages where slug = $1 and (published or $2)', [slug, !!Astro.locals.user]);
 if (!p) return new Response(null, { status: 404 });
-const { data: qs } = await sb.from('form_questions').select('*').eq('page_slug', slug).order('step').order('position');
-const step1 = (qs || []).filter((q) => q.step === 1), step2 = (qs || []).filter((q) => q.step === 2);
-const turnstile = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
-Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+const qs = await q('select key, label, type, options, required, step from form_questions where page_slug = $1 order by step, position', [slug]);
+const steps = [qs.filter((x: any) => x.step === 1), qs.filter((x: any) => x.step === 2)];
+const [l, grid, site] = await Promise.all([page('landing'), setting('grid'), setting('site')]);
+const turnstile = env('PUBLIC_TURNSTILE_SITE_KEY');
+const messages: { label: string; text: string }[] = p.messages || [];
+const msg = { required: l.required, email: l.emailError, grid: l.gridError, next: l.next, finish: l.finish, sending: l.sending, done: l.doneText, magnet: l.magnetSent, booking: l.bookingTitle, failure: l.failure, fallback: `${l.fallback} ${site.email}.` };
 Astro.response.headers.set('X-Robots-Tag', 'noindex');  // unlisted campaign URL
+const field = (x: any) => ({ id: 'q-' + x.key, star: x.required ? '*' : '' });
 ---
-<Base title={p.headline} description={p.situation} image="/images/og-default.png">
-  <Fragment slot="head"><meta name="robots" content="noindex,nofollow" /></Fragment>
-  <section class="hero dark lp-hero">
-    <img class="hero__bg" src="/images/hero-bg.jpg" alt="" aria-hidden="true" />
-    <div class="hero__tint" style="background:linear-gradient(100deg,rgba(18,15,56,.9) 0%,rgba(18,15,56,.72) 55%,rgba(18,15,56,.4) 100%)"></div>
-    <div class="wrap" style="position:relative;z-index:2;padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
-      <p class="eyebrow rise">{p.eyebrow} · {p.frame}</p>
+<Landing title={p.headline} description={p.situation} cta={p.cta}>
+  <section class="lp-hero dark">
+    <img class="lp-hero__bg" src="/images/hero-bg.jpg" alt="" aria-hidden="true" />
+    <div class="lp-hero__tint" aria-hidden="true"></div>
+    <img class="lp-hero__mark" src="/images/mark-half-right-teal.png" alt="" aria-hidden="true" />
+    <div class="lwrap lp-hero__in">
+      <p class="eyebrow rise" style="margin-bottom:20px"><Fragment set:html={si(p.eyebrow)} /> · <Fragment set:html={si(p.frame)} /></p>
       <h1 class="lp-h word" style="animation-delay:.1s">{p.headline}</h1>
-      <p class="rise" style="margin:24px 0 0;font-size:clamp(18px,1.6vw,21px);line-height:1.5;max-width:54ch;animation-delay:.35s"><span style="color:var(--teal);font-weight:600">Sound familiar?</span> {p.situation}</p>
-      <blockquote class="lp-q rise" style="animation-delay:.5s">{p.messages[0]?.text}</blockquote>
-      <div class="hero__cta rise" style="animation-delay:.65s"><a href="#form" class="btn btn--teal">{p.cta}</a><span style="display:inline-flex;align-items:center;font-size:14px;color:rgba(255,255,255,.75)">4 short steps · about 2 minutes</span></div>
+      <p class="lp-sit rise" style="animation-delay:.35s"><span>{l.soundFamiliar}</span> <Fragment set:html={si(p.situation)} /></p>
+      {messages[0] && <blockquote class="lp-q rise" style="animation-delay:.5s" set:html={si(messages[0].text)} />}
+      <div class="lp-cta rise" style="animation-delay:.65s"><a href="#form" class="btn btn--teal" data-to-form>{p.cta}</a><span>{l.stepsHint}</span></div>
     </div>
   </section>
 
-  <section class="wrap grid" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
-    <div><p class="eyebrow">What you’re after</p><ul class="lp-list lp-list--check">{p.goals.map((g: string) => <li>{g}</li>)}</ul></div>
-    <div><p class="eyebrow">What you’re dealing with</p><ul class="lp-list lp-list--dash">{p.pains.map((g: string) => <li>{g}</li>)}</ul></div>
+  <section class="lwrap lp-two">
+    <div><p class="eyebrow">{l.goalsLabel}</p><ul class="lp-list lp-list--check">{(p.goals || []).map((g: string) => <li><span aria-hidden="true">✓</span><span set:html={si(g)} /></li>)}</ul></div>
+    <div><p class="eyebrow">{l.painsLabel}</p><ul class="lp-list lp-list--dash">{(p.pains || []).map((g: string) => <li><span aria-hidden="true"></span><span set:html={si(g)} /></li>)}</ul></div>
   </section>
 
-  <section style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)"><div class="wrap grid" style="padding-top:clamp(56px,7vw,88px);padding-bottom:clamp(56px,7vw,88px)">
-    <div><p class="eyebrow">The engagement</p><h2 class="h2" style="font-size:clamp(30px,3.6vw,46px);margin-bottom:16px">{p.offer.name}</h2><p class="lead" style="margin:0;font-size:18px;max-width:46ch">{p.offer.detail}</p>{p.show_price && <p style="margin:18px 0 0;font-size:15px;font-weight:600">{p.offer.price}</p>}</div>
-    <div style="display:grid;gap:12px">{p.messages.map((m: { label: string; text: string }) => <div class="quote" style="border-radius:10px"><p class="label" style="color:var(--teal);margin:0 0 8px;font-family:var(--sans)">{m.label}</p>{m.text}</div>)}</div>
-  </div></section>
+  <section class="lp-eng">
+    <div class="lwrap lp-eng__in">
+      <div>
+        <p class="eyebrow">{l.engagementLabel}</p>
+        <h2 class="lp-eng__h">{p.offer?.name}</h2>
+        <p class="lp-eng__d">{p.offer?.detail}</p>
+        {p.show_price && p.offer?.price && <p class="lp-eng__p">{p.offer.price}</p>}
+      </div>
+      <div style="display:grid;gap:12px">
+        {messages.map((m) => <div class="lp-msg"><p>{m.label}</p><p set:html={si(m.text)} /></div>)}
+        <ul class="lp-proof">{(l.proof || []).map((x: { title: string; text: string }) => <li><strong>{x.title}</strong>{x.text}</li>)}</ul>
+      </div>
+    </div>
+  </section>
 
-  <section id="form" class="wrap grid" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
+  <section id="form" class="lwrap lp-form-sec">
     <div>
-      <p class="eyebrow">Exploration</p><h2 class="h2" style="margin-bottom:18px">What are the reasons to talk?</h2>
-      <p class="lead" style="margin:0;font-size:18px;max-width:44ch">Four steps. The last one is the grid: who can lead the change, and who can do the work? You place yourself. Then we decide whether to continue to Discovery.</p>
-      <ol class="lp-steps">{['About you', 'Your situation', 'Who can lead it, who can do it', 'Next step'].map((l, i) => <li data-step={i + 1}><span>{i + 1}</span>{l}</li>)}</ol>
+      <p class="eyebrow">{l.formEyebrow}</p>
+      <h2 class="lp-form__h">{l.formHeading}</h2>
+      <p class="lp-form__i">{l.formIntro}</p>
+      <ol class="lp-steps">{(l.steps || []).map((label: string, i: number) => <li data-step={i + 1}><span>{i + 1}</span>{label}</li>)}</ol>
     </div>
-    <form id="lp-form" class="lp-form" novalidate data-slug={slug} data-booking={p.booking_url || ''} data-magnet={p.magnet_title || ''}>
-      <div class="lp-progress"><div></div></div>
-      <fieldset data-panel="1"><legend class="h3" style="font-size:26px;margin-bottom:14px">About you</legend>
-        {step1.map((q) => <div class="field"><label for={'q-' + q.key}>{q.label} {q.required && <span aria-hidden="true" style="color:var(--indigo)">*</span>}</label><input id={'q-' + q.key} name={q.key} type={q.type} required={q.required} /><span class="err"></span></div>)}
-      </fieldset>
-      <fieldset data-panel="2" hidden><legend class="h3" style="font-size:26px;margin-bottom:14px">Your situation</legend>
-        {step2.map((q) => <div class="field"><label for={'q-' + q.key}>{q.label} {q.required && <span aria-hidden="true" style="color:var(--indigo)">*</span>}</label>
-          {q.type === 'select' ? <select id={'q-' + q.key} name={q.key} required={q.required}><option value="">Choose one</option>{(q.options || []).map((o: string) => <option>{o}</option>)}</select>
-          : q.type === 'radio' ? <div class="lp-radios" role="radiogroup">{(q.options || []).map((o: string, i: number) => <label><input type="radio" name={q.key} value={o} required={q.required && i === 0} /><span>{o}</span></label>)}</div>
-          : q.type === 'textarea' ? <textarea id={'q-' + q.key} name={q.key} rows="4" required={q.required}></textarea>
-          : <input id={'q-' + q.key} name={q.key} type={q.type} required={q.required} />}
-          <span class="err"></span></div>)}
-      </fieldset>
-      <fieldset data-panel="3" hidden><legend class="h3" style="font-size:26px;margin-bottom:6px">Who can lead it? Who can do it?</legend>
-        <p style="margin:0 0 14px;font-size:15px;color:var(--muted)">Pick the quadrant that sounds like your organization right now.</p>
-        <div class="quad quad--light" role="group">{GRID.map((g) => <button type="button" data-grid={g.id} data-result={g.result} aria-pressed="false"><span>{g.tag}</span><span>{g.label}</span></button>)}</div>
-        <span class="err" id="grid-err"></span>
+    <form id="lp-form" class="lp-form" novalidate data-slug={slug} data-booking={p.booking_url || ''} data-msg={JSON.stringify(msg)}>
+      <div class="lp-progress" aria-hidden="true"><div></div></div>
+      {steps.map((list, si_) => <fieldset data-panel={si_ + 1} hidden={si_ > 0}>
+        <legend class="lp-step__h">{l.steps?.[si_]}</legend>
+        {list.map((x: any) => { const f = field(x); return <div class="field" data-key={x.key} data-type={x.type} data-required={x.required ? '1' : ''}>
+          {x.type === 'radio' ? <span class="lp-lbl" id={f.id + '-l'}>{x.label} {f.star && <span aria-hidden="true" class="lp-star">{f.star}</span>}</span> : <label for={f.id}>{x.label} {f.star && <span aria-hidden="true" class="lp-star">{f.star}</span>}</label>}
+          {x.type === 'select' ? <select id={f.id} name={x.key} required={x.required}><option value="">{l.choose}</option>{(x.options || []).map((o: string) => <option value={o}>{o}</option>)}</select>
+            : x.type === 'radio' ? <div class="lp-radios" role="radiogroup" aria-labelledby={f.id + '-l'}>{(x.options || []).map((o: string) => <label><input type="radio" name={x.key} value={o} /><span>{o}</span></label>)}</div>
+            : x.type === 'textarea' ? <textarea id={f.id} name={x.key} rows="4" required={x.required}></textarea>
+            : <input id={f.id} name={x.key} type={x.type} required={x.required} autocomplete={x.key === 'name' ? 'name' : x.key === 'email' ? 'email' : x.key === 'company' ? 'organization' : x.key === 'title' ? 'organization-title' : undefined} />}
+          <span class="err" aria-live="polite"></span>
+        </div>; })}
+      </fieldset>)}
+      <fieldset data-panel="3" hidden>
+        <legend class="lp-step__h">{l.gridHeading}</legend>
+        <p class="lp-grid__i">{l.gridIntro}</p>
+        <div class="lp-quad" role="group" aria-label={l.gridHeading}>{grid.cells.map((g: any) => <button type="button" data-grid={g.id} data-result={g.result} aria-pressed="false"><span>{g.tag}</span><span>{g.label}</span></button>)}</div>
+        <span class="err" id="grid-err" aria-live="polite"></span>
+        {turnstile && <div class="cf-turnstile" data-sitekey={turnstile} data-theme="light"></div>}
       </fieldset>
       <div data-panel="4" hidden class="lp-done" role="status">
-        <p class="label" style="color:var(--teal)">Your place on the grid</p>
-        <p id="done-result" style="margin:0;font-family:var(--serif);font-size:clamp(28px,3vw,36px);line-height:1.1"></p>
-        <p id="done-msg" style="margin:0;color:var(--muted)"></p>
-        <div id="booking" class="lp-booking"></div>
+        <p class="lp-done__l">{l.doneLabel}</p>
+        <p id="done-result" class="lp-done__r"></p>
+        <p id="done-msg" class="lp-done__t"></p>
+        {p.booking_url && <div id="booking" class="lp-booking"></div>}
         {p.magnet_title && <div class="lp-magnet"><span aria-hidden="true"></span><div><strong>{p.magnet_title}</strong><span id="done-magnet"></span></div></div>}
       </div>
       <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp" />
-      {turnstile && <div class="cf-turnstile" data-sitekey={turnstile} data-theme="light"></div>}
-      <div class="lp-nav"><button type="button" id="back" class="lp-back">← Back</button><button type="submit" id="next" class="btn btn--navy" style="padding:14px 24px;font-size:15px">Continue →</button></div>
-      <p class="note" id="lp-status">Protected by Cloudflare Turnstile. Your answers go to Eichenberg & Associates only. No marketing emails without your say-so.</p>
+      <div class="lp-nav"><button type="button" id="back" class="lp-back">{l.back}</button><button type="submit" id="next" class="lp-next">{l.next}</button></div>
+      <p class="lp-note" id="lp-status" aria-live="polite" data-note={l.note}>{l.note}</p>
     </form>
   </section>
-  {turnstile && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
-</Base>
+  {turnstile && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+</Landing>
 <style>
-.lp-hero .hero__half{display:none}
+.lp-hero{position:relative;overflow:hidden;isolation:isolate}
+.lp-hero__bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.lp-hero__tint{position:absolute;inset:0;z-index:1;background:linear-gradient(100deg,rgba(18,15,56,.9) 0%,rgba(18,15,56,.72) 55%,rgba(18,15,56,.4) 100%)}
+.lp-hero__mark{position:absolute;right:-3%;top:-10%;height:120%;width:auto;opacity:.1;pointer-events:none;z-index:1}
+.lp-hero__in{position:relative;z-index:2;padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)}
 .lp-h{margin:0;font-family:Poppins,var(--sans);font-weight:600;font-size:clamp(38px,5.4vw,72px);line-height:1.06;letter-spacing:-.02em;max-width:18ch;text-wrap:balance}
+.lp-sit{margin:24px 0 0;font-size:clamp(18px,1.6vw,21px);line-height:1.5;max-width:54ch;color:#fff}.lp-sit>span:first-child{color:var(--teal);font-weight:600}
 .lp-q{margin:28px 0 0;padding:20px 24px;border-left:2px solid var(--teal);background:rgba(255,255,255,.06);font-family:var(--serif);font-size:clamp(20px,2vw,26px);line-height:1.3;max-width:60ch}
+.lp-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}.lp-cta .btn{white-space:nowrap}.lp-cta>span{display:inline-flex;align-items:center;font-size:14px;color:rgba(255,255,255,.75)}
+.lp-two{padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px}
 .lp-list{list-style:none;margin:0;padding:0;display:grid;gap:14px}.lp-list li{display:flex;gap:14px;font-size:18px;line-height:1.45}
-.lp-list--check li::before{content:"✓";flex:none;width:22px;height:22px;border-radius:50%;background:var(--teal);color:var(--navy);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-top:3px}
-.lp-list--dash li{color:var(--muted)}.lp-list--dash li::before{content:"";flex:none;width:22px;height:2px;background:var(--indigo);margin-top:13px}
-.lp-steps{list-style:none;margin:32px 0 0;padding:0;display:grid;gap:10px}.lp-steps li{display:flex;gap:14px;align-items:center;font-size:15px;color:var(--muted)}
+.lp-list--check li>span:first-child{flex:none;width:22px;height:22px;border-radius:50%;background:var(--teal);color:var(--navy);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-top:3px}
+.lp-list--dash li{color:var(--muted)}.lp-list--dash li>span:first-child{flex:none;width:22px;height:2px;background:var(--indigo);margin-top:13px}
+.lp-eng{background:#fff;border-top:1px solid rgba(18,15,56,.08);border-bottom:1px solid rgba(18,15,56,.08)}
+.lp-eng__in{padding-top:clamp(56px,7vw,88px);padding-bottom:clamp(56px,7vw,88px);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:40px;align-items:start}
+.lp-eng__h{margin:0 0 16px;font-family:var(--serif);font-weight:400;font-size:clamp(30px,3.6vw,46px);line-height:1.08;letter-spacing:-.015em;text-wrap:balance}
+.lp-eng__d{margin:0;font-size:18px;line-height:1.55;color:var(--muted);max-width:46ch}.lp-eng__p{margin:18px 0 0;font-size:15px;font-weight:600}
+.lp-msg{padding:22px 24px;background:var(--navy);color:#fff;border-radius:10px}.lp-msg p{margin:0}.lp-msg p:first-child{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--teal)}.lp-msg p:last-child{font-family:var(--serif);font-size:21px;line-height:1.35}
+.lp-proof{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;font-size:14px;color:var(--muted)}.lp-proof strong{display:block;color:var(--navy)}
+.lp-form-sec{padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;align-items:start}
+.lp-form__h{margin:0 0 18px;font-family:var(--serif);font-weight:400;font-size:clamp(32px,4vw,52px);line-height:1.05;letter-spacing:-.015em;text-wrap:balance}
+.lp-form__i{margin:0;font-size:18px;line-height:1.55;color:var(--muted);max-width:44ch}
+.lp-steps{line-height:normal;list-style:none;margin:32px 0 0;padding:0;display:grid;gap:10px}.lp-steps li{display:flex;gap:14px;align-items:center;font-size:15px;color:var(--muted)}
 .lp-steps span{flex:none;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border:1px solid rgba(18,15,56,.25);color:var(--faint)}
-.lp-steps li.on{color:var(--ink);font-weight:600}.lp-steps li.on span{background:var(--navy);color:#fff;border-color:var(--navy)}.lp-steps li.done span{background:var(--teal);color:var(--navy);border-color:var(--teal)}
-.lp-form{background:#fff;border:1px solid var(--line);border-radius:12px;padding:clamp(24px,3vw,40px);display:grid;gap:20px;min-width:0;box-shadow:0 30px 60px rgba(18,15,56,.08);position:relative}
-.lp-form fieldset{border:0;margin:0;padding:0;display:grid;gap:16px;min-width:0}.lp-form legend{padding:0}
-.lp-progress{height:4px;background:rgba(18,15,56,.08);border-radius:99px;overflow:hidden}.lp-progress div{height:100%;width:8%;background:linear-gradient(90deg,var(--indigo),var(--teal));transition:width .4s}
-.lp-radios{display:grid;gap:8px}.lp-radios label{display:block;cursor:pointer}.lp-radios input{position:absolute;opacity:0}.lp-radios span{display:block;padding:12px 14px;border-radius:6px;border:1px solid rgba(18,15,56,.2);font-size:15px}.lp-radios input:checked+span{border-color:var(--teal);background:rgba(20,182,161,.14)}.lp-radios input:focus-visible+span{outline:3px solid var(--teal)}
-.quad{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;min-width:0}.quad button{min-width:0;text-align:left;border-radius:10px;border:1px solid;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;gap:10px;font:inherit;transition:background .3s,transform .3s}.quad button span:first-child{font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;opacity:.75}.quad button span:last-child{font-family:var(--serif);font-size:clamp(16px,1.6vw,20px);line-height:1.2;overflow-wrap:anywhere}
-.quad--light button{background:var(--paper);color:var(--navy);border-color:rgba(18,15,56,.15);aspect-ratio:1.1;padding:16px}.quad--light button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal)}
-.lp-nav{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.lp-back{padding:12px 16px;background:transparent;border:0;color:var(--indigo);font-weight:500;cursor:pointer}.lp-back[hidden]{visibility:hidden;display:block}
-.lp-done{display:grid;gap:18px;animation:rise .6s ease-out both}
-.lp-booking{border:1px dashed rgba(18,15,56,.3);border-radius:10px;min-height:220px;display:grid;place-items:center;text-align:center;color:var(--faint);font-size:14px;background:var(--paper)}.lp-booking iframe{width:100%;height:660px;border:0;border-radius:10px}
-.lp-magnet{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px 18px;border:1px solid var(--line);border-radius:10px}.lp-magnet>span{width:40px;height:52px;background:var(--navy);border-radius:3px;flex:none}.lp-magnet strong{display:block;font-size:15px}
+.lp-steps li.on{color:var(--navy);font-weight:600}.lp-steps li.on span{background:var(--navy);color:#fff;border-color:var(--navy)}.lp-steps li.done span{background:var(--teal);color:var(--navy);border-color:var(--teal)}
+.lp-form{line-height:normal;background:#fff;border:1px solid var(--line);border-radius:12px;padding:clamp(24px,3vw,40px);display:grid;gap:20px;min-width:0;box-shadow:0 30px 60px rgba(18,15,56,.08);position:relative}
+.lp-form fieldset{border:0;margin:0;padding:0;display:grid;gap:18px;min-width:0;animation:fadeIn .35s ease-out both}.lp-form fieldset[hidden]{display:none}
+.lp-step__h{padding:0;margin:0 0 0;font-family:var(--serif);font-weight:400;font-size:26px;color:var(--navy);float:left;width:100%}
+.lp-form .field label,.lp-lbl{font-size:14px;font-weight:500}.lp-star{color:var(--indigo)}
+.lp-progress{height:4px;background:rgba(18,15,56,.08);border-radius:99px;overflow:hidden}.lp-progress div{height:100%;width:8%;background:linear-gradient(90deg,var(--indigo),var(--teal));transition:width .4s cubic-bezier(.2,.7,.2,1)}
+.lp-radios{display:grid;gap:8px}.lp-radios label{display:block;cursor:pointer;position:relative}.lp-radios input{position:absolute;opacity:0;width:1px;height:1px}
+.lp-radios span{display:block;padding:12px 14px;border-radius:6px;border:1px solid rgba(18,15,56,.2);background:#fff;font-size:15px;font-weight:400;color:var(--navy);transition:background .2s,border-color .2s}
+.lp-radios input:checked+span{border-color:var(--teal);background:rgba(20,182,161,.14)}.lp-radios input:focus-visible+span{outline:3px solid var(--teal);outline-offset:2px}
+.lp-grid__i{margin:0;font-size:15px;color:var(--muted)}
+.lp-quad{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;min-width:0}
+.lp-quad button{aspect-ratio:1.1;min-width:0;text-align:left;padding:16px;border-radius:10px;border:1px solid rgba(18,15,56,.15);background:var(--paper);color:var(--navy);cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;gap:10px;font:inherit;transition:background .3s,transform .3s,border-color .3s}
+.lp-quad button:hover{transform:translateY(-3px)}.lp-quad button[aria-pressed="true"]{background:var(--teal);border-color:var(--teal)}
+.lp-quad span:first-child{font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;opacity:.75}.lp-quad span:last-child{font-family:var(--serif);font-size:clamp(16px,1.6vw,20px);line-height:1.2;overflow-wrap:anywhere}
+.lp-nav{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.lp-nav[hidden]{display:none}
+.lp-back{padding:12px 16px;background:transparent;border:0;color:var(--indigo);font-weight:500;cursor:pointer}.lp-back.off{visibility:hidden}
+.lp-next{padding:14px 24px;background:var(--navy);color:#fff;font-weight:600;border:0;border-radius:6px;cursor:pointer;transition:background .2s,transform .2s}.lp-next:hover{background:var(--indigo);transform:translateY(-2px)}.lp-next:disabled{opacity:.6;cursor:wait}
+.lp-note{margin:0;font-size:12.5px;color:var(--faint)}
+.lp-done{display:grid;gap:18px;animation:dropIn .6s cubic-bezier(.2,.8,.2,1) both}.lp-done[hidden]{display:none}
+.lp-done__l{margin:0;font-size:12px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--teal)}
+.lp-done__r{margin:0;font-family:var(--serif);font-size:clamp(28px,3vw,36px);line-height:1.1;color:var(--navy)}.lp-done__t{margin:0;font-size:16px;line-height:1.55;color:var(--muted)}
+.lp-booking{border:1px dashed rgba(18,15,56,.3);border-radius:10px;background:var(--paper);min-height:220px;overflow:hidden}.lp-booking :global(iframe){display:block;width:100%;height:660px;border:0}
+.lp-magnet{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px 18px;border:1px solid var(--line);border-radius:10px}.lp-magnet>span{width:40px;height:52px;background:var(--navy);border-radius:3px;flex:none}.lp-magnet>div{flex:1;min-width:200px}.lp-magnet strong{display:block;font-size:15px}.lp-magnet #done-magnet{font-size:14px;color:var(--muted)}
 .hp{position:absolute;left:-9999px}
 </style>
 <script>
-  const form = document.getElementById('lp-form') as HTMLFormElement, bar = form.querySelector('.lp-progress div') as HTMLElement, steps = [...document.querySelectorAll<HTMLElement>('.lp-steps li')];
-  const panels = [1, 2, 3, 4].map((n) => form.querySelector<HTMLElement>(`[data-panel="${n}"]`)!); const back = document.getElementById('back')!, next = document.getElementById('next')!, status = document.getElementById('lp-status')!;
+  const form = document.getElementById('lp-form') as HTMLFormElement, m = JSON.parse(form.dataset.msg || '{}');
+  const bar = form.querySelector('.lp-progress div') as HTMLElement, steps = [...document.querySelectorAll<HTMLElement>('.lp-steps li')];
+  const panels = [1, 2, 3, 4].map((n) => form.querySelector<HTMLElement>(`[data-panel="${n}"]`)!);
+  const back = document.getElementById('back')!, next = document.getElementById('next') as HTMLButtonElement, status = document.getElementById('lp-status')!, nav = form.querySelector('.lp-nav') as HTMLElement;
   let step = 1, grid: HTMLButtonElement | null = null;
-  const show = () => { panels.forEach((p, i) => p.hidden = i !== step - 1); bar.style.width = (step === 4 ? 100 : (step - 1) * 25 + 8) + '%'; steps.forEach((s, i) => { s.classList.toggle('on', i === step - 1); s.classList.toggle('done', i < step - 1); }); back.toggleAttribute('hidden', step === 1 || step === 4); next.textContent = step === 3 ? 'See my place on the grid' : 'Continue →'; (form.querySelector('.lp-nav') as HTMLElement).hidden = step === 4; (form.querySelector('.cf-turnstile') as HTMLElement | null)?.toggleAttribute('hidden', step !== 3); };
-  const validate = (panel: HTMLElement) => { let ok = true; panel.querySelectorAll<HTMLElement>('.field').forEach((f) => { const inp = f.querySelector<HTMLInputElement | HTMLSelectElement>('input,select,textarea')!; const radios = f.querySelectorAll<HTMLInputElement>('input[type=radio]'); const req = inp.required || [...radios].some((r) => r.required); const val = radios.length ? [...radios].some((r) => r.checked) : inp.value.trim(); const err = f.querySelector('.err')!; let msg = ''; if (req && !val) msg = 'Required.'; if (inp.type === 'email' && inp.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inp.value)) msg = 'Enter a valid work email.'; err.textContent = msg; inp.setAttribute('aria-invalid', String(!!msg)); if (msg) ok = false; }); return ok; };
+  const show = () => {
+    panels.forEach((p, i) => (p.hidden = i !== step - 1));
+    bar.style.width = (step === 4 ? 100 : (step - 1) * 25 + 8) + '%';
+    steps.forEach((s, i) => { s.classList.toggle('on', i === step - 1 && step < 4); s.classList.toggle('done', i < step - 1 || step === 4); s.querySelector('span')!.textContent = i < step - 1 || step === 4 ? '✓' : String(i + 1); });
+    back.classList.toggle('off', step === 1); next.textContent = step === 3 ? m.finish : m.next; nav.hidden = step === 4;
+    if (step === 4) status.hidden = true;
+  };
+  const validate = (panel: HTMLElement) => {
+    let first: HTMLElement | null = null;
+    panel.querySelectorAll<HTMLElement>('.field').forEach((f) => {
+      const radios = [...f.querySelectorAll<HTMLInputElement>('input[type=radio]')]; const inp = f.querySelector<HTMLInputElement>('input:not([type=radio]),select,textarea');
+      const val = radios.length ? radios.some((r) => r.checked) : !!inp?.value.trim(); const err = f.querySelector('.err')!; let msg = '';
+      if (f.dataset.required && !val) msg = m.required;
+      if (inp?.type === 'email' && inp.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inp.value)) msg = m.email;
+      err.textContent = msg; (inp || radios[0])?.setAttribute('aria-invalid', String(!!msg)); if (inp) inp.style.borderColor = msg ? '#B3261E' : '';
+      if (msg && !first) first = inp || radios[0];
+    });
+    (first as HTMLElement | null)?.focus(); return !first;
+  };
   form.querySelectorAll<HTMLButtonElement>('[data-grid]').forEach((b) => b.addEventListener('click', () => { form.querySelectorAll('[data-grid]').forEach((x) => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', 'true'); grid = b; document.getElementById('grid-err')!.textContent = ''; }));
-  back.addEventListener('click', () => { if (step > 1) { step--; show(); } });
-  form.addEventListener('submit', async (e) => { e.preventDefault();
-    if (step < 3) { if (!validate(panels[step - 1])) return; step++; show(); return; }
-    if (!grid) { document.getElementById('grid-err')!.textContent = 'Pick one quadrant to continue.'; return; }
-    const fd = new FormData(form); fd.set('grid', grid.dataset.grid!); fd.set('grid_result', grid.dataset.result!); fd.set('page_slug', form.dataset.slug!);
-    status.textContent = 'Sending…'; next.setAttribute('disabled', '');
-    try { const r = await fetch('/api/lead', { method: 'POST', body: fd }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Something went wrong.');
-      step = 4; show(); document.getElementById('done-result')!.textContent = grid.dataset.result!; const first = String(fd.get('name') || '').split(' ')[0] || 'there';
-      document.getElementById('done-msg')!.textContent = `Thanks, ${first}. We’ve got your answers and will reply within two business days. Pick a time below if you’d rather talk sooner.`;
-      const bk = document.getElementById('booking')!; const url = form.dataset.booking; if (url) { const f = document.createElement('iframe'); f.src = url + (url.includes('?') ? '&' : '?') + 'hide_gdpr_banner=1&name=' + encodeURIComponent(String(fd.get('name'))) + '&email=' + encodeURIComponent(String(fd.get('email'))); f.title = 'Book a call'; bk.replaceChildren(f); } else bk.innerHTML = '<div><strong style="display:block;color:#120F38;font-size:16px;margin-bottom:6px">Booking link not set</strong>Add the Calendly URL in Dashboard → Landing pages.</div>';
-      const dm = document.getElementById('done-magnet'); if (dm) dm.textContent = 'On its way to ' + fd.get('email') + '.';
-      status.textContent = ''; (window as any).plausible?.('Lead submitted', { props: { page: form.dataset.slug, grid: grid.dataset.grid } });
-    } catch (err: any) { status.textContent = err.message + ' You can also email jennifer@eichenbergassociates.com.'; next.removeAttribute('disabled'); } });
+  back.addEventListener('click', () => { if (step > 1 && step < 4) { step--; show(); } });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (step < 3) { if (!validate(panels[step - 1])) return; step++; show(); panels[step - 1].querySelector<HTMLElement>('input,select,textarea,button')?.focus(); return; }
+    if (!grid) { document.getElementById('grid-err')!.textContent = m.grid; return; }
+    const fd = new FormData(form); fd.set('grid', grid.dataset.grid!); fd.set('page_slug', form.dataset.slug!);
+    status.textContent = m.sending; next.disabled = true;
+    try {
+      const r = await fetch('/api/lead', { method: 'POST', body: fd }); const j = await r.json(); if (!r.ok) throw new Error(j.error || m.failure);
+      step = 4; show();
+      document.getElementById('done-result')!.textContent = grid.dataset.result!;
+      const first = String(fd.get('name') || '').trim().split(' ')[0] || 'there';
+      document.getElementById('done-msg')!.textContent = m.done.replace('{first}', first);
+      const bk = document.getElementById('booking'); const url = form.dataset.booking;
+      if (bk && url && /^https:\/\//.test(url)) { const f = document.createElement('iframe'); f.src = url + (url.includes('?') ? '&' : '?') + 'hide_gdpr_banner=1&name=' + encodeURIComponent(String(fd.get('name') || '')) + '&email=' + encodeURIComponent(String(fd.get('email') || '')); f.title = m.booking; f.loading = 'lazy'; bk.replaceChildren(f); }
+      const dm = document.getElementById('done-magnet'); if (dm) dm.textContent = m.magnet.replace('{email}', String(fd.get('email') || ''));
+      (window as any).plausible?.('Lead submitted', { props: { page: form.dataset.slug, grid: grid.dataset.grid } });
+      panels[3].focus?.();
+    } catch (err: any) { status.textContent = (err.message || m.failure) + ' ' + m.fallback; next.disabled = false; (window as any).turnstile?.reset(); }
+  });
   show();
 </script>

@@ -1,27 +1,31 @@
 ---
-// Renders merged feed posts. Server-rendered at build with whatever is live, then refreshed client-side from /api/feed.
+// Merged feed posts: rendered on the server, then refreshed in the browser from /api/feed.
 import { allPosts, fmtDate } from '../lib/feeds';
+import { setting } from '../lib/content';
 interface Props { limit?: number; variant?: 'cards' | 'list' }
 const { limit = 3, variant = 'cards' } = Astro.props;
 const { items, errors } = await allPosts(limit);
+const feeds = await setting('feeds');
 ---
 <div class={'feed feed--' + variant} data-feed data-limit={limit}>
   {items.map((p) => <a href={p.link} target={p.local ? undefined : '_blank'} rel={p.local ? undefined : 'noopener'} class="feed__item"><p class="label" style="color:var(--teal);margin:0">{p.source}</p><h3>{p.title}</h3><p class="feed__x">{p.excerpt}</p><p class="note" style="margin:0">{fmtDate(p.date)}</p></a>)}
-  {!items.length && <p class="note feed__empty">First post coming soon.</p>}
+  {!items.length && <p class="note feed__empty">{feeds.emptyText}</p>}
 </div>
 {import.meta.env.DEV && errors.length > 0 && <p class="note">Feed errors (dev only): {errors.join(' · ')}</p>}
-<style>
+<style is:global>
 .feed--cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.feed--list{display:grid;gap:10px}
 .feed__item{display:grid;gap:10px;align-content:start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 28px;color:var(--ink);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s}.feed--list .feed__item{background:#fff;padding:28px 32px}
 .feed__item:hover{transform:translateY(-4px);box-shadow:0 20px 36px rgba(18,15,56,.1);color:var(--ink)}
-.feed__item h3{margin:0;font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.15}.feed--list .feed__item h3{font-size:28px}.feed__x{margin:0;font-size:15px;line-height:1.5;color:var(--muted)}
+.feed__item h3{margin:0;font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.15}.feed--list .feed__item h3{font-size:28px;line-height:1.1}.feed__x{margin:0;font-size:15px;line-height:1.5;color:var(--muted)}
+.feed--list .feed__item p.note{font-size:14px}
 </style>
 <script>
-  // Hydrate with the live merged feed so new remote posts show without a rebuild.
+  // Refresh with the live merged feed so new remote posts show without a reload of the server cache.
   document.querySelectorAll<HTMLElement>('[data-feed]').forEach(async (el) => {
     try { const r = await fetch('/api/feed?limit=' + el.dataset.limit); const { items } = await r.json(); if (!items?.length) return;
       const fmt = (d: string) => { const x = new Date(d); return isNaN(+x) ? '' : x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
-      const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
-      el.innerHTML = items.map((p: any) => `<a href="${esc(p.link)}" ${p.local ? '' : 'target="_blank" rel="noopener"'} class="feed__item"><p class="label" style="color:var(--teal);margin:0">${esc(p.source)}</p><h3>${esc(p.title)}</h3><p class="feed__x">${esc(p.excerpt || '')}</p><p class="note" style="margin:0">${fmt(p.date)}</p></a>`).join('');
+      const esc = (s: string) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+      const safe = (u: string) => (/^(https?:|\/)/.test(u) ? u : '#');
+      el.innerHTML = items.map((p: any) => `<a href="${esc(safe(p.link))}" ${p.local ? '' : 'target="_blank" rel="noopener"'} class="feed__item"><p class="label" style="color:var(--teal);margin:0">${esc(p.source)}</p><h3>${esc(p.title)}</h3><p class="feed__x">${esc(p.excerpt || '')}</p><p class="note" style="margin:0">${fmt(p.date)}</p></a>`).join('');
     } catch {} });
 </script>

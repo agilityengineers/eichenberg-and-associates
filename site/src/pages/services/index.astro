@@ -1,32 +1,33 @@
 ---
 import Base from '../../layouts/Base.astro';
-import c from '../../content/pages/services.json';
+import { getDocs, page, setting } from '../../lib/content';
 import { si } from '../../lib/si';
-import { getCollection } from 'astro:content';
-const services = (await getCollection('services')).sort((a, b) => a.data.order - b.data.order);
-const timeline = c.timeline.map((t) => [t.when, t.what]);
+const [c, golive] = await Promise.all([page('services'), setting('golive')]);
+const services = await getDocs('services');
+const stages = ['kickoff', 'delivery', 'assess', 'after'];
+const goliveCfg = JSON.stringify({ monthsOut: golive.monthsOut, daysOut: golive.daysOut, afterGoLive: golive.afterGoLive, advice: golive.advice });
 ---
 <Base title={c.title} description={c.description}>
   <section class="wrap" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(40px,5vw,64px)">
     <p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="max-width:14ch;animation-delay:.1s">{c.heading}</h1>
-    <p class="lead" style="margin-top:28px">{c.lead}</p>
+    <p class="lead rise" style="margin-top:28px;animation-delay:.3s" set:html={si(c.lead)} />
   </section>
   <section class="wrap" style="padding-bottom:clamp(64px,8vw,96px)">
-    <div class="tlbox">
-      <div class="tlbox__hd"><label for="golive2">Where is your go-live?</label><output id="golive2-out" for="golive2" aria-live="polite">9 months out</output></div>
+    <div class="tlbox" data-golive={goliveCfg}>
+      <div class="tlbox__hd"><label for="golive2">{golive.label}</label><output id="golive2-out" for="golive2" aria-live="polite"></output></div>
       <input id="golive2" type="range" min="0" max="12" step="1" value="9" />
-      <ol class="tl">{timeline.map(([w, t], i) => <li data-stage={['kickoff', 'delivery', 'assess', 'after'][i]}><span class="label" style="color:var(--teal);display:block;margin-bottom:8px">{w}</span><span style="font-size:17px;font-weight:500">{t}</span></li>)}</ol>
-      <p id="golive2-advice" style="margin:18px 0 0;font-size:15px;line-height:1.45"></p>
+      <ol class="tl">{(c.timeline || []).map((t: { when: string; what: string }, i: number) => <li data-stage={stages[i]}><span class="tl__w">{t.when}</span><span class="tl__t">{t.what}</span></li>)}</ol>
+      <p data-advice style="margin:18px 0 0;font-size:15px;line-height:1.45;color:var(--ink)"></p>
     </div>
   </section>
   {services.map((s, i) => <section id={s.slug} style={`border-top:1px solid var(--line);background:${i % 2 ? '#fff' : 'var(--paper)'}`}>
     <div class="wrap grid" data-reveal style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
-      <div><p class="eyebrow eyebrow--teal">{s.data.when}</p><h2 class="h2" style="font-size:clamp(36px,4.6vw,60px);line-height:1.02;margin-bottom:20px">{s.data.title}</h2><p class="lead" style="margin:0;max-width:40ch">{s.data.lead}</p>{s.data.showPrice && <p style="margin:24px 0 0;font-weight:600">{s.data.price}</p>}</div>
+      <div><p class="eyebrow eyebrow--teal">{s.data.when}</p><h2 class="h2" style="font-size:clamp(36px,4.6vw,60px);line-height:1.02;margin-bottom:20px">{s.data.title}</h2><p class="lead" style="margin:0;max-width:40ch;line-height:1.5" set:html={si(s.data.lead)} />{s.data.showPrice && <p style="margin:24px 0 0;font-size:15px;font-weight:600">{s.data.price}</p>}</div>
       <div style="display:grid;gap:28px;align-content:start">
-        <div><h3 class="label" style="margin:0 0 12px">Who it's for</h3><p style="margin:0;font-size:17px" set:html={si(s.data.who)} /></div>
-        <div><h3 class="label" style="margin:0 0 12px">What you get</h3><ul style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:17px">{s.data.points.map((p) => <li set:html={si(p)} />)}</ul></div>
-        <blockquote class="quote" set:html={si(s.data.message)} />
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"><a href="/contact" class="btn btn--navy" style="padding:14px 22px;font-size:15px">{s.data.cta}</a><a href={`/services/${s.slug}`} class="link">Details →</a></div>
+        <div><h3 class="label" style="margin:0 0 12px">{c.whoLabel}</h3><p style="margin:0;font-size:17px;line-height:1.55" set:html={si(s.data.who)} /></div>
+        <div><h3 class="label" style="margin:0 0 12px">{c.getLabel}</h3><ul style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:17px;line-height:1.5">{(s.data.points || []).map((p: string) => <li set:html={si(p)} />)}</ul></div>
+        <blockquote class="quote" style="border-radius:8px" set:html={si(s.data.message)} />
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"><a href="/contact" class="btn btn--navy" style="padding:14px 22px;font-size:15px">{s.data.cta}</a><a href={`/services/${s.slug}`} class="link">{c.detailsLabel}</a></div>
       </div>
     </div>
   </section>)}
@@ -35,13 +36,7 @@ const timeline = c.timeline.map((t) => [t.when, t.what]);
 .tlbox{background:#fff;border:1px solid var(--line);border-radius:10px;padding:clamp(22px,3vw,32px);animation:rise .7s .4s ease-out both}
 .tlbox__hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}.tlbox__hd label{font-size:15px;font-weight:600}.tlbox__hd output{font-family:var(--serif);font-size:26px;color:var(--indigo)}
 .tlbox input{width:100%;margin:16px 0 18px;cursor:pointer}
-.tl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.tl li{padding:18px;border-radius:8px;background:var(--paper);border:1px solid var(--line);transition:background .4s,color .4s,border-color .4s}.tl li.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.tl li{padding:18px;border-radius:8px;background:var(--paper);color:var(--ink);border:1px solid var(--line);transition:background .4s,color .4s,border-color .4s}.tl li.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tl__w{display:block;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}.tl__t{display:block;font-size:17px;font-weight:500}
 </style>
-<script>
-  const r = document.getElementById('golive2') as HTMLInputElement, out = document.getElementById('golive2-out')!, adv = document.getElementById('golive2-advice')!;
-  const advice: Record<string, string> = { kickoff: 'Program funded, SI selected, date set. Start with Project Role Readiness at kickoff, inside a phased OCM Leadership engagement: Prepare first.', delivery: 'You’re in delivery. OCM Leadership runs the Act phase, with contract associates for production work and a Readiness Assessment coming at 90 days or less.', assess: '90 days or less before go-live: a 3–4 week Readiness Assessment. Know, with evidence, whether people can perform. It leads into gap-closure work.', after: 'Go-live plus 90 days: the Sustain check-in. A read on adoption, and planning for the next initiative.' };
-  const update = () => { const m = +r.value; const stage = m >= 7 ? 'kickoff' : m >= 4 ? 'delivery' : m >= 1 ? 'assess' : 'after';
-    out.textContent = m === 0 ? 'Go-live + 90 days' : m <= 3 ? m * 30 + ' days out' : m + ' months out'; adv.textContent = advice[stage];
-    document.querySelectorAll<HTMLElement>('.tl li').forEach((li) => li.classList.toggle('on', li.dataset.stage === stage)); };
-  r.addEventListener('input', update); update();
-</script>
+<script>import '../../scripts/golive';</script>

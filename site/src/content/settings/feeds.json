@@ -15,5 +15,7 @@
       "url": "https://rss.app/feeds/PLACEHOLDER.xml",
       "enabled": false
     }
-  ]
+  ],
+  "homeLink": "All insights →",
+  "emptyText": "First post coming soon."
 }

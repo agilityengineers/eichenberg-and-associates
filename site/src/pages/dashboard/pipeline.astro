@@ -1,32 +1,55 @@
 ---
 import Dashboard from '../../layouts/Dashboard.astro';
-export const prerender = false;
-const sb = Astro.locals.sb;
-import { STAGES, STAGE_Q } from '../../lib/personas.js';
-const Q: Record<string, string> = STAGE_Q;
-const { data: deals } = await sb.from('deals').select('*, partners(firm)').order('next_due');
-const GRID: Record<string, string> = { nn: 'Can’t lead · Can’t do', nd: 'Can’t lead · Can do', ln: 'Can lead · Can’t do', ld: 'Can lead · Can do' };
-const cap = (fee: number) => fee ? Math.round(fee * 0.1 / 200) : 15;  // 10% of fee at $200/h
+import { q } from '../../lib/db';
+import { getSettings } from '../../lib/settings';
+import { GRID_SHORT, money, bdCap, shortDate } from '../../lib/dashboard';
+const s = await getSettings();
+const deals = await q('select d.*, p.firm from deals d left join partners p on p.id = d.partner_id order by d.next_due nulls last, d.created_at');
+const proposed = deals.reduce((a, d) => a + Number(d.fee_estimate || 0), 0);
+const accent = (offer: string | null) => (/assess/i.test(offer || '') ? 'var(--teal)' : /anchor/i.test(offer || '') ? 'var(--indigo)' : 'var(--faint)');
 ---
 <Dashboard title="Five stages, from first call to repeat work" eyebrow="Sales process" active="pipeline">
-
-
-<p class="note" style="margin:0 0 16px">Spend up to 10% of the proposed fee to win it. Assessment: 10–15 hours. Anchor: about 100 hours, over months. Drag a card between stages, or use the arrows.</p>
-<section class="cols">{STAGES.map((s, i) => <div class="col" data-stage={s}><h2>{s} <small>{(deals || []).filter((d) => d.stage === s).length}</small></h2><p class="q">{Q[s]}</p>
-  {(deals || []).filter((d) => d.stage === s).map((d) => <article class="deal" draggable="true" data-deal={d.id} style={d.offer && /assess/i.test(d.offer) ? 'border-left-color:var(--teal)' : ''}><div style="display:flex;justify-content:space-between;gap:8px"><strong style="font-size:14px">{d.company}</strong><span style="font-weight:600">{d.fee_estimate ? '$' + Math.round(d.fee_estimate / 1000) + 'K' : '—'}</span></div><span class="note">{d.contact}</span>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">{d.offer && <span class="pill pill--teal" style="font-size:11px">{d.offer}</span>}{d.source && <span class="pill pill--indigo" style="font-size:11px">{d.source}</span>}</div>
-    <dl><dt>Go-live</dt><dd>{d.go_live || '—'}</dd><dt>Partner</dt><dd>{d.partners?.firm || '—'}</dd><dt>Grid</dt><dd>{GRID[d.grid] || '—'}</dd><dt>BD hours</dt><dd style={Number(d.bd_hours) > cap(d.fee_estimate) ? 'color:#B3261E' : ''}>{d.bd_hours} of {cap(d.fee_estimate)}h budget</dd></dl>
-    <p style="margin:0;padding-top:8px;border-top:1px solid rgba(18,15,56,.08)"><strong>Next:</strong> {d.next_step || '—'} <span class="note">· {d.next_due || ''}</span></p>
-    <div class="acts">{i > 0 && <button data-action="patch" data-table="deals" data-id={d.id} data-field="stage" data-value={STAGES[i - 1]}>←</button>}{i < 4 && <button class="adv" data-action="patch" data-table="deals" data-id={d.id} data-field="stage" data-value={STAGES[i + 1]}>Advance →</button>}<a href={'/dashboard/deal?id=' + d.id} class="note" style="align-self:center">Edit</a></div></article>)}
-</div>)}</section>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:16px;font-size:13px;color:var(--muted)">
+    <span><strong style="color:var(--navy)">{money(proposed)}</strong> proposed across {deals.length} deals</span><span>·</span><span>Spend up to 10% of the proposed fee to win it</span><span>·</span><span>Drag a card to move it between stages, or use the arrows</span>
+  </div>
+  <section class="cols" id="cols">{s.stages.map((st, i) => <div class="col" data-stage={i}>
+    <div style="padding:4px 6px 8px"><h2 class="col__h">{st.name} <span>{deals.filter((d) => d.stage === i).length}</span></h2><p class="col__q">{st.question}</p></div>
+    {deals.filter((d) => d.stage === i).map((d) => { const cap = bdCap(d.fee_estimate); return <article class="deal" draggable="true" data-deal={d.id} style={`border-left-color:${accent(d.offer)}`}>
+      <div style="display:flex;justify-content:space-between;gap:8px"><a href={'/dashboard/deal?id=' + d.id} class="deal__co">{d.company}</a><span style="font-weight:600;white-space:nowrap">{d.fee_estimate ? money(Number(d.fee_estimate)) : '—'}</span></div>
+      <span class="muted">{d.contact}</span>
+      {(d.offer || d.source) && <div style="display:flex;gap:6px;flex-wrap:wrap">{d.offer && <span class="pill pill--teal14" style="font-size:11px;padding:2px 8px">{d.offer}</span>}{d.source && <span class="pill pill--indigo" style="font-size:11px;padding:2px 8px">{d.source}</span>}</div>}
+      <dl><dt>Go-live</dt><dd>{d.go_live || '—'}</dd><dt>Partner</dt><dd>{d.firm || '—'}</dd><dt>Grid</dt><dd>{GRID_SHORT[d.grid] || '—'}</dd><dt>BD hours</dt><dd style={Number(d.bd_hours) > cap ? 'color:#B3261E' : ''}>{Number(d.bd_hours)} of {cap}h budget</dd></dl>
+      <p class="deal__next"><strong>Next:</strong> {d.next_step || '—'} <span class="faint">· {shortDate(d.next_due)}</span></p>
+      <div class="deal__acts"><button type="button" data-action="patch" data-table="deals" data-id={d.id} data-field="stage" data-value={Math.max(0, i - 1)} disabled={i === 0} aria-label="Move back a stage">←</button><button type="button" class="adv" data-action="patch" data-table="deals" data-id={d.id} data-field="stage" data-value={Math.min(4, i + 1)} disabled={i === 4}>Advance →</button></div>
+    </article>; })}
+  </div>)}</section>
+  <form data-save="deals" data-method="POST" data-reload class="addrow"><input name="company" required class="inp" placeholder="Company" aria-label="Company" /><input name="contact" class="inp" placeholder="Contact, title" aria-label="Contact" style="flex:1;min-width:180px" /><button class="dbtn dbtn--sm" type="submit">+ Add deal</button><span role="status" class="faint" style="font-size:12px"></span></form>
 </Dashboard>
-<style>.deal[draggable]{cursor:grab}.deal.dragging{opacity:.45}.col.over{background:rgba(20,182,161,.12);outline:1px dashed var(--teal)}</style>
+<style>
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;align-items:start}
+.col{background:rgba(18,15,56,.04);border:1px dashed rgba(18,15,56,.08);border-radius:12px;padding:12px;display:grid;gap:10px;min-height:200px;align-content:start;transition:background .2s,border-color .2s}
+.cols.dragging .col{border-color:rgba(18,15,56,.25)}.col.over{background:rgba(20,182,161,.12);border-color:var(--teal)!important}
+.col__h{margin:0;font-family:var(--serif);font-weight:400;font-size:22px}.col__h span{font-size:13px;color:var(--faint);font-family:var(--sans)}.col__q{margin:4px 0 0;font-size:12px;color:var(--faint);font-style:italic}
+.deal{background:#fff;border:1px solid var(--line);border-left:3px solid var(--indigo);border-radius:10px;padding:14px;display:grid;gap:8px;font-size:13px;cursor:grab;transition:opacity .2s,transform .2s,box-shadow .2s}
+.deal:hover{box-shadow:0 10px 24px rgba(18,15,56,.12);transform:translateY(-2px)}.deal.dragging{opacity:.45}
+.deal__co{font-size:14px;font-weight:600;color:var(--ink)}.deal__co:hover{color:var(--indigo)}
+.deal dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;color:var(--muted)}.deal dd{margin:0;color:var(--ink)}
+.deal__next{margin:0;padding-top:8px;border-top:1px solid rgba(18,15,56,.08)}
+.deal__acts{display:flex;justify-content:space-between;gap:6px}.deal__acts button{padding:6px 10px;border-radius:6px;border:1px solid rgba(18,15,56,.15);background:#fff;cursor:pointer;font-size:12px;font-family:inherit}.deal__acts button.adv{border:0;background:var(--navy);color:#fff;font-weight:600}.deal__acts button:disabled{opacity:.35;cursor:default}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
+</style>
 <script>
-  let dragId: string | null = null;
-  document.querySelectorAll<HTMLElement>('.deal[draggable]').forEach((c) => { c.addEventListener('dragstart', (e) => { dragId = c.dataset.deal!; e.dataTransfer!.setData('text/plain', dragId); e.dataTransfer!.effectAllowed = 'move'; c.classList.add('dragging'); }); c.addEventListener('dragend', () => { c.classList.remove('dragging'); document.querySelectorAll('.col.over').forEach((x) => x.classList.remove('over')); }); });
+  import { api } from '../../scripts/dashboard';
+  const cols = document.getElementById('cols')!; let dragId: string | null = null;
+  document.querySelectorAll<HTMLElement>('.deal[draggable]').forEach((c) => {
+    c.addEventListener('dragstart', (e) => { dragId = c.dataset.deal!; e.dataTransfer!.setData('text/plain', dragId); e.dataTransfer!.effectAllowed = 'move'; c.classList.add('dragging'); cols.classList.add('dragging'); });
+    c.addEventListener('dragend', () => { c.classList.remove('dragging'); cols.classList.remove('dragging'); document.querySelectorAll('.col.over').forEach((x) => x.classList.remove('over')); });
+  });
   document.querySelectorAll<HTMLElement>('.col[data-stage]').forEach((col) => {
     col.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer!.dropEffect = 'move'; col.classList.add('over'); });
     col.addEventListener('dragleave', (e) => { if (!col.contains(e.relatedTarget as Node)) col.classList.remove('over'); });
-    col.addEventListener('drop', async (e) => { e.preventDefault(); col.classList.remove('over'); const id = e.dataTransfer!.getData('text/plain') || dragId; if (!id) return; const card = document.querySelector(`[data-deal="${id}"]`); if (card) col.appendChild(card); await (window as any).api('deals', 'PATCH', { id, stage: col.dataset.stage }); location.reload(); });
+    col.addEventListener('drop', async (e) => { e.preventDefault(); col.classList.remove('over'); const id = e.dataTransfer!.getData('text/plain') || dragId; if (!id) return;
+      const card = document.querySelector(`[data-deal="${id}"]`); if (card) col.appendChild(card);
+      try { await api('deals', 'PATCH', { id, stage: Number(col.dataset.stage) }); } finally { location.reload(); } });
   });
 </script>

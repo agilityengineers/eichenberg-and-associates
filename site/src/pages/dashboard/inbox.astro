@@ -1,16 +1,37 @@
 ---
 import Dashboard from '../../layouts/Dashboard.astro';
-export const prerender = false;
-const sb = Astro.locals.sb;
-const { data: leads } = await sb.from('leads').select('*').order('created_at', { ascending: false }).limit(200);
-const { data: pages } = await sb.from('landing_pages').select('slug,eyebrow'); const label = (s: string) => (pages || []).find((p) => p.slug === s)?.eyebrow || s || 'Contact form';
-const GRID: Record<string, string> = { nn: 'Can’t lead · Can’t do', nd: 'Can’t lead · Can do', ln: 'Can lead · Can’t do', ld: 'Can lead · Can do' };
+import { q } from '../../lib/db';
+import { getSettings } from '../../lib/settings';
+import { GRID_SHORT } from '../../lib/dashboard';
+const filter = Astro.url.searchParams.get('page') || 'all';
+const [pages, s] = await Promise.all([q('select slug, eyebrow from landing_pages order by slug'), getSettings()]);
+const where = filter === 'all' ? '' : filter === 'contact' ? "where l.source = 'contact'" : 'where l.page_slug = $1';
+const leads = await q(`select l.*, d.stage from leads l left join deals d on d.id = l.deal_id ${where} order by l.created_at desc limit 300`, where.includes('$1') ? [filter] : []);
+const label = (slug: string | null) => (slug ? pages.find((p) => p.slug === slug)?.eyebrow || slug : 'Contact form');
+const order = ['operations', 'sponsor-90-days', 'pmo', 'integration', 'si-partners'];
+const filters = [['all', 'All pages'], ...pages.slice().sort((a, b) => order.indexOf(a.slug) - order.indexOf(b.slug)).map((p) => [p.slug, p.eyebrow]), ['contact', 'Contact form']];
+const when = (d: Date) => { const t = new Date(), y = new Date(Date.now() - 864e5); const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  return same(d, t) ? 'Today ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : same(d, y) ? 'Yesterday' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+const qorder = await q('select page_slug, key from form_questions where step = 2 order by page_slug, position');
+const rank = (slug: string | null, k: string) => { const i = slug ? qorder.findIndex((x) => x.page_slug === slug && x.key === k) : ['situation', 'message'].indexOf(k); return i < 0 ? 999 : i; };
+const key = (l: { page_slug: string | null; answers: Record<string, string> }) => Object.entries(l.answers || {}).sort((x, y) => rank(l.page_slug, x[0]) - rank(l.page_slug, y[0])).map(([, v]) => v).join(' · ').slice(0, 160);
 ---
 <Dashboard title="Form submissions" eyebrow="Lead inbox" active="inbox">
-
-
-<section class="panel" style="overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Received</th><th>Lead</th><th>Page</th><th>Grid</th><th>Answers</th><th></th></tr></thead><tbody>
-{(leads || []).map((l) => <tr><td style="white-space:nowrap;color:var(--muted)">{new Date(l.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td><td><strong style="display:block">{l.name}</strong><span class="note">{[l.title, l.company].filter(Boolean).join(', ')}</span><br /><a href={'mailto:' + l.email} style="font-size:13px">{l.email}</a></td><td><span class="pill pill--indigo">{label(l.page_slug)}</span></td><td class="note" style="white-space:nowrap">{GRID[l.grid] || '—'}</td><td class="note" style="max-width:320px">{Object.entries(l.answers || {}).map(([k, v]) => <div><b>{k}:</b> {String(v)}</div>)}</td><td style="white-space:nowrap">{l.deal_id ? <a href="/dashboard/pipeline" class="pill pill--teal">In pipeline ✓</a> : <button class="btn-sm" data-action="convert" data-id={l.id} data-company={l.company || l.name} data-contact={l.name + (l.title ? ', ' + l.title : '')} data-grid={l.grid}>Add to pipeline</button>}</td></tr>)}
-{!(leads || []).length && <tr><td colspan="6" class="note" style="padding:40px;text-align:center">No submissions yet.</td></tr>}
-</tbody></table></div></section>
+  <section class="panel" style="overflow:hidden">
+    <div style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid rgba(18,15,56,.08);flex-wrap:wrap;align-items:center">
+      {filters.map(([k, l]) => <a class="fpill" href={k === 'all' ? '/dashboard/inbox' : '/dashboard/inbox?page=' + k} aria-current={filter === k ? 'page' : undefined}>{l}</a>)}
+      <span style="margin-left:auto;font-size:13px;color:var(--faint)">{leads.length} submissions</span>
+    </div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Received</th><th>Lead</th><th>Page</th><th>Grid</th><th>Key answer</th><th></th></tr></thead><tbody>
+      {leads.map((l) => <tr>
+        <td style="white-space:nowrap;color:var(--muted)">{when(new Date(l.created_at))}</td>
+        <td><strong style="display:block">{l.name}</strong><span class="muted">{[l.title, l.company].filter(Boolean).join(', ')}</span><br /><a href={'mailto:' + l.email} style="font-size:13px">{l.email}</a></td>
+        <td><span class="pill pill--indigo">{label(l.page_slug)}</span></td>
+        <td style="font-size:13px;color:var(--muted);white-space:nowrap">{GRID_SHORT[l.grid] || '—'}</td>
+        <td style="color:var(--muted);max-width:280px">{key(l) || '—'}</td>
+        <td style="white-space:nowrap">{l.deal_id ? <a href="/dashboard/pipeline" style="font-size:13px;color:var(--teal);font-weight:600">In {s.stages[l.stage ?? 0]?.name} ✓</a> : <button class="dbtn dbtn--sm" data-action="convert" data-id={l.id}>Add to pipeline</button>}</td>
+      </tr>)}
+      {!leads.length && <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--faint)">No submissions yet.</td></tr>}
+    </tbody></table></div>
+  </section>
 </Dashboard>

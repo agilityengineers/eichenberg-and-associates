@@ -1,16 +1,32 @@
 ---
 import Dashboard from '../../layouts/Dashboard.astro';
-export const prerender = false;
-const sb = Astro.locals.sb;
-const { data: partners } = await sb.from('partners').select('*').order('status', { ascending: false }); const n = (s: number) => (partners || []).filter((p) => p.status >= s).length; const S = ['Contacted', 'Meeting', 'Active partner'], C = ['pill--grey', 'pill--indigo', 'pill--teal'];
+import { q } from '../../lib/db';
+import { getSettings } from '../../lib/settings';
+import { shortDate } from '../../lib/dashboard';
+const s = await getSettings(); const t = s.partnerTargets;
+const partners = await q('select * from partners order by status desc, last_touch desc nulls last, firm');
+const at = (n: number) => partners.filter((p) => p.status >= n).length;
+const pct = (a: number, b: number) => Math.min(100, Math.round((a / (b || 1)) * 100)) + '%';
+const funnel = [['Contacts', partners.length, String(t.contacts), t.contacts], ['Meetings', at(1), String(t.meetings), t.meetings], ['Active partners', at(2), t.activeLabel, t.active]] as const;
+const S = ['Contacted', 'Meeting', 'Active partner'], C = ['pill--grey', 'pill--indigo2', 'pill--teal'];
 ---
-<Dashboard title="SI partner tracker" eyebrow="Go-to-market" active="partners">
-
-
-<section class="kpis">{[['Contacts', n(0), 15], ['Meetings', n(1), 5], ['Active partners', n(2), 3]].map(([l, v, t]) => <div class="kpi"><p class="k">{l}</p><p class="v">{v} <small style="font-size:15px;color:var(--faint);font-family:var(--sans)">/ {t} target</small></p><div class="bar" style="margin-top:12px"><div style={`width:${Math.min(100, Math.round((Number(v) / Number(t)) * 100))}%;background:var(--teal)`}></div></div></div>)}</section>
-<section class="panel" style="margin-top:20px;overflow:hidden"><div style="padding:14px 18px;border-bottom:1px solid rgba(18,15,56,.08);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><h2 class="h3" style="font-size:24px">Mid-market SI partners</h2><span class="note">15 contacts → 5 meetings → 2–3 active partners by mid-2027. Click a status to advance it.</span></div>
-<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Firm</th><th>Platform</th><th>Contact</th><th>Status</th><th>Last touch</th><th>Next</th><th></th></tr></thead><tbody>
-{(partners || []).map((p) => <tr><td style="font-weight:600">{p.firm}</td><td class="note">{p.platform}</td><td class="note">{p.contact}<br /><a href={'mailto:' + p.email} style="font-size:12px">{p.email}</a></td><td><button class={'pill ' + C[p.status]} data-action="patch" data-table="partners" data-id={p.id} data-field="status" data-value={(p.status + 1) % 3}>{S[p.status]}</button></td><td class="note" style="white-space:nowrap">{p.last_touch || '—'}</td><td class="note">{p.next_step}</td><td><button class="rm note" data-action="delete" data-table="partners" data-id={p.id} style="border:0;background:none;color:#B3261E;cursor:pointer">Remove</button></td></tr>)}
-</tbody></table></div>
-<form data-save="partners" data-method="POST" style="display:flex;gap:10px;flex-wrap:wrap;padding:14px 18px;border-top:1px solid rgba(18,15,56,.08)"><input name="firm" placeholder="Firm" required style="font:inherit;padding:8px 10px;border:1px solid rgba(18,15,56,.15);border-radius:6px" /><input name="platform" list="pf" placeholder="Platform" style="font:inherit;padding:8px 10px;border:1px solid rgba(18,15,56,.15);border-radius:6px" /><datalist id="pf"><option>NetSuite</option><option>Dynamics</option><option>Epicor</option><option>Workday</option></datalist><input name="contact" placeholder="Contact" style="font:inherit;padding:8px 10px;border:1px solid rgba(18,15,56,.15);border-radius:6px" /><input name="email" type="email" placeholder="Email" style="font:inherit;padding:8px 10px;border:1px solid rgba(18,15,56,.15);border-radius:6px" /><input name="next_step" placeholder="Next step" style="font:inherit;padding:8px 10px;border:1px solid rgba(18,15,56,.15);border-radius:6px;flex:1;min-width:160px" /><button class="btn-sm" type="submit">+ Add contact</button><span role="status" class="note"></span></form></section>
+<Dashboard title="Systems Integrator (SI) partner tracker" eyebrow="Go-to-market" active="partners">
+  <div style="display:grid;gap:20px">
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">{funnel.map(([l, n, tl, tn]) => <div class="kpi kpi--sm"><p class="k">{l}</p><p class="v">{n} <small>/ {tl} target</small></p><div class="bar" style="height:6px;margin-top:12px"><div style={`width:${pct(n, tn)};background:var(--teal);border-radius:0`}></div></div></div>)}</section>
+    <section class="panel" style="overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid rgba(18,15,56,.08);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><h2 class="ph2">Mid-market Systems Integrator (<abbr title="Systems Integrator">SI</abbr>) partners</h2><span style="font-size:13px;color:var(--faint)">{t.note}</span></div>
+      <div style="overflow-x:auto"><table class="tbl tbl--tight"><thead><tr><th>Firm</th><th>Platform</th><th>Contact</th><th>Status</th><th>Last touch</th><th>Next</th><th></th></tr></thead><tbody>
+        {partners.map((p) => <tr><td style="font-weight:600">{p.firm}</td><td class="muted">{p.platform || '—'}</td><td class="muted">{p.contact || '—'}{p.email && <><br /><a href={'mailto:' + p.email} style="font-size:12px">{p.email}</a></>}</td>
+          <td><button class={'pill ' + C[p.status]} data-action="patch" data-table="partners" data-id={p.id} data-field="status" data-value={(p.status + 1) % 3} title="Click to advance">{S[p.status]}</button></td>
+          <td class="muted" style="white-space:nowrap">{p.last_touch ? shortDate(p.last_touch) : '—'}</td><td class="muted">{p.next_step || '—'}</td>
+          <td><button class="lnk-rm" style="font-size:12px;font-weight:500" data-action="delete" data-table="partners" data-id={p.id} data-confirm={`Remove ${p.firm}?`}>Remove</button></td></tr>)}
+        {!partners.length && <tr><td colspan="7" style="padding:32px;text-align:center;color:var(--faint)">No partners yet. Add the first contact below.</td></tr>}
+      </tbody></table></div>
+      <form data-save="partners" data-method="POST" data-reload style="display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;border-top:1px solid rgba(18,15,56,.08)">
+        <input name="firm" required class="inp" placeholder="Firm" aria-label="Firm" /><input name="platform" list="pf" class="inp" placeholder="Platform" aria-label="Platform" style="width:130px" /><datalist id="pf">{s.lists.platforms.map((x) => <option value={x} />)}</datalist>
+        <input name="contact" class="inp" placeholder="Contact" aria-label="Contact" /><input name="email" type="email" class="inp" placeholder="Email" aria-label="Email" /><input name="next_step" class="inp" placeholder="Next step" aria-label="Next step" style="flex:1;min-width:160px" />
+        <button class="dbtn dbtn--sm" type="submit">+ Add contact</button><span role="status" class="faint" style="font-size:12px"></span>
+      </form>
+    </section>
+  </div>
 </Dashboard>

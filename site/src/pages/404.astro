@@ -1,9 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
+import { page } from '../lib/content';
+import { marked } from 'marked';
+const c = await page('not-found');
 ---
-<Base title="Page not found" description="That page isn't here.">
+<Base title={c.title} description={c.description} noindex>
   <section class="wrap" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
-    <p class="eyebrow">404</p><h1 class="display">That page isn't here.</h1>
-    <p class="lead" style="margin-top:28px">Try <a href="/services">Services</a>, <a href="/who-we-serve">Who we serve</a>, or <a href="/contact">Contact</a>.</p>
+    <p class="eyebrow">{c.eyebrow}</p><h1 class="display">{c.heading}</h1>
+    <p class="lead" style="margin-top:28px" set:html={marked.parseInline(c.text || '')} />
   </section>
 </Base>
