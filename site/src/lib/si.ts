@@ -6,3 +6,6 @@ const ABBR = '<abbr title="Systems Integrator">SI</abbr>';
 export const si = (s: string | undefined | null) => escapeHtml(String(s ?? '')).replace(/\bSI\b/g, ABBR);
 /** For Markdown/HTML sources that are rendered afterwards (no escaping). */
 export const siRaw = (s: string) => s.replace(/\bSI\b/g, ABBR);
+/** Persona landing pages: as in their design reference, the spelled-out "Systems Integrator (SI)" stays plain;
+ *  a bare "SI" elsewhere is still wrapped. */
+export const siPlainFirst = (s: string | undefined | null) => escapeHtml(String(s ?? '')).replace(/(?<!Systems Integrator \()\bSI\b/g, ABBR);

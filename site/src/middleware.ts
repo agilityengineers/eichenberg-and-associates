@@ -4,7 +4,7 @@ import { SESSION_COOKIE, userFromCookies } from './lib/auth';
 import { dbConfigured } from './lib/db';
 import { isProd } from './lib/env';
 
-// Old WordPress URLs (formerly netlify.toml redirects).
+// Old WordPress URLs.
 const REDIRECTS: Record<string, string> = { '/speaking-engagements': '/about', '/resources': '/insights', '/book-a-meeting': '/contact' };
 
 const CSP = ["default-src 'self'", "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://plausible.io", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -36,9 +36,10 @@ export const onRequest = defineMiddleware(async ({ request, cookies, locals, red
 
   const res = await next();
   const h = res.headers;
-  h.set('X-Content-Type-Options', 'nosniff'); h.set('X-Frame-Options', 'DENY'); h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  h.set('X-Content-Type-Options', 'nosniff'); h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  if (isProd()) { h.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains'); h.set('Content-Security-Policy', CSP); }
+  // Framing is refused only on the deployed site: the Replit workspace shows the dev server inside an iframe.
+  if (isProd()) { h.set('X-Frame-Options', 'DENY'); h.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains'); h.set('Content-Security-Policy', CSP); }
   if (isAdmin || path === '/login') { h.set('Cache-Control', 'no-store'); h.set('X-Robots-Tag', 'noindex'); }
   return res;
 });

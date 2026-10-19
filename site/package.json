@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
-    "start": "HOST=0.0.0.0 PORT=${PORT:-5000} node ./dist/server/entry.mjs",
+    "start": "NODE_ENV=production HOST=0.0.0.0 PORT=${PORT:-5000} node ./dist/server/entry.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "user:add": "tsx db/user.ts"

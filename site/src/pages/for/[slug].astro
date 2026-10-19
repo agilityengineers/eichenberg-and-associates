@@ -3,7 +3,7 @@
 import Landing from '../../layouts/Landing.astro';
 import { dbConfigured, one, q } from '../../lib/db';
 import { page, setting } from '../../lib/content';
-import { si } from '../../lib/si';
+import { siPlainFirst as si } from '../../lib/si';
 import { env } from '../../lib/env';
 if (!dbConfigured()) return new Response(null, { status: 404 });
 const { slug } = Astro.params;

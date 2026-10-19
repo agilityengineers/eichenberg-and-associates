@@ -2,6 +2,7 @@
 import type { AstroCookies } from 'astro';
 import { q, one } from './db';
 import { newToken, sha256 } from './password';
+import { isProd } from './env';
 
 export const SESSION_COOKIE = 'ea_session';
 const DAYS = 30;
@@ -13,7 +14,10 @@ export async function createSession(userId: string, cookies: AstroCookies, reque
   const token = newToken(); const expires = new Date(Date.now() + DAYS * 864e5);
   await q('insert into sessions (id, user_id, expires_at) values ($1, $2, $3)', [sha256(token), userId, expires]);
   await q('update users set last_login_at = now() where id = $1', [userId]);
-  cookies.set(SESSION_COOKIE, token, { path: '/', httpOnly: true, sameSite: 'lax', secure: secureFor(request), expires });
+  // The Replit workspace previews the dev server inside an iframe on replit.com, where a SameSite=Lax cookie is never
+  // sent back. Dev over HTTPS therefore uses SameSite=None; the deployed site keeps Lax.
+  const secure = secureFor(request);
+  cookies.set(SESSION_COOKIE, token, { path: '/', httpOnly: true, sameSite: !isProd() && secure ? 'none' : 'lax', secure, expires });
 }
 
 export async function userFromCookies(cookies: AstroCookies): Promise<User | null> {
