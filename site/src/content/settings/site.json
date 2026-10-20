@@ -1,7 +1,6 @@
 {
   "name": "Eichenberg & Associates",
   "tagline": "Trained isn't ready.",
-  "positioning": "Your Systems Integrator (SI) knows the system. We know your people.",
   "description": "Change management for mid-market go-lives. Readiness across ERP, PM and HR, led by a senior practitioner on a fixed fee.",
   "email": "jennifer@eichenbergassociates.com",
   "phone": "+1 (734) 620-4162",
@@ -29,5 +28,53 @@
       "label": "Insights",
       "href": "/insights"
     }
-  ]
+  ],
+  "ctaLabel": "Start a conversation",
+  "ctaHref": "/contact",
+  "certification": "WBENC certified",
+  "footer": {
+    "tagline": "Trained isn't ready. We make sure your people can actually perform on day one.",
+    "servicesHeading": "Services",
+    "services": [
+      {
+        "label": "Project Role Readiness",
+        "href": "/services/project-role-readiness"
+      },
+      {
+        "label": "OCM Leadership (Anchor)",
+        "href": "/services/ocm-leadership"
+      },
+      {
+        "label": "Readiness Assessment",
+        "href": "/services/readiness-assessment"
+      },
+      {
+        "label": "For SI partners",
+        "href": "/partners"
+      }
+    ],
+    "firmHeading": "Firm",
+    "firm": [
+      {
+        "label": "Who we serve",
+        "href": "/who-we-serve"
+      },
+      {
+        "label": "About",
+        "href": "/about"
+      },
+      {
+        "label": "Insights",
+        "href": "/insights"
+      },
+      {
+        "label": "Contact",
+        "href": "/contact"
+      }
+    ],
+    "contactHeading": "Contact",
+    "linkedinLabel": "LinkedIn",
+    "privacyLabel": "Privacy Policy",
+    "termsLabel": "Terms of Service"
+  }
 }

@@ -1,61 +1,62 @@
 ---
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+import { env } from '../lib/env';
+interface Props { c: any; email: string; situations: { value: string; label: string }[] }
+const { c, email, situations } = Astro.props; const f = c.form;
+const siteKey = env('PUBLIC_TURNSTILE_SITE_KEY');
+const msg = { name: f.nameError, email: f.emailError, situation: f.situationError, sending: f.sending, failure: f.failure, fallback: `${f.fallback} ${email}.` };
 ---
-<form id="contact" class="cf" method="post" action="/api/contact" novalidate>
+<form id="contact" class="cf rise" style="animation-duration:.8s;animation-delay:.3s" method="post" action="/api/contact" novalidate data-msg={JSON.stringify(msg)}>
+  <div class="cf__sent" role="status" hidden><p class="cf__sent-h">{c.successHeading}</p><p class="cf__sent-t">{c.successText}</p></div>
   <div class="cf__row">
-    <div class="field"><label for="c-name">Name <span aria-hidden="true" style="color:var(--indigo)">*</span></label><input id="c-name" name="name" autocomplete="name" required maxlength="120" /><span class="err" id="e-name"></span></div>
-    <div class="field"><label for="c-email">Work email <span aria-hidden="true" style="color:var(--indigo)">*</span></label><input id="c-email" name="email" type="email" autocomplete="email" required maxlength="200" /><span class="err" id="e-email"></span></div>
+    <div class="field"><label for="c-name">{f.name} <span aria-hidden="true" style="color:var(--indigo)">*</span></label><input id="c-name" name="name" autocomplete="name" required maxlength="120" aria-describedby="e-name" /><span class="err" id="e-name" aria-live="polite"></span></div>
+    <div class="field"><label for="c-email">{f.email} <span aria-hidden="true" style="color:var(--indigo)">*</span></label><input id="c-email" name="email" type="email" autocomplete="email" required maxlength="200" aria-describedby="e-email" /><span class="err" id="e-email" aria-live="polite"></span></div>
   </div>
   <div class="cf__row">
-    <div class="field"><label for="c-company">Company</label><input id="c-company" name="company" autocomplete="organization" maxlength="160" /></div>
-    <div class="field"><label for="c-role">Your role</label><input id="c-role" name="role" autocomplete="organization-title" maxlength="120" /></div>
+    <div class="field"><label for="c-company">{f.company}</label><input id="c-company" name="company" autocomplete="organization" maxlength="160" /></div>
+    <div class="field"><label for="c-role">{f.role}</label><input id="c-role" name="role" autocomplete="organization-title" maxlength="120" /></div>
   </div>
   <div class="field">
-    <label for="c-situation">Where are you? <span aria-hidden="true" style="color:var(--indigo)">*</span></label>
-    <select id="c-situation" name="situation" required>
-      <option value="">Choose one</option>
-      <option value="funded">Program funded, Systems Integrator (SI) selected, go-live 6–12 months out</option>
-      <option value="90days">Go-live within 90 days and cracks are showing</option>
-      <option value="portfolio">Several go-lives at once</option>
-      <option value="merger">Deal closed; integration lead named</option>
-      <option value="partner">I'm an SI partner with a won deal</option>
-      <option value="other">Something else</option>
-    </select><span class="err" id="e-situation"></span>
+    <label for="c-situation">{f.situation} <span aria-hidden="true" style="color:var(--indigo)">*</span></label>
+    <select id="c-situation" name="situation" required aria-describedby="e-situation">
+      <option value="">{f.choose}</option>
+      {situations.map((o) => <option value={o.value}>{o.label}</option>)}
+    </select><span class="err" id="e-situation" aria-live="polite"></span>
   </div>
-  <div class="field"><label for="c-msg">What's the go-live, and who owns the date?</label><textarea id="c-msg" name="message" rows="5" maxlength="4000"></textarea></div>
+  <div class="field"><label for="c-msg">{f.message}</label><textarea id="c-msg" name="message" rows="5" maxlength="4000"></textarea></div>
   <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp" />
   {siteKey && <div class="cf-turnstile" data-sitekey={siteKey} data-theme="light"></div>}
-  <button type="submit" class="btn btn--navy" style="justify-self:start">Send</button>
-  <p class="note" role="status" aria-live="polite" id="cf-status">Protected by Cloudflare Turnstile. No marketing emails without your say-so.</p>
+  <button type="submit" class="btn btn--navy cf__btn">{f.submit}</button>
+  <p class="note" role="status" aria-live="polite" id="cf-status" data-note={f.note}>{f.note}</p>
 </form>
-{siteKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+{siteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 <style>
-.cf{background:#fff;border:1px solid var(--line);padding:clamp(24px,3vw,40px);display:grid;gap:18px;border-radius:6px;position:relative}
+.cf{background:#fff;border:1px solid var(--line);padding:clamp(24px,3vw,40px);display:grid;gap:18px;border-radius:10px;position:relative;min-width:0;box-shadow:0 30px 60px rgba(18,15,56,.08)}
+.cf textarea{resize:vertical}
 .cf__row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.cf__btn{justify-self:start;padding:15px 24px}
 .hp{position:absolute;left:-9999px}
-.cf.sent > :not(#cf-status){display:none}
-.cf.sent #cf-status{font-family:var(--serif);font-size:24px;color:var(--navy)}
+.cf.sent > :not(.cf__sent){display:none}.cf.sent > .cf__sent{display:block}
+.cf__sent{padding:24px;background:var(--paper);border-radius:8px;animation:dropIn .7s cubic-bezier(.2,.8,.2,1) both}.cf__sent-h{margin:0 0 8px;font-family:var(--serif);font-size:28px;color:var(--navy)}.cf__sent-t{margin:0;font-size:16px;color:var(--muted)}
 </style>
 <script>
   const form = document.getElementById('contact') as HTMLFormElement;
-  const status = document.getElementById('cf-status')!;
+  const status = document.getElementById('cf-status')!; const m = JSON.parse(form.dataset.msg || '{}');
   const show = (id: string, msg: string) => { const el = document.getElementById('e-' + id)!; el.textContent = msg; (form.elements.namedItem(id) as HTMLElement)?.setAttribute('aria-invalid', String(!!msg)); };
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(form); let ok = true;
     show('name', ''); show('email', ''); show('situation', '');
-    if (!String(fd.get('name') || '').trim()) { show('name', 'Please add your name.'); ok = false; }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(fd.get('email') || ''))) { show('email', 'Enter a valid work email.'); ok = false; }
-    if (!fd.get('situation')) { show('situation', 'Pick the closest match.'); ok = false; }
+    if (!String(fd.get('name') || '').trim()) { show('name', m.name); ok = false; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(fd.get('email') || ''))) { show('email', m.email); ok = false; }
+    if (!fd.get('situation')) { show('situation', m.situation); ok = false; }
     if (!ok) { (form.querySelector('[aria-invalid="true"]') as HTMLElement)?.focus(); return; }
-    status.textContent = 'Sending…';
+    status.textContent = m.sending;
     try {
       const r = await fetch('/api/contact', { method: 'POST', body: fd, headers: { Accept: 'application/json' } });
       const j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Something went wrong.');
-      form.classList.add('sent');
-      status.textContent = "Thanks. We've got it. Expect a reply within two business days.";
+      if (!r.ok) throw new Error(j.error || m.failure);
+      form.classList.add('sent'); form.querySelector<HTMLElement>('.cf__sent')?.removeAttribute('hidden');
       (window as any).plausible?.('Contact submitted', { props: { situation: fd.get('situation') } });
-    } catch (err: any) { status.textContent = err.message + ' You can also email jennifer@eichenbergassociates.com.'; }
+    } catch (err: any) { status.textContent = (err.message || m.failure) + ' ' + m.fallback; (window as any).turnstile?.reset(); }
   });
 </script>

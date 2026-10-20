@@ -1,0 +1,14 @@
+---
+// A complete edit form for one JSON document. Used by Website content, Landing pages and Settings.
+import Field from './Field.astro';
+import type { Field as F } from '../../lib/cms-schema';
+interface Props { fields: F[]; value: any; endpoint: string; method?: string; extra?: Record<string, unknown>; body?: { label: string; value: string; optional?: boolean }; slug?: { value: string; prefix?: string }; saveLabel?: string }
+const { fields, value, endpoint, method = 'PUT', extra = {}, body, slug, saveLabel = 'Save' } = Astro.props;
+---
+<form class="cms" data-cms-form data-endpoint={endpoint} data-method={method} data-extra={JSON.stringify(extra)} novalidate>
+  <slot name="top" />
+  {slug && <div class="cms-f cms-slug"><label for="cms-slug">Web address</label><div class="cms-slugrow"><span>{slug.prefix}</span><input id="cms-slug" data-slug-input value={slug.value} pattern="[a-z0-9-]+" /></div><span class="cms-hint">Lowercase letters, numbers and hyphens. Changing it changes the page’s URL.</span></div>}
+  <div class="cms-f" data-kind="object" data-root><div class="cms-body">{fields.map((f) => <Field f={f} v={value?.[f.name]} />)}</div></div>
+  {body && <div class="cms-f"><label for="cms-body">{body.label}</label><textarea id="cms-body" class="cms-md" rows="14" data-body>{body.value}</textarea><span class="cms-hint">Markdown: a blank line starts a new paragraph; **bold**, *italic*, [link](https://…), “- ” for bullets.</span></div>}
+  <div class="cms-save"><slot name="actions" /><span role="status" aria-live="polite" class="cms-st"></span><button type="submit" class="dbtn dbtn--teal">{saveLabel}</button></div>
+</form>

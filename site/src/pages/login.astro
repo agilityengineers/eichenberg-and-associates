@@ -1,25 +1,45 @@
 ---
 import Base from '../layouts/Base.astro';
-export const prerender = false;
-const next = Astro.url.searchParams.get('next') || '/dashboard';
-const supa = { url: import.meta.env.PUBLIC_SUPABASE_URL, key: import.meta.env.PUBLIC_SUPABASE_ANON_KEY };
+import { dbConfigured } from '../lib/db';
+import { PASSWORD_RULE } from '../lib/password';
+import { safeNext } from '../lib/http';
+const next = safeNext(Astro.url.searchParams.get('next') || '/dashboard');
+const token = Astro.url.searchParams.get('token') || '';
+const mode = token ? 'reset' : Astro.url.searchParams.has('forgot') ? 'forgot' : 'signin';
+const heading = { signin: 'Sign in', forgot: 'Reset your password', reset: 'Choose a new password' }[mode];
 ---
-<Base title="Sign in" description="Dashboard sign-in">
-  <section class="wrap" style="max-width:480px;padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
-    <p class="eyebrow">Sales dashboard</p><h1 class="display" style="font-size:clamp(36px,5vw,56px)">Sign in</h1>
-    <form id="login" style="display:grid;gap:14px;margin-top:28px" class="field">
-      <label for="email">Email</label><input id="email" type="email" required placeholder="jennifer@eichenbergassociates.com" />
-      <button class="btn btn--navy" type="submit">Email me a sign-in link</button>
-      <p id="st" class="note" role="status" aria-live="polite"></p>
+<Base title={heading} description="Dashboard sign-in" noindex>
+  <section class="wrap" style="max-width:520px;padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
+    <p class="eyebrow rise">Sales dashboard</p><h1 class="display word" style="font-size:clamp(36px,5vw,56px);animation-delay:.1s">{heading}</h1>
+    {!dbConfigured() && <p class="note" role="alert" style="margin-top:20px;color:#B3261E">The database isn’t connected yet. Add Replit’s PostgreSQL database, then restart the app.</p>}
+    <form id="auth" class="lg rise" data-mode={mode} data-next={next} data-token={token} novalidate style="animation-delay:.3s">
+      {mode !== 'reset' && <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="username" required /></div>}
+      {mode === 'signin' && <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required /></div>}
+      {mode === 'reset' && <div class="field"><label for="password">New password</label><input id="password" name="password" type="password" autocomplete="new-password" required minlength="10" aria-describedby="pw-rule" /><span id="pw-rule" class="note">{PASSWORD_RULE}</span></div>}
+      <button class="btn btn--navy" type="submit" style="justify-self:start;padding:14px 24px;font-size:15px">{mode === 'signin' ? 'Sign in' : mode === 'forgot' ? 'Email me a reset link' : 'Save and sign in'}</button>
+      <p id="st" role="status" aria-live="polite" class="lg__st"></p>
+      <p class="note" style="margin:0">{mode === 'signin' ? <a href="/login?forgot">Forgot your password?</a> : <a href="/login">Back to sign in</a>}</p>
     </form>
   </section>
-  <script define:vars={{ next, supa }}>
-    import('https://esm.sh/@supabase/supabase-js@2').then(({ createClient }) => {
-      const sb = createClient(supa.url, supa.key);
-      const f = document.getElementById('login'), st = document.getElementById('st');
-      f.addEventListener('submit', async (e) => { e.preventDefault(); st.textContent = 'Sending…';
-        const { error } = await sb.auth.signInWithOtp({ email: f.email.value, options: { emailRedirectTo: location.origin + '/api/auth/callback?next=' + encodeURIComponent(next) } });
-        st.textContent = error ? error.message : 'Check your inbox for the link.'; });
-    });
-  </script>
 </Base>
+<style>
+.lg{display:grid;gap:16px;margin-top:32px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:clamp(24px,3vw,36px);box-shadow:0 30px 60px rgba(18,15,56,.08)}
+.lg__st{margin:0;font-size:14px;min-height:1.3em;color:var(--muted)}.lg__st.err{color:#B3261E}
+</style>
+<script>
+  const f = document.getElementById('auth') as HTMLFormElement, st = document.getElementById('st')!;
+  const { mode, next, token } = f.dataset as Record<string, string>;
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault(); st.classList.remove('err');
+    const v = (n: string) => (f.elements.namedItem(n) as HTMLInputElement | null)?.value.trim() || '';
+    const url = { signin: '/api/auth/login', forgot: '/api/auth/forgot', reset: '/api/auth/reset' }[mode]!;
+    const body = mode === 'signin' ? { email: v('email'), password: (f.elements.namedItem('password') as HTMLInputElement).value, next } : mode === 'forgot' ? { email: v('email') } : { token, password: (f.elements.namedItem('password') as HTMLInputElement).value };
+    st.textContent = mode === 'forgot' ? 'Sending…' : 'Signing in…';
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Something went wrong.');
+      if (mode === 'forgot') { st.textContent = 'If that email has a login, a reset link is on its way. It works for one hour.'; f.reset(); return; }
+      location.href = j.next || '/dashboard';
+    } catch (err: any) { st.textContent = err.message; st.classList.add('err'); }
+  });
+</script>

@@ -1,0 +1,56 @@
+---
+// Website content: every page, setting and collection on the public site.
+import Dashboard from '../../layouts/Dashboard.astro';
+import Editor from '../../components/cms/Editor.astro';
+import { DOCS, type DocType } from '../../lib/cms-schema';
+import { getDoc, getDocs, type Doc } from '../../lib/content';
+const sp = Astro.url.searchParams;
+const [dc, ds] = (sp.get('doc') || '').split('/');
+const c = sp.get('c') || '', slug = sp.get('slug') || '';
+let t: DocType | undefined, doc: Doc | undefined, entries: Doc[] = [];
+if (c) { t = DOCS.find((d) => d.collection === c && d.entry); if (t) { entries = await getDocs(c); doc = slug ? entries.find((e) => e.slug === slug) : undefined; } }
+else { t = DOCS.find((d) => d.collection === (dc || 'settings') && d.slug === (ds || 'site')); if (t) doc = await getDoc(t.collection, t.slug!); }
+if (!t || (c && slug && !doc)) return Astro.redirect('/dashboard/website');
+const groups = ['Site-wide', 'Pages', 'Collections'];
+const href = (d: DocType) => (d.entry ? `/dashboard/website?c=${d.collection}` : `/dashboard/website?doc=${d.collection}/${d.slug}`);
+const isCur = (d: DocType) => d === t;
+const VIEW: Record<string, string> = { 'pages/home': '/', 'pages/services': '/services', 'pages/who-we-serve': '/who-we-serve', 'pages/partners': '/partners', 'pages/about': '/about', 'pages/insights': '/insights', 'pages/contact': '/contact', 'pages/landing': '/for/operations', 'pages/not-found': '/page-not-found-preview', 'settings/hero': '/', 'settings/golive': '/services', 'settings/grid': '/', 'settings/feeds': '/insights' };
+const view = t.entry ? (doc && t.entry.urlPrefix ? t.entry.urlPrefix + doc.slug : doc && t.collection === 'situations' ? '/who-we-serve' : doc && t.collection === 'testimonials' ? '/' : doc && t.collection === 'team' ? '/about' : '') : VIEW[`${t.collection}/${t.slug}`] || '/';
+const entryTitle = (e: Doc) => e.data[t!.entry!.titleKey] || e.slug;
+---
+<Dashboard title={doc && t.entry ? entryTitle(doc) : t.label} eyebrow="Website content" active="website">
+  <section class="two">
+    <nav class="side-list" aria-label="Website content">
+      {groups.map((g) => <><h3>{g}</h3>{DOCS.filter((d) => d.group === g).map((d) => <a href={href(d)} aria-current={isCur(d) ? 'page' : undefined}><strong>{d.label}</strong></a>)}</>)}
+      <p class="side-note">Saving publishes immediately; there is no rebuild. Privacy Policy and Terms of Service are kept in code so legal wording can’t change by accident.</p>
+    </nav>
+    <div class="panel" style="padding:22px;display:grid;gap:14px;align-content:start;min-width:0">
+      {t.entry && !doc ? <>
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><h2 class="ph2">{t.label}</h2><button type="button" class="dbtn dbtn--sm" id="new-entry" data-collection={t.collection}>+ New {t.entry.singular}</button></div>
+        {t.description && <p class="cms-hint" style="margin:0">{t.description}</p>}
+        <ul class="ent">{entries.map((e) => <li><a href={`/dashboard/website?c=${t!.collection}&slug=${e.slug}`}><strong>{entryTitle(e)}</strong><small>{[t!.entry!.urlPrefix ? t!.entry!.urlPrefix + e.slug : '', e.data.order != null ? 'Order ' + e.data.order : '', e.data.draft ? 'Draft' : '', t!.collection === 'custom-pages' ? (e.data.published ? 'Published' : 'Not published') : ''].filter(Boolean).join(' · ')}</small></a></li>)}
+          {!entries.length && <li class="faint" style="padding:12px 0">Nothing here yet.</li>}</ul>
+      </> : <>
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+          <h2 class="ph2">{t.entry ? <><a href={`/dashboard/website?c=${t.collection}`} class="faint" style="font-size:14px;font-family:var(--sans)">{t.label}</a> <span class="faint">/</span> {entryTitle(doc!)}</> : t.label}</h2>
+          {view && <a href={view} target="_blank" rel="noopener" style="font-size:13px;font-weight:600">View on the site ↗</a>}
+        </div>
+        {t.description && <p class="cms-hint" style="margin:0">{t.description}</p>}
+        <Editor fields={t.fields} value={doc!.data} endpoint="/api/admin/content" extra={{ collection: t.collection, slug: doc!.slug }}
+          body={t.body ? { label: t.body.label, value: doc!.body, optional: t.body.optional } : undefined}
+          slug={t.entry?.slugEditable ? { value: doc!.slug, prefix: t.entry.urlPrefix } : undefined}>
+          {t.entry && <button slot="actions" type="button" class="lnk-rm" id="del-entry" data-collection={t.collection} data-slug={doc!.slug}>Delete {t.entry.singular}</button>}
+        </Editor>
+      </>}
+    </div>
+  </section>
+</Dashboard>
+<style>
+.ent{list-style:none;margin:0;padding:0;display:grid;gap:6px}.ent a{display:grid;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}.ent a:hover{border-color:var(--navy);color:var(--ink)}.ent small{font-size:12px;color:var(--faint)}
+</style>
+<script>
+  import '../../scripts/cms';
+  import { api } from '../../scripts/dashboard';
+  document.getElementById('new-entry')?.addEventListener('click', async (e) => { const b = e.currentTarget as HTMLElement; const j = await api('content', 'POST', { collection: b.dataset.collection }); location.href = j.redirect; });
+  document.getElementById('del-entry')?.addEventListener('click', async (e) => { const b = e.currentTarget as HTMLElement; if (!confirm('Delete this for good? It disappears from the site immediately.')) return; const f = b.closest<HTMLFormElement>('form'); if (f) delete f.dataset.dirty; const j = await api('content', 'DELETE', { collection: b.dataset.collection, slug: b.dataset.slug }); location.href = j.redirect; });
+</script>

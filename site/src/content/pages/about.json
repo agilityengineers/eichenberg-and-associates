@@ -1,8 +1,13 @@
 {
   "title": "About Jennifer Eichenberg",
   "description": "Founder and Change Management Lead. Since 2007, people readiness across ERP, PM and HR programs. WBENC certified.",
+  "eyebrow": "About",
+  "portraitPlaceholder": "PLACEHOLDER: portrait of Jennifer Eichenberg",
+  "missionLabel": "Mission",
   "mission": "To educate and guide organizations through transformational change, enabling them to achieve sustainable growth and competitive advantage.",
+  "visionLabel": "Vision",
   "vision": "To be the leading consultancy that empowers businesses to embrace change confidently and thrive in a dynamic marketplace.",
+  "valuesLabel": "Values",
   "values": [
     {
       "name": "Transparency",
@@ -36,7 +41,7 @@
     },
     {
       "label": "WBENC certified",
-      "text": "Helps clients and Systems Integrator (SI) partners meet supplier diversity goals."
+      "text": "Helps clients and SI partners meet supplier diversity goals."
     }
   ]
 }

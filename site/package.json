@@ -4,27 +4,30 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "postinstall": "node scripts/fix-routes.mjs",
     "dev": "astro dev",
     "build": "astro check && astro build",
+    "start": "NODE_ENV=production HOST=0.0.0.0 PORT=${PORT:-5000} node ./dist/server/entry.mjs",
     "preview": "astro preview",
     "astro": "astro",
-    "seed": "tsx supabase/seed.ts"
+    "user:add": "tsx db/user.ts"
   },
   "dependencies": {
+    "@astrojs/node": "^8.3.4",
     "astro": "^4.16.0",
-    "@astrojs/netlify": "^5.5.0",
-    "@astrojs/sitemap": "^3.2.0",
-    "resend": "^4.0.0",
-    "zod": "^3.23.8",
-    "@supabase/supabase-js": "^2.45.0",
-    "@supabase/ssr": "^0.5.1",
+    "fast-xml-parser": "^4.5.0",
+    "gray-matter": "^4.0.3",
     "marked": "^14.1.0",
-    "fast-xml-parser": "^4.5.0"
+    "pg": "^8.23.1",
+    "resend": "^4.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
-    "typescript": "^5.6.0",
-    "tsx": "^4.19.0"
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

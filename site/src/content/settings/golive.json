@@ -1,0 +1,17 @@
+{
+  "label": "Where is your go-live?",
+  "ticks": [
+    "Go-live + 90 days",
+    "≤ 90 days",
+    "Kickoff · 12 months"
+  ],
+  "monthsOut": "{n} months out",
+  "daysOut": "{n} days out",
+  "afterGoLive": "Go-live + 90 days",
+  "advice": {
+    "kickoff": "Program funded, Systems Integrator (SI) selected, date set. Start with Project Role Readiness at kickoff, inside a phased OCM Leadership engagement: Prepare first.",
+    "delivery": "You’re in delivery. OCM Leadership runs the Act phase, with contract associates for production work and a Readiness Assessment coming at 90 days or less.",
+    "assess": "90 days or less before go-live: a 3–4 week Readiness Assessment. Know, with evidence, whether people can perform. It leads into gap-closure work.",
+    "after": "Go-live plus 90 days: the Sustain check-in. A read on adoption, and planning for the next initiative."
+  }
+}

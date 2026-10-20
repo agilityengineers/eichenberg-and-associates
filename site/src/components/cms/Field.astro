@@ -1,0 +1,50 @@
+---
+// One editable field (recursive). The DOM contract is read back by src/scripts/cms.ts:
+//   .cms-f[data-kind][data-key]  → object (.cms-body children) | list (.cms-items > .cms-item) | primitive (.cms-v)
+import type { Field } from '../../lib/cms-schema';
+import { blank } from '../../lib/cms-schema';
+interface Props { f: Field; v: any; keyless?: boolean }
+const { f, v, keyless = false } = Astro.props;
+const Self = Astro.self;
+const id = 'f' + Math.random().toString(36).slice(2, 9);
+const key = keyless ? undefined : f.name;
+const val = v === undefined || v === null ? (f.widget === 'number' ? null : blank(f)) : v;
+const objOf = (fields: Field[]): Field => ({ name: '', label: '', widget: 'object', fields });
+const typeOf = (t?: string) => f.types?.find((x) => x.name === t);
+const items: any[] = f.widget === 'list' && Array.isArray(val) ? val : [];
+const dateVal = f.widget === 'date' && val && !isNaN(+new Date(val)) ? new Date(val).toISOString().slice(0, 10) : '';
+const isUpload = f.widget === 'image' || f.widget === 'file';
+---
+{f.widget === 'object' ? (keyless
+  ? <div class="cms-f cms-obj" data-kind="object"><div class="cms-body">{(f.fields || []).map((c) => <Self f={c} v={val?.[c.name]} />)}</div></div>
+  : <fieldset class="cms-f cms-obj" data-kind="object" data-key={key}><legend>{f.label}</legend>{f.hint && <p class="cms-hint">{f.hint}</p>}<div class="cms-body">{(f.fields || []).map((c) => <Self f={c} v={val?.[c.name]} />)}</div></fieldset>)
+: f.widget === 'list' ? (
+  <div class="cms-f cms-list" data-kind="list" data-key={key} data-fixed={f.fixed ? '1' : undefined} data-scalar={f.of ? '1' : undefined}>
+    <div class="cms-lhd"><span class="cms-lbl">{f.label}</span>{f.hint && <span class="cms-hint">{f.hint}</span>}</div>
+    <ol class="cms-items">
+      {items.map((item) => <li class="cms-item" data-type={f.types ? item?.type : undefined}>
+        <div class="cms-ictl">{f.types && <span class="cms-itype">{typeOf(item?.type)?.label || item?.type}</span>}{!f.fixed && <><button type="button" data-move="-1" aria-label="Move up">▲</button><button type="button" data-move="1" aria-label="Move down">▼</button><button type="button" data-remove class="cms-rm">Remove</button></>}</div>
+        {f.of ? <Self f={f.of} v={item} keyless /> : <Self f={objOf(f.types ? typeOf(item?.type)?.fields || [] : f.fields || [])} v={item} keyless />}
+      </li>)}
+    </ol>
+    {!f.fixed && (f.types
+      ? f.types.map((t) => <template data-type={t.name}><li class="cms-item" data-type={t.name}><div class="cms-ictl"><span class="cms-itype">{t.label}</span><button type="button" data-move="-1" aria-label="Move up">▲</button><button type="button" data-move="1" aria-label="Move down">▼</button><button type="button" data-remove class="cms-rm">Remove</button></div><Self f={objOf(t.fields)} v={blank(objOf(t.fields))} keyless /></li></template>)
+      : <template><li class="cms-item"><div class="cms-ictl"><button type="button" data-move="-1" aria-label="Move up">▲</button><button type="button" data-move="1" aria-label="Move down">▼</button><button type="button" data-remove class="cms-rm">Remove</button></div>{f.of ? <Self f={f.of} v={blank(f.of)} keyless /> : <Self f={objOf(f.fields || [])} v={blank(objOf(f.fields || []))} keyless />}</li></template>)}
+    {!f.fixed && (f.types
+      ? <div class="cms-add"><select data-add-type aria-label="Block type">{f.types.map((t) => <option value={t.name}>{t.label}</option>)}</select><button type="button" data-add class="cms-addbtn">+ Add {f.singular || 'block'}</button></div>
+      : <button type="button" data-add class="cms-addbtn">+ Add {f.singular || 'row'}</button>)}
+  </div>)
+: f.widget === 'boolean' ? (
+  <div class="cms-f cms-bool" data-kind="boolean" data-key={key}><label class="cms-check"><input type="checkbox" class="cms-v" checked={!!val} /> {f.label}</label>{f.hint && <span class="cms-hint">{f.hint}</span>}</div>)
+: (
+  <div class={'cms-f' + (keyless ? ' cms-bare' : '')} data-kind={f.widget} data-key={key}>
+    {!keyless && <label for={id}>{f.label}</label>}
+    {f.widget === 'text' ? <textarea id={id} class="cms-v" rows={keyless ? 2 : 3} aria-label={keyless ? f.label : undefined}>{val}</textarea>
+      : f.widget === 'markdown' ? <textarea id={id} class="cms-v cms-md" rows="10" aria-label={keyless ? f.label : undefined}>{val}</textarea>
+      : f.widget === 'number' ? <input id={id} class="cms-v" type="number" value={val ?? ''} min={f.min} max={f.max} step={f.step ?? 'any'} aria-label={keyless ? f.label : undefined} />
+      : f.widget === 'select' ? <select id={id} class="cms-v" aria-label={keyless ? f.label : undefined}>{(f.options || []).map((o) => <option value={o.value} selected={o.value === val}>{o.label}</option>)}</select>
+      : f.widget === 'date' ? <input id={id} class="cms-v" type="date" value={dateVal} />
+      : isUpload ? <div class="cms-up"><input id={id} class="cms-v" type="text" value={val} placeholder={f.widget === 'image' ? '/images/… or upload' : 'https://… or upload'} /><label class="cms-upbtn">Upload<input type="file" accept={f.widget === 'image' ? 'image/*' : 'application/pdf,image/*'} data-upload hidden /></label>{f.widget === 'image' && <img class="cms-prev" src={val || undefined} alt="" hidden={!val} />}</div>
+      : <input id={id} class="cms-v" type="text" value={val} readonly={f.readonly} aria-label={keyless ? f.label : undefined} />}
+    {f.hint && !keyless && <span class="cms-hint">{f.hint}</span>}
+  </div>)}

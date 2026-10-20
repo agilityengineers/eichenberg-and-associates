@@ -5,18 +5,21 @@
   "heading": "Your firm sells software and configuration. Not change.",
   "lead": "OCM gets scoped thin to win the deal, then exposed late. When adoption stalls, the client blames the implementation. A readiness check protects your go-live and your relationship.",
   "coverHeading": "What we cover, what you cover",
+  "youCoverLabel": "You cover",
   "youCover": [
     "The system",
     "Software and configuration",
     "Cutover",
     "Technical delivery and the follow-on work"
   ],
+  "weCoverLabel": "We cover",
   "weCover": [
     "Your people and their readiness to perform on day one",
     "Subcontracted anchor lead through Prepare, Act, Sustain",
     "White-label Readiness Assessments",
     "White-label Project Role Readiness modules"
   ],
+  "chartNote": "PLACEHOLDER: replace this two-column summary with the final “what we cover, what you cover” chart.",
   "why": [
     {
       "heading": "Offer OCM without building a practice",

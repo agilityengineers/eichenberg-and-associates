@@ -1,9 +1,34 @@
-// Tiny data helper shared by dashboard pages. All writes go through /api/admin/<table> (RLS-protected).
-export {};
-declare global { interface Window { api: (table: string, method: 'GET' | 'POST' | 'PATCH' | 'DELETE', body?: unknown) => Promise<any> } }
-window.api = async (table, method, body) => { const r = await fetch('/api/admin/' + table, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); const j = await r.json(); if (!r.ok) { alert(j.error || 'Request failed'); throw new Error(j.error); } return j; };
-document.addEventListener('click', async (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('[data-action]'); if (!b) return; const { action, table, id, field, value, cycle } = b.dataset as Record<string, string>;
-  if (action === 'patch') { let v: any = value; if (cycle) { const opts = cycle.split('|'); v = opts[(opts.indexOf(b.dataset.current!) + 1) % opts.length]; } await window.api(table, 'PATCH', { id, [field]: isNaN(Number(v)) || v === '' ? v : Number(v) }); location.reload(); }
-  if (action === 'delete' && confirm('Remove?')) { await window.api(table, 'DELETE', { id }); location.reload(); }
-  if (action === 'convert') { const d = await window.api('deals', 'POST', { company: b.dataset.company, contact: b.dataset.contact, lead_id: id, stage: 'Exploration', grid: b.dataset.grid, source: 'Content', next_step: 'Exploration call' }); await window.api('leads', 'PATCH', { id, deal_id: d[0].id }); location.reload(); } });
-document.querySelectorAll<HTMLFormElement>('form[data-save]').forEach((f) => f.addEventListener('submit', async (e) => { e.preventDefault(); const fd = new FormData(f); const body: any = {}; fd.forEach((v, k) => { body[k] = f.elements.namedItem(k) instanceof HTMLInputElement && (f.elements.namedItem(k) as HTMLInputElement).type === 'checkbox' ? true : v; }); f.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach((c) => body[c.name] = c.checked); if (f.dataset.json) f.dataset.json.split(',').forEach((k) => { try { body[k] = JSON.parse(body[k]); } catch {} }); await window.api(f.dataset.save!, f.dataset.method as any || 'PATCH', body); (f.querySelector('[role=status]') || {}).textContent = 'Saved.'; }));
+// Shared by every dashboard page. Writes go through /api/admin/* (signed-in session; validated on the server).
+export async function api(path: string, method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', body?: unknown) {
+  const r = await fetch('/api/admin/' + path, { method, headers: { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search); throw new Error('signed out'); }
+  if (!r.ok) { alert(j.error || 'That didn’t save. Try again.'); throw new Error(j.error); }
+  return j;
+}
+(window as any).api = api;
+
+// <button data-action="patch|delete|convert" data-table data-id data-field data-value data-cycle data-current>
+document.addEventListener('click', async (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLElement>('[data-action]'); if (!b) return;
+  const { action, table, id, field, value, cycle, current } = b.dataset as Record<string, string>;
+  b.setAttribute('aria-busy', 'true');
+  try {
+    const done = () => (b.dataset.redirect ? location.assign(b.dataset.redirect) : location.reload());
+    if (action === 'patch') { let v: any = value; if (cycle) { const o = cycle.split('|'); v = o[(o.indexOf(current) + 1) % o.length]; } if (/^-?\d+(\.\d+)?$/.test(String(v))) v = Number(v); await api(table, 'PATCH', { id, [field]: v }); done(); }
+    if (action === 'delete' && confirm(b.dataset.confirm || 'Remove this?')) { await api(table, 'DELETE', { id }); done(); }
+    if (action === 'convert') { await api('convert', 'POST', { id }); location.reload(); }
+  } catch {} finally { b.removeAttribute('aria-busy'); }
+});
+
+// <form data-save="table" data-method="POST|PATCH">: flat forms → one row.
+document.querySelectorAll<HTMLFormElement>('form[data-save]').forEach((f) => f.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body: Record<string, unknown> = {};
+  new FormData(f).forEach((v, k) => { body[k] = typeof v === 'string' ? v : ''; });
+  f.querySelectorAll<HTMLInputElement>('input[type=checkbox][name]').forEach((c) => (body[c.name] = c.checked));
+  f.querySelectorAll<HTMLInputElement>('input[type=number][name]').forEach((c) => (body[c.name] = c.value === '' ? null : Number(c.value)));
+  const st = f.querySelector('[role=status]'); if (st) st.textContent = 'Saving…';
+  try { await api(f.dataset.save!, (f.dataset.method as any) || 'PATCH', body); if (st) st.textContent = 'Saved.'; if (f.dataset.reload !== undefined) location.reload(); }
+  catch { if (st) st.textContent = ''; }
+}));

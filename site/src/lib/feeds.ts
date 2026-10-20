@@ -2,17 +2,16 @@
 // (rss.app exposes .xml RSS and .json JSON Feed URLs — both parse here). Fetched at request time via /api/feed
 // and at build time for the static pages; never from the browser, so no CORS issues.
 import { XMLParser } from 'fast-xml-parser';
-import feeds from '../content/settings/feeds.json';
-import { getCollection } from 'astro:content';
+import { getDocs, setting } from './content';
 
 export type FeedItem = { title: string; link: string; excerpt: string; date: string; source: string; local?: boolean };
 const cache = new Map<string, { at: number; items: FeedItem[] }>();
 const strip = (s: unknown) => String(s ?? '').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim();
 const text = (v: any) => typeof v === 'string' ? v : v?.['#text'] ?? v?.href ?? '';
 
-export async function fetchFeed(url: string, name?: string): Promise<FeedItem[]> {
-  const hit = cache.get(url); if (hit && Date.now() - hit.at < (feeds.cacheMinutes || 30) * 60_000) return hit.items;
-  const r = await fetch(url, { headers: { 'user-agent': 'EichenbergSite/1.0 (+https://eichenbergassociates.com)', accept: 'application/rss+xml, application/atom+xml, application/feed+json, application/json, text/xml, */*' } });
+export async function fetchFeed(url: string, name?: string, cacheMinutes = 30): Promise<FeedItem[]> {
+  const hit = cache.get(url); if (hit && Date.now() - hit.at < (cacheMinutes || 30) * 60_000) return hit.items;
+  const r = await fetch(url, { signal: AbortSignal.timeout(8000), headers: { 'user-agent': 'EichenbergSite/1.0 (+https://eichenbergassociates.com)', accept: 'application/rss+xml, application/atom+xml, application/feed+json, application/json, text/xml, */*' } });
   if (!r.ok) throw new Error(`feed ${url} → ${r.status}`);
   const body = await r.text(); let items: FeedItem[] = [];
   if (body.trim().startsWith('{')) {                       // JSON Feed
@@ -32,8 +31,9 @@ export async function fetchFeed(url: string, name?: string): Promise<FeedItem[]>
 /** All enabled remote feeds + local Insights posts, newest first. Errors in one feed never break the page. */
 export async function allPosts(limit = 50): Promise<{ items: FeedItem[]; errors: string[] }> {
   const errors: string[] = [];
-  const remote = await Promise.all(feeds.sources.filter((s) => s.enabled && s.url && !s.url.includes('PLACEHOLDER')).map((s) => fetchFeed(s.url, s.name).catch((e) => { errors.push(`${s.name}: ${e.message}`); return [] as FeedItem[]; })));
-  const local = (await getCollection('insights', ({ data }) => !data.draft)).map((p) => ({ title: p.data.title, link: '/insights/' + p.slug, excerpt: p.data.description, date: p.data.date.toISOString(), source: 'Eichenberg & Associates', local: true }));
+  const feeds = await setting('feeds');
+  const remote = await Promise.all((feeds.sources || []).filter((s: any) => s.enabled && s.url && !s.url.includes('PLACEHOLDER')).map((s: any) => fetchFeed(s.url, s.name, feeds.cacheMinutes).catch((e) => { errors.push(`${s.name}: ${e.message}`); return [] as FeedItem[]; })));
+  const local = (await getDocs('insights', (d) => !d.data.draft)).map((p) => ({ title: p.data.title, link: '/insights/' + p.slug, excerpt: p.data.description, date: new Date(p.data.date).toISOString(), source: 'Eichenberg & Associates', local: true }));
   const items = [...local, ...remote.flat()].sort((a, b) => +new Date(b.date || 0) - +new Date(a.date || 0)).slice(0, limit);
   return { items, errors };
 }

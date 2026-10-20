@@ -1,0 +1,55 @@
+---
+import Dashboard from '../../layouts/Dashboard.astro';
+import Editor from '../../components/cms/Editor.astro';
+import { SETTINGS_FIELDS } from '../../lib/cms-schema';
+import { getSettings } from '../../lib/settings';
+import { q } from '../../lib/db';
+import { PASSWORD_RULE } from '../../lib/password';
+import { mailConfigured } from '../../lib/mail';
+const [s, users] = await Promise.all([getSettings(), q('select id, email, name, last_login_at from users order by created_at')]);
+const me = Astro.locals.user!;
+---
+<Dashboard title="Settings" eyebrow="Dashboard" active="settings">
+  <div class="setl">
+    <div class="panel" style="padding:22px;display:grid;gap:14px;min-width:0">
+      <h2 class="ph2">Pipeline, measures and pick-lists</h2>
+      <p class="cms-hint" style="margin:0">These drive the Overview, Pipeline, SI partners and deal forms. The contact form’s “Where are you?” choices are here too.</p>
+      <Editor fields={SETTINGS_FIELDS} value={s} endpoint="/api/admin/settings" />
+    </div>
+    <div style="display:grid;gap:20px;align-content:start">
+      <section class="panel" style="padding:22px;display:grid;gap:12px">
+        <h2 class="ph2">Who can sign in</h2>
+        <p class="cms-hint" style="margin:0">Everyone listed can use the dashboard and edit the website. Sign-in is at /login.</p>
+        <ul class="users">{users.map((u) => <li><div><strong>{u.name || u.email}</strong>{u.name && <span>{u.email}</span>}<small>{u.last_login_at ? 'Last signed in ' + new Date(u.last_login_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Never signed in'}</small></div>{u.id === me.id ? <em>You</em> : <button type="button" class="lnk-rm" data-user-rm={u.id} data-email={u.email}>Remove</button>}</li>)}</ul>
+        <form id="add-user" class="uform"><h3>Add a login</h3>
+          <input name="name" class="inp" placeholder="Full name" aria-label="Full name" /><input name="email" type="email" required class="inp" placeholder="Email" aria-label="Email" />
+          <input name="password" type="password" required minlength="10" autocomplete="new-password" class="inp" placeholder="Temporary password" aria-label="Temporary password" />
+          <span class="cms-hint">{PASSWORD_RULE} Share it privately; they can change it here after signing in{mailConfigured() ? ', or use “Forgot your password?”' : ''}.</span>
+          <div style="display:flex;gap:10px;align-items:center"><button class="dbtn dbtn--sm" type="submit">Add login</button><span role="status" class="faint" style="font-size:12px"></span></div></form>
+      </section>
+      <section class="panel" style="padding:22px">
+        <form id="my-pw" class="uform"><h3 style="margin-top:0">Change your password</h3>
+          <input name="current" type="password" required autocomplete="current-password" class="inp" placeholder="Current password" aria-label="Current password" />
+          <input name="password" type="password" required minlength="10" autocomplete="new-password" class="inp" placeholder="New password" aria-label="New password" />
+          <div style="display:flex;gap:10px;align-items:center"><button class="dbtn dbtn--sm" type="submit">Change password</button><span role="status" class="faint" style="font-size:12px"></span></div></form>
+      </section>
+    </div>
+  </div>
+</Dashboard>
+<style>
+.setl{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:20px;align-items:start}@media (max-width:1100px){.setl{grid-template-columns:1fr}}
+.users{list-style:none;margin:0;padding:0;display:grid;gap:8px}.users li{display:flex;justify-content:space-between;gap:10px;align-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:14px}
+.users li div{display:grid;gap:2px;min-width:0}.users span{color:var(--muted);word-break:break-all}.users small{color:var(--faint);font-size:12px}.users em{font-style:normal;font-size:12px;font-weight:600;color:#0E7C6E}
+.uform{display:grid;gap:8px}.uform h3{margin:8px 0 2px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+</style>
+<script>
+  import '../../scripts/cms';
+  import { api } from '../../scripts/dashboard';
+  const wire = (id: string, method: 'POST' | 'PATCH', ok: string, reload = false) => {
+    const f = document.getElementById(id) as HTMLFormElement; const st = f.querySelector('[role=status]')!;
+    f.addEventListener('submit', async (e) => { e.preventDefault(); if (!f.reportValidity()) return; st.textContent = 'Saving…';
+      try { await api('users', method, Object.fromEntries(new FormData(f))); f.reset(); st.textContent = ok; if (reload) location.reload(); } catch { st.textContent = ''; } });
+  };
+  wire('add-user', 'POST', 'Added.', true); wire('my-pw', 'PATCH', 'Password changed.');
+  document.querySelectorAll<HTMLButtonElement>('[data-user-rm]').forEach((b) => b.addEventListener('click', async () => { if (!confirm(`Remove ${b.dataset.email}? They will no longer be able to sign in.`)) return; await api('users', 'DELETE', { id: b.dataset.userRm }); location.reload(); }));
+</script>

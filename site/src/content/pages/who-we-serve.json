@@ -23,5 +23,7 @@
     }
   ],
   "footer": "Running an implementation practice? There's a fifth situation.",
-  "footerLink": "See how we work with Systems Integrator (SI) partners →"
+  "footerLink": "See how we work with Systems Integrator (SI) partners →",
+  "triggerLabel": "The trigger:",
+  "painsLabel": "What you're dealing with"
 }

@@ -23,27 +23,27 @@ Files under `design-references/` are **design references created in HTML** — i
 ## Fidelity
 **High-fidelity.** Colours, type, spacing, motion and copy are final. Recreate pixel-accurately.
 
-## Stack (already chosen and implemented in `site/`)
-- **Astro 4** (hybrid: static pages + serverless `/api/*`), TypeScript, no UI framework.
-- **Netlify** hosting + functions; `netlify.toml` carries CSP/HSTS headers and legacy redirects.
-- **Decap CMS** at `/admin` (git-based; Netlify Identity + Git Gateway) for all public content.
-- **Supabase** (Postgres + Auth + RLS) for leads, deals, partners, form builder, landing-page copy; magic-link login with email allow-list for `/dashboard`.
+## Stack (implemented in `site/`)
+- **Astro 4** with the Node adapter (server-rendered on request), TypeScript, no UI framework.
+- **Replit** hosting: the Run button for development, an **Autoscale deployment** for production (`.replit` at the repo root). Security headers (CSP/HSTS) and legacy redirects live in `src/middleware.ts`.
+- **Replit's built-in PostgreSQL** (`DATABASE_URL`) for site content, uploaded images, leads, deals, partners, form builder, landing-page copy, dashboard settings and logins. Schema: `site/db/schema.sql`, applied on every boot.
+- **Email + password sign-in at `/login`** (built into the app) for the dashboard. The website content editor lives inside the dashboard (*Website content*), so there is one login for everything.
 - **Resend** (email), **Cloudflare Turnstile** (spam), **Plausible** (analytics, optional), **fast-xml-parser** (RSS).
 See `site/README.md` for setup, env vars, deployment and content editing.
 
-## Packaging for GitHub
-1. Move `CLAUDE.md` into `site/` (repo root), then `cd site && git init && git add -A && git commit -m "Eichenberg & Associates site v1"`.
-2. Create an empty **private** repo on GitHub; `git remote add origin <url> && git branch -M main && git push -u origin main`.
-3. `npm install` runs `scripts/fix-routes.mjs`, which renames `-slug-.astro` / `-table-.ts` placeholders to Astro's `[slug].astro` / `[table].ts` (the export tool couldn't write square brackets). After the first install, commit the renamed files and delete the script + `postinstall` hook.
-4. Connect the repo to Netlify (base dir `site`), add env vars from `.env.example`, enable Identity + Git Gateway, run `supabase/schema.sql`, then `npm run seed`.
+## Deploying
+1. Import the GitHub repo into Replit. The `.replit` file at the root configures the Run button and the Autoscale deployment.
+2. Create a PostgreSQL database with Replit's *Database* tool (adds `DATABASE_URL`), then add the Secrets listed in `site/.env.example` (at least `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `PUBLIC_SITE_URL`).
+3. Press Run. First boot creates the tables, loads the default copy and the five landing pages, and creates the first login. Sign in at `/login`.
+4. *Deploy → Autoscale* for production (it gets its own database and seeds itself the same way), then link the custom domain.
 5. `.gitignore` already excludes `node_modules`, `dist`, `.env*`. Never commit `.env`.
 
-## Known gaps / first tasks for Claude Code
-1. **Build has never been run** — code was authored without a Node toolchain. Expect small type/syntax fixes on first `npm run build`. Fix in place; don't restructure.
-2. **Dashboard settings are hardcoded** (stage names/questions, 2027 targets, tripwire rules, KPI "Kept $380K", pick-lists, nav). Add a `settings` JSON row in Supabase + a *Dashboard → Settings* view so the admin can edit them without a deploy.
+## Status
+1. ~~Build has never been run.~~ Done: `npm run build` (type check + build) passes with no errors.
+2. ~~Dashboard settings are hardcoded.~~ Done: *Dashboard → Settings* edits stage names/questions, measures and targets, tripwire rules, the KPI "Kept" figure, pick-lists and logins.
 3. Placeholders to replace (search `PLACEHOLDER`): portrait + full bio, lead-magnet titles/PDFs, Calendly URL, blog + rss.app feed URLs, "what we cover / what you cover" chart, OG image, privacy/terms legal review.
-4. Dashboard forms use JSON textareas for list fields (goals, pains, messages, options). Replace with repeatable row editors.
-5. Rate limiter is per function instance; swap `src/lib/ratelimit.ts` for Upstash if abuse appears.
+4. ~~JSON textareas for list fields.~~ Done: every list in the dashboard is a repeatable row editor.
+5. The rate limiter is in memory per instance; move it to a shared store if abuse appears.
 
 ## Screens / views
 
@@ -61,10 +61,10 @@ Routes: `/`, `/services`, `/services/{project-role-readiness|ocm-leadership|read
 **Services / Who we serve / Partners / About / Insights / Contact** — see prototype; all headline/lead/list copy lives in `site/src/content/pages/*.json` and must stay CMS-driven. Contact form: name*, work email*, company, role, "Where are you?" select*, message, honeypot, Turnstile; inline errors `#B3261E`; success state replaces the form.
 
 ### Persona landing pages (`Persona Landing Pages.dc.html` ↔ `site/src/pages/for/[slug].astro`)
-Unlisted, `noindex`, SSR from Supabase `landing_pages` + `form_questions`. Slugs: `operations`, `sponsor-90-days`, `pmo`, `integration`, `si-partners`. Hero (same image/tint as home), eyebrow "{audience} · {frame}", Poppins H1 = persona headline, "Sound familiar?" + situation, lead message in a teal-ruled quote, CTA. Then goals (✓ teal dots) / pains (indigo dash), the engagement (offer + fee range, admin toggle), key-message cards, and the **4-step form**: 1 About you (fixed: name, email, company, title) → 2 Your situation (admin-editable questions: text/textarea/email/number/date/select/radio) → 3 the grid (2×2, required) → 4 outcome: "Continue to Discovery." for 3 quadrants, "Stay in touch, ask for a referral." for can-lead+can-do; then Calendly inline embed (URL from DB) and lead-magnet confirmation. Progress bar gradient indigo→teal. Form card: white, radius 12, shadow `0 30px 60px rgba(18,15,56,.08)`. Submit → `POST /api/lead` → inserts lead + Exploration-stage deal, emails admin + sender.
+Unlisted, `noindex`, rendered from the `landing_pages` + `form_questions` tables. Slugs: `operations`, `sponsor-90-days`, `pmo`, `integration`, `si-partners`. Hero (same image/tint as home), eyebrow "{audience} · {frame}", Poppins H1 = persona headline, "Sound familiar?" + situation, lead message in a teal-ruled quote, CTA. Then goals (✓ teal dots) / pains (indigo dash), the engagement (offer + fee range, admin toggle), key-message cards, and the **4-step form**: 1 About you (fixed: name, email, company, title) → 2 Your situation (admin-editable questions: text/textarea/email/number/date/select/radio) → 3 the grid (2×2, required) → 4 outcome: "Continue to Discovery." for 3 quadrants, "Stay in touch, ask for a referral." for can-lead+can-do; then Calendly inline embed (URL from DB) and lead-magnet confirmation. Progress bar gradient indigo→teal. Form card: white, radius 12, shadow `0 30px 60px rgba(18,15,56,.08)`. Submit → `POST /api/lead` → inserts lead + Exploration-stage deal, emails admin + sender.
 
 ### Sales dashboard (`Admin Dashboard.dc.html` ↔ `site/src/pages/dashboard/*`)
-Sidebar 232px navy; active item `rgba(255,255,255,.1)` bg + 3px teal left bar. Main on paper `#F6F5F0`, panels white radius 12, border `rgba(18,15,56,.1)`. Views: **Overview** (KPI tiles, measures vs targets with progress bars, five learning questions on indigo, tripwires), **Lead inbox** (table, page filter pills, "Add to pipeline"), **Pipeline** (5 columns Exploration/Discovery/Scoping/Preparation/Continuation with guiding question; cards show offer, fee, go-live, source, partner, grid, BD hours vs 10%-of-fee budget, next step; **drag-and-drop between columns** plus ←/Advance buttons; column highlights teal on drag-over; dragged card opacity .45), **Form builder** (per page: reorder ▲▼, label, type, required, options, remove, add; steps 1 & 3 locked), **SI partners** (funnel 15→5→2–3, table, click status to cycle), **Landing pages** (copy editor, fee toggle, magnet, Calendly, publish), **Subscribers**, **Content calendar** (month → post → LinkedIn cut dots → newsletter), link out to **Website content** (`/admin`).
+Sidebar 232px navy; active item `rgba(255,255,255,.1)` bg + 3px teal left bar. Main on paper `#F6F5F0`, panels white radius 12, border `rgba(18,15,56,.1)`. Views: **Overview** (KPI tiles, measures vs targets with progress bars, five learning questions on indigo, tripwires), **Lead inbox** (table, page filter pills, "Add to pipeline"), **Pipeline** (5 columns Exploration/Discovery/Scoping/Preparation/Continuation with guiding question; cards show offer, fee, go-live, source, partner, grid, BD hours vs 10%-of-fee budget, next step; **drag-and-drop between columns** plus ←/Advance buttons; column highlights teal on drag-over; dragged card opacity .45), **Form builder** (per page: reorder ▲▼, label, type, required, options, remove, add; steps 1 & 3 locked), **SI partners** (funnel 15→5→2–3, table, click status to cycle), **Landing pages** (copy editor, fee toggle, magnet, Calendly, publish), **Subscribers**, **Content calendar** (month → post → LinkedIn cut dots → newsletter), **Website content** (the CMS editor for every public page), **Settings**.
 
 ## Interactions & motion
 - Entrance: `rise` (translateY 14–18px → 0, .7s ease-out, staggered .1–.85s); `wordIn` for hero headline.

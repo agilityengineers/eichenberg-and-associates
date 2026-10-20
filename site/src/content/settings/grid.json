@@ -1,0 +1,28 @@
+{
+  "cells": [
+    {
+      "id": "nn",
+      "tag": "Can’t lead it · Can’t do it",
+      "label": "We need someone to lead the change and do the work.",
+      "result": "Continue to Discovery."
+    },
+    {
+      "id": "nd",
+      "tag": "Can’t lead it · Can do it",
+      "label": "We have hands, but no one to lead it.",
+      "result": "Continue to Discovery."
+    },
+    {
+      "id": "ln",
+      "tag": "Can lead it · Can’t do it",
+      "label": "We have a leader, but no capacity to do the work.",
+      "result": "Continue to Discovery."
+    },
+    {
+      "id": "ld",
+      "tag": "Can lead it · Can do it",
+      "label": "We can lead it and do it ourselves.",
+      "result": "Stay in touch, ask for a referral."
+    }
+  ]
+}

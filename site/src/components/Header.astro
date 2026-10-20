@@ -1,33 +1,33 @@
 ---
-import site from '../content/settings/site.json';
-import { getCollection } from 'astro:content';
-const extra = (await getCollection('customPages', ({ data }) => data.published && data.inNav)).map((p) => ({ label: p.data.title, href: '/p/' + p.data.slug }));
-const navItems = [...site.nav, ...extra];
+import { getDocs, setting } from '../lib/content';
+const site = await setting('site');
+const extra = (await getDocs('custom-pages', (d) => d.data.published && d.data.inNav)).map((p) => ({ label: p.data.title, href: '/p/' + p.slug }));
+const navItems = [...(site.nav || []), ...extra];
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 ---
 <header class="hdr">
   <div class="progress" aria-hidden="true"></div>
   <nav class="wrap nav" aria-label="Primary">
-    <a href="/" class="brand" aria-label="Eichenberg & Associates home">
+    <a href="/" class="brand" aria-label={`${site.name} home`}>
       <img src="/images/mark-color.png" alt="" width="51" height="56" />
       <span class="brand__t"><span>EICHENBERG</span><span>&amp; ASSOCIATES</span></span>
     </a>
     <button class="burger" aria-expanded="false" aria-controls="menu" aria-label="Menu"><span></span><span></span></button>
     <ul id="menu" class="menu">
-      {navItems.map((n) => <li><a href={n.href} aria-current={path.startsWith(n.href) ? 'page' : undefined}>{n.label}</a></li>)}
-      <li><a href="/contact" class="btn btn--navy cta">Start a conversation</a></li>
+      {navItems.map((n: { label: string; href: string }) => <li><a href={n.href} aria-current={n.href !== '/' && path.startsWith(n.href) ? 'page' : undefined}>{n.label}</a></li>)}
+      <li><a href={site.ctaHref || '/contact'} class="btn btn--navy cta">{site.ctaLabel}</a></li>
     </ul>
   </nav>
 </header>
 <style>
-.hdr{position:sticky;top:0;z-index:50;background:rgba(246,245,240,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:14px;padding-bottom:14px;flex-wrap:wrap}
+.hdr{position:sticky;top:0;z-index:50;background:rgba(246,245,240,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:16px;color:var(--navy)}.brand img{height:56px;width:auto}.brand:hover img{animation:bob .9s ease-in-out infinite}@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .brand__t{display:flex;flex-direction:column;line-height:1}.brand__t span:first-child{font-weight:600;letter-spacing:.22em;font-size:22px}.brand__t span:last-child{font-weight:500;letter-spacing:.32em;font-size:12.5px;margin-top:6px;color:var(--indigo)}
 .menu{list-style:none;margin:0;padding:0;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
-.menu a:not(.cta){display:inline-block;padding:8px 12px;font-size:14px;font-weight:500;color:var(--navy);border-radius:6px;border-bottom:2px solid transparent}
+.menu a:not(.cta){display:inline-block;padding:8px 12px;font-size:14px;font-weight:500;color:var(--navy);border-radius:6px;border-bottom:2px solid transparent;transition:background .2s}
 .menu a:not(.cta):hover{background:rgba(52,60,151,.08)}.menu a[aria-current="page"]{border-bottom-color:var(--teal)}
-.cta{margin-left:8px;padding:10px 18px;font-size:14px;white-space:nowrap}
+.cta{margin-left:8px;padding:10px 18px;font-size:14px;white-space:nowrap}.cta:hover{transform:translateY(-1px)}
 .burger{display:none;background:none;border:0;width:44px;height:44px;cursor:pointer;flex-direction:column;justify-content:center;gap:6px;align-items:center}
 .burger span{display:block;width:22px;height:2px;background:var(--navy)}
 @media (max-width:860px){

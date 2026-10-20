@@ -2,17 +2,45 @@
   "title": "Eichenberg & Associates — Change management for mid-market go-lives",
   "gap": {
     "eyebrow": "The gap",
-    "heading": "Your Systems Integrator (SI) will get the system live. Who's making sure your people can run the operation on day one?",
+    "heading": "Your SI will get the system live. Who's making sure your people can run the operation on day one?",
     "paragraphs": [
       "Training completion tells you who clicked through. It doesn't tell you who can do the job on day one.",
       "The SI plan covers cutover; people readiness is a line item for training sessions. Status reports are green, but you can't see whether operations is ready."
     ],
     "closing": "The SI brings system expertise. We bring people expertise."
   },
+  "stats": [
+    {
+      "prefix": "",
+      "value": 2007,
+      "from": 1990,
+      "text": "Every engagement since, inside ERP, PM and HR programs"
+    },
+    {
+      "prefix": "~",
+      "value": 150,
+      "from": 0,
+      "text": "Build hours a built OCM toolkit saves on an ERP project"
+    },
+    {
+      "prefix": "≤",
+      "value": 90,
+      "from": 0,
+      "text": "Days before go-live for a Readiness Assessment"
+    },
+    {
+      "prefix": "",
+      "value": 3,
+      "from": 3,
+      "text": "Phases, fixed fee by phase: Prepare, Act, Sustain"
+    }
+  ],
   "offers": {
     "eyebrow": "What we offer",
     "heading": "Three offers around one go-live",
-    "link": "All services →"
+    "link": "All services →",
+    "fitLabel": "Fits now",
+    "learnMore": "Learn more →"
   },
   "who": {
     "eyebrow": "Who this is for",

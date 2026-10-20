@@ -1,0 +1,48 @@
+{
+  "soundFamiliar": "Sound familiar?",
+  "stepsHint": "4 short steps · about 2 minutes",
+  "goalsLabel": "What you’re after",
+  "painsLabel": "What you’re dealing with",
+  "engagementLabel": "The engagement",
+  "proof": [
+    {
+      "title": "System-agnostic",
+      "text": "Readiness across ERP, PM, and HR"
+    },
+    {
+      "title": "Senior lead, flexible bench",
+      "text": "Contract associates for production work"
+    },
+    {
+      "title": "WBENC certified",
+      "text": "Supplier diversity goals"
+    }
+  ],
+  "formEyebrow": "Exploration",
+  "formHeading": "What are the reasons to talk?",
+  "formIntro": "Four steps. The last one is the grid: who can lead the change, and who can do the work? You place yourself. Then we decide whether to continue to Discovery.",
+  "steps": [
+    "About you",
+    "Your situation",
+    "Who can lead it, who can do it",
+    "Next step"
+  ],
+  "gridHeading": "Who can lead it? Who can do it?",
+  "gridIntro": "Pick the quadrant that sounds like your organization right now.",
+  "gridError": "Pick one quadrant to continue.",
+  "choose": "Choose one",
+  "required": "Required.",
+  "emailError": "Enter a valid work email.",
+  "back": "← Back",
+  "next": "Continue →",
+  "finish": "See my place on the grid",
+  "sending": "Sending…",
+  "note": "Protected by Cloudflare Turnstile. Your answers go to Eichenberg & Associates only. No marketing emails without your say-so.",
+  "doneLabel": "Your place on the grid",
+  "doneText": "Thanks, {first}. We’ve got your answers and will reply within two business days. Pick a time below if you’d rather talk sooner.",
+  "magnetSent": "On its way to {email}.",
+  "bookingTitle": "Book a call",
+  "failure": "Something went wrong.",
+  "fallback": "You can also email",
+  "footerNote": "WBENC certified"
+}

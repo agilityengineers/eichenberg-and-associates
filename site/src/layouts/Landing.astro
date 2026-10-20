@@ -1,0 +1,43 @@
+---
+// Unlisted persona landing pages (/for/<slug>): compact header and footer, as in Persona Landing Pages.dc.html.
+import Head from '../components/Head.astro';
+import { page, setting } from '../lib/content';
+import '../styles/global.css';
+interface Props { title: string; description: string; cta: string }
+const { cta, ...head } = Astro.props;
+const [site, l] = await Promise.all([setting('site'), page('landing')]);
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="en">
+<head><Head {...head} noindex /></head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="lhdr">
+    <nav aria-label="Primary" class="lwrap lhdr__in">
+      <a href="/" class="lbrand" aria-label={site.name}><img src="/images/mark-color.png" alt="" width="30" height="33" /><span><span>EICHENBERG</span><span>&amp; ASSOCIATES</span></span></a>
+      <a href="#form" class="lhdr__cta" data-to-form>{cta}</a>
+    </nav>
+  </header>
+  <main id="main"><slot /></main>
+  <footer class="lft">
+    <div class="lwrap lft__in">
+      <img src="/images/logo-white.png" alt={site.name} width="120" height="87" />
+      <span>© {year} {site.name} · <a href="/privacy">{site.footer.privacyLabel}</a> · <a href="/terms">{site.footer.termsLabel}</a> · {l.footerNote}</span>
+    </div>
+  </footer>
+  <script>
+    document.querySelectorAll<HTMLAnchorElement>('[data-to-form]').forEach((a) => a.addEventListener('click', (e) => { const el = document.getElementById('form'); if (!el) return; e.preventDefault(); window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }));
+  </script>
+</body>
+</html>
+<style is:global>
+.lwrap{max-width:1200px;margin:0 auto;padding-left:24px;padding-right:24px}
+.lhdr{background:rgba(246,245,240,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.lhdr__in{padding-top:12px;padding-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.lbrand{display:flex;align-items:center;gap:12px;color:var(--navy)}.lbrand img{display:block;height:33px;width:auto}
+.lbrand>span{display:flex;flex-direction:column;line-height:1}.lbrand>span span:first-child{font-weight:600;letter-spacing:.22em;font-size:14px}.lbrand>span span:last-child{font-weight:500;letter-spacing:.3em;font-size:8.5px;margin-top:4px;color:var(--indigo)}
+.lhdr__cta{display:inline-block;padding:10px 18px;font-size:14px;font-weight:600;color:#fff;background:var(--navy);border-radius:6px;transition:background .2s}.lhdr__cta:hover{background:var(--indigo);color:#fff}
+.lft{background:var(--navy);color:rgba(255,255,255,.7);font-size:13px}.lft a{color:rgba(255,255,255,.7)}.lft a:hover{color:var(--teal)}
+.lft__in{padding-top:28px;padding-bottom:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}.lft__in img{width:120px;height:auto}
+</style>

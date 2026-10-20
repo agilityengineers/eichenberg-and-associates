@@ -1,26 +1,28 @@
 ---
 import Base from '../layouts/Base.astro';
-import c from '../content/pages/partners.json';
 import Cta from '../components/Cta.astro';
+import { page } from '../lib/content';
+import { si } from '../lib/si';
+const c = await page('partners');
 ---
 <Base title={c.title} description={c.description}>
   <section class="wrap" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(40px,5vw,64px)">
-    <p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="max-width:16ch;animation-delay:.1s">{c.heading}</h1>
-    <p class="lead" style="margin-top:28px;max-width:58ch">{c.lead}</p>
+    <p class="eyebrow rise" set:html={si(c.eyebrow)} /><h1 class="display word" style="max-width:16ch;animation-delay:.1s">{c.heading}</h1>
+    <p class="lead rise" style="margin-top:28px;max-width:58ch;animation-delay:.3s" set:html={si(c.lead)} />
   </section>
   <section class="wrap" style="padding-bottom:clamp(64px,8vw,104px)">
     <h2 class="eyebrow" style="margin-bottom:24px">{c.coverHeading}</h2>
     <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
-      <div class="indigo cov__box" data-reveal="left"><img src="/images/mark-half-left-white.png" alt="" aria-hidden="true" class="cov__mark" style="right:-8px;opacity:.1" /><h3 class="h3" style="margin-bottom:20px">You cover</h3><ul class="cov">{c.youCover.map((i) => <li>{i}</li>)}</ul></div>
-      <div class="dark cov__box" data-reveal="right"><img src="/images/mark-half-right-teal.png" alt="" aria-hidden="true" class="cov__mark" style="left:-8px;opacity:.18" /><h3 class="h3" style="margin-bottom:20px;color:var(--teal)">We cover</h3><ul class="cov">{c.weCover.map((i) => <li>{i}</li>)}</ul></div>
+      <div class="indigo cov__box" data-reveal="left"><img src="/images/mark-half-left-white.png" alt="" aria-hidden="true" class="cov__mark" style="right:-8px;opacity:.1" /><h3 class="h3" style="margin-bottom:20px">{c.youCoverLabel}</h3><ul class="cov">{c.youCover.map((i: string) => <li set:html={si(i)} />)}</ul></div>
+      <div class="dark cov__box" data-reveal="right"><img src="/images/mark-half-right-teal.png" alt="" aria-hidden="true" class="cov__mark" style="left:-8px;opacity:.18" /><h3 class="h3" style="margin-bottom:20px;color:var(--teal)">{c.weCoverLabel}</h3><ul class="cov">{c.weCover.map((i: string) => <li set:html={si(i)} />)}</ul></div>
     </div>
-    <p class="note" style="margin-top:28px">PLACEHOLDER: replace this two-column summary with the final “what we cover, what you cover” chart.</p>
+    {c.chartNote && <p class="note" style="margin-top:28px">{c.chartNote}</p>}
   </section>
-  <section style="background:#fff;border-top:1px solid var(--line)"><div class="wrap why" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">{c.why.map((w) => <div><h3>{w.heading}</h3><p>{w.text}</p></div>)}</div></section>
+  <section style="background:#fff;border-top:1px solid rgba(18,15,56,.08)"><div class="wrap why" data-reveal style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">{c.why.map((w: { heading: string; text: string }) => <div><h3>{w.heading}</h3><p set:html={si(w.text)} /></div>)}</div></section>
   <Cta title={c.cta.heading} body={c.cta.text} label={c.cta.label} />
 </Base>
 <style>
-.cov__box{padding:36px 32px;border-radius:10px;position:relative;overflow:hidden}.cov__box>*{position:relative}.cov__mark{position:absolute;top:-10%;height:120%;width:auto;pointer-events:none}
-.cov{margin:0;padding-left:20px;display:grid;gap:10px;font-size:17px}
-.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:40px}.why h3{margin:0 0 10px;font-family:var(--serif);font-weight:400;font-size:28px}.why p{margin:0;color:var(--muted)}
+.cov__box{padding:36px 32px;border-radius:10px;position:relative;overflow:hidden;transition-duration:.9s}.cov__box>:not(img){position:relative}.cov__box>.cov__mark{position:absolute;top:-10%;height:120%;width:auto;pointer-events:none}
+.cov{margin:0;padding-left:20px;display:grid;gap:10px;font-size:17px;line-height:1.5}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:40px}.why h3{margin:0 0 10px;font-family:var(--serif);font-weight:400;font-size:28px}.why p{margin:0;font-size:16px;line-height:1.55;color:var(--muted)}
 </style>
