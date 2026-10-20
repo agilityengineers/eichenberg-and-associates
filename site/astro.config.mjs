@@ -9,6 +9,8 @@ for (const [k, v] of Object.entries(loadEnv(process.env.NODE_ENV || 'development
 export default defineConfig({
   site: process.env.PUBLIC_SITE_URL || 'https://eichenbergassociates.com',
   output: 'server',                 // content, leads and the dashboard all live in Postgres, so every route renders per request
+  compressHTML: true,               // preserve the imported site's spacing between inline elements
+  legacy: { collectionsBackwardsCompat: true }, // keep the existing content schema and file layout
   adapter: node({ mode: 'standalone' }),
   build: { inlineStylesheets: 'auto' },
   server: { host: true, port: Number(process.env.PORT) || 5000 },

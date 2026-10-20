@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --ignore-lock",
     "build": "astro check && astro build",
     "start": "NODE_ENV=production HOST=0.0.0.0 PORT=${PORT:-5000} node ./dist/server/entry.mjs",
     "preview": "astro preview",
@@ -12,8 +12,8 @@
     "user:add": "tsx db/user.ts"
   },
   "dependencies": {
-    "@astrojs/node": "^8.3.4",
-    "astro": "^4.16.0",
+    "@astrojs/node": "^11.1.9",
+    "astro": "^7.4.1",
     "fast-xml-parser": "^4.5.0",
     "gray-matter": "^4.0.3",
     "marked": "^14.1.0",
@@ -22,12 +22,12 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.4",
+    "@astrojs/check": "^0.9.11",
     "@types/pg": "^8.23.1",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24.13.0"
   }
 }

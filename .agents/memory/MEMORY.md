@@ -1,0 +1,1 @@
+- [Astro workflow lifecycle](astro-workflow-lifecycle.md) — Astro 7 auto-backgrounds in agent environments; keep Replit's dev process in the foreground.

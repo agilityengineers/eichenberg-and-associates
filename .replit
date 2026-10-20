@@ -1,4 +1,4 @@
-modules = ["web", "nodejs-20", "postgresql-16"]
+modules = ["web", "postgresql-16", "nodejs-24", "python-base-3.13"]
 
 # Run button: dev server with live reload on port 5000 (Webview).
 run = "cd site && npm install --no-audit --no-fund && npm run dev"
@@ -33,10 +33,10 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd site && npm ci --include=dev --no-audit --no-fund && npm run dev"
 waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"

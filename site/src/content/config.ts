@@ -1,4 +1,5 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro/zod';
 
 const services = defineCollection({ type: 'content', schema: z.object({
   title: z.string(), order: z.number(), when: z.string(), lead: z.string(), who: z.string(),
@@ -25,6 +26,7 @@ const testimonials = defineCollection({ type: 'data', schema: z.object({
 })});
 
 const pages = defineCollection({ type: 'data', schema: z.any() });   // per-page copy, shape owned by each .astro page
+const settings = defineCollection({ type: 'data', schema: z.any() });
 
 const block = z.discriminatedUnion('type', [
   z.object({ type: z.literal('hero'), eyebrow: z.string().optional(), heading: z.string(), text: z.string().optional(), dark: z.boolean().default(true) }),
@@ -40,4 +42,4 @@ const customPages = defineCollection({ type: 'content', schema: z.object({
   title: z.string(), description: z.string(), published: z.boolean().default(false), inNav: z.boolean().default(false), blocks: z.array(block),
 })});
 
-export const collections = { services, insights, team, situations, testimonials, pages, 'custom-pages': customPages };
+export const collections = { services, insights, team, situations, testimonials, pages, settings, 'custom-pages': customPages };
