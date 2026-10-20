@@ -1,4 +1,4 @@
-modules = ["web", "postgresql-16", "nodejs-24", "python-base-3.13"]
+modules = ["web", "nodejs-24", "python-base-3.13", "postgresql-16"]
 
 # Run button: dev server with live reload on port 5000 (Webview).
 run = "cd site && npm install --no-audit --no-fund && npm run dev"
