@@ -72,7 +72,7 @@ export const DOCS: DocType[] = [
     rows('sources', 'Feed sources', [str('name', 'Display name (shown under each post)'), str('url', 'Feed URL'), bool('enabled', 'Enabled')], { singular: 'feed', hint: 'A standard RSS/Atom address (for a WordPress blog: the site address followed by /feed) or an rss.app URL (.xml or .json). Untick “Enabled” to pause a feed.' }),
     num('insightsCount', 'Posts on the Insights page', { min: 1, max: 50 }),
     bool('showImages', 'Show each post’s picture when the feed includes one'),
-    str('emptyText', 'Text when there are no posts yet'),
+    str('readMore', 'Link text at the foot of each post card'), str('emptyText', 'Text when there are no posts yet'),
     num('cacheMinutes', 'Check feeds for new posts every (minutes)', { min: 5, max: 1440 }),
     bool('showOnHome', 'Show the “Latest insights” section on the home page'), str('homeEyebrow', 'Home section eyebrow'), str('homeHeading', 'Home section heading'),
     str('homeLink', 'Home section link text'), num('homeCount', 'Posts on the home page', { min: 1, max: 6 }),

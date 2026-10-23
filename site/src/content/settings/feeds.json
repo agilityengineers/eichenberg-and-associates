@@ -8,6 +8,7 @@
   ],
   "insightsCount": 12,
   "showImages": true,
+  "readMore": "Read the post",
   "emptyText": "First post coming soon.",
   "cacheMinutes": 30,
   "showOnHome": true,
