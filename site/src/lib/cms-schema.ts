@@ -68,11 +68,14 @@ export const DOCS: DocType[] = [
   { collection: 'settings', slug: 'cta', group: 'Site-wide', label: 'Closing call to action', description: 'The navy band at the end of service detail pages and insight posts.', fields: [
     str('heading', 'Heading'), text('text', 'Text'), str('label', 'Button label'), str('href', 'Button link'),
   ] },
-  { collection: 'settings', slug: 'feeds', group: 'Site-wide', label: 'Insights feed (RSS)', fields: [
+  { collection: 'settings', slug: 'feeds', group: 'Site-wide', label: 'Insights feed (RSS)', description: 'Posts from these feeds appear on the Insights page, merged with the site’s own Insights posts, newest first. The home page can show the latest few.', fields: [
+    rows('sources', 'Feed sources', [str('name', 'Display name (shown under each post)'), str('url', 'Feed URL'), bool('enabled', 'Enabled')], { singular: 'feed', hint: 'A standard RSS/Atom address (for a WordPress blog: the site address followed by /feed) or an rss.app URL (.xml or .json). Untick “Enabled” to pause a feed.' }),
+    num('insightsCount', 'Posts on the Insights page', { min: 1, max: 50 }),
+    bool('showImages', 'Show each post’s picture when the feed includes one'),
+    str('emptyText', 'Text when there are no posts yet'),
+    num('cacheMinutes', 'Check feeds for new posts every (minutes)', { min: 5, max: 1440 }),
     bool('showOnHome', 'Show the “Latest insights” section on the home page'), str('homeEyebrow', 'Home section eyebrow'), str('homeHeading', 'Home section heading'),
-    str('homeLink', 'Home section link text'), num('homeCount', 'Posts on the home page', { min: 1, max: 6 }), str('emptyText', 'Text when there are no posts yet'),
-    num('cacheMinutes', 'Refresh feeds every (minutes)', { min: 5, max: 1440 }),
-    rows('sources', 'Feed sources', [str('name', 'Display name (tag on each post)'), str('url', 'Feed URL'), bool('enabled', 'Enabled')], { singular: 'feed', hint: 'Standard RSS/Atom URLs or an rss.app URL (.xml or .json). Untick “Enabled” to pause a feed.' }),
+    str('homeLink', 'Home section link text'), num('homeCount', 'Posts on the home page', { min: 1, max: 6 }),
   ] },
   // ---------- Pages ----------
   { collection: 'pages', slug: 'home', group: 'Pages', label: 'Home', fields: [

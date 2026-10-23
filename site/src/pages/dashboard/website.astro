@@ -4,6 +4,7 @@ import Dashboard from '../../layouts/Dashboard.astro';
 import Editor from '../../components/cms/Editor.astro';
 import { DOCS, type DocType } from '../../lib/cms-schema';
 import { getDoc, getDocs, type Doc } from '../../lib/content';
+import { checkFeeds, type FeedHealth } from '../../lib/feeds';
 const sp = Astro.url.searchParams;
 const [dc, ds] = (sp.get('doc') || '').split('/');
 const c = sp.get('c') || '', slug = sp.get('slug') || '';
@@ -17,6 +18,9 @@ const isCur = (d: DocType) => d === t;
 const VIEW: Record<string, string> = { 'pages/home': '/', 'pages/services': '/services', 'pages/who-we-serve': '/who-we-serve', 'pages/partners': '/partners', 'pages/about': '/about', 'pages/insights': '/insights', 'pages/contact': '/contact', 'pages/landing': '/for/operations', 'pages/not-found': '/page-not-found-preview', 'settings/hero': '/', 'settings/golive': '/services', 'settings/grid': '/', 'settings/feeds': '/insights' };
 const view = t.entry ? (doc && t.entry.urlPrefix ? t.entry.urlPrefix + doc.slug : doc && t.collection === 'situations' ? '/who-we-serve' : doc && t.collection === 'testimonials' ? '/' : doc && t.collection === 'team' ? '/about' : '') : VIEW[`${t.collection}/${t.slug}`] || '/';
 const entryTitle = (e: Doc) => e.data[t!.entry!.titleKey] || e.slug;
+// Insights feed: show whether each source loads, so a wrong address is caught here rather than on the site.
+const health: FeedHealth[] | null = t.collection === 'settings' && t.slug === 'feeds' && doc ? await checkFeeds(doc.data) : null;
+const when = (d?: string) => (d ? new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
 ---
 <Dashboard title={doc && t.entry ? entryTitle(doc) : t.label} eyebrow="Website content" active="website">
   <section class="two">
@@ -36,6 +40,12 @@ const entryTitle = (e: Doc) => e.data[t!.entry!.titleKey] || e.slug;
           {view && <a href={view} target="_blank" rel="noopener" style="font-size:13px;font-weight:600">View on the site ↗</a>}
         </div>
         {t.description && <p class="cms-hint" style="margin:0">{t.description}</p>}
+        {health && <div class="fh"><h3>Feed check</h3>
+          {health.length ? <ul>{health.map((h) => <li class:list={{ 'fh--bad': h.enabled && !!h.error && !h.count, 'fh--warn': h.enabled && !!h.error && h.count > 0 }}>
+            <strong>{h.name}</strong>{h.url && <span class="faint"> · {h.url}</span>}<br />
+            {!h.enabled ? 'Paused.' : h.error && !h.count ? `Could not load: ${h.error}.` : <>{h.count} post{h.count === 1 ? '' : 's'}, {h.images} with a picture{h.fetchedAt && ` · checked ${when(h.fetchedAt)}`}{h.error && ` · last attempt failed (${h.error}); showing the earlier copy`}.</>}
+          </li>)}</ul> : <p class="cms-hint" style="margin:0">No feed sources yet. Add one below and save.</p>}
+        </div>}
         <Editor fields={t.fields} value={doc!.data} endpoint="/api/admin/content" extra={{ collection: t.collection, slug: doc!.slug }}
           body={t.body ? { label: t.body.label, value: doc!.body, optional: t.body.optional } : undefined}
           slug={t.entry?.slugEditable ? { value: doc!.slug, prefix: t.entry.urlPrefix } : undefined}>
@@ -46,6 +56,8 @@ const entryTitle = (e: Doc) => e.data[t!.entry!.titleKey] || e.slug;
   </section>
 </Dashboard>
 <style>
+.fh{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--paper);display:grid;gap:8px}.fh h3{margin:0;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--indigo)}
+.fh ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:13.5px;line-height:1.5}.fh li{padding-left:14px;border-left:3px solid var(--teal)}.fh li.fh--warn{border-color:#C98A00}.fh li.fh--bad{border-color:#B3261E}
 .ent{list-style:none;margin:0;padding:0;display:grid;gap:6px}.ent a{display:grid;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}.ent a:hover{border-color:var(--navy);color:var(--ink)}.ent small{font-size:12px;color:var(--faint)}
 </style>
 <script>

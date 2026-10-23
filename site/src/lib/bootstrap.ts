@@ -25,6 +25,15 @@ async function boot() {
     await q('insert into content (collection, slug, data, body) values ($1, $2, $3, $4) on conflict do nothing', [d.collection, d.slug, JSON.stringify(d.data), d.body]);
   }
   if (!seeded) await q("insert into settings (key, data) values ('content_seeded', 'true') on conflict do nothing");
+  // Databases seeded before the blog feed was known still hold the placeholder feed sources; swap those (and only those)
+  // for the shipped defaults. Sources the admin has edited to a real address are left alone.
+  const feedsDefault = DEFAULTS.find((d) => d.collection === 'settings' && d.slug === 'feeds');
+  const feedsRow = await one<{ data: any }>("select data from content where collection = 'settings' and slug = 'feeds'");
+  const stored = feedsRow?.data?.sources;
+  if (feedsDefault && Array.isArray(stored) && stored.every((x: any) => !x?.url || String(x.url).includes('PLACEHOLDER'))) {
+    await q("update content set data = jsonb_set(data, '{sources}', $1::jsonb), updated_at = now() where collection = 'settings' and slug = 'feeds'", [JSON.stringify(feedsDefault.data.sources)]);
+    console.log('[boot] replaced placeholder feed sources with the default blog feed');
+  }
   await q("insert into settings (key, data) values ('dashboard', $1) on conflict do nothing", [JSON.stringify(DEFAULT_SETTINGS)]);
   invalidate();
 
