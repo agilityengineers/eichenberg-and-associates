@@ -29,7 +29,8 @@ site/
    │  ├─ cms-schema.ts       # field definitions for every editable page/collection (drives the editor + validation)
    │  ├─ settings.ts         # dashboard settings defaults (stages, targets, tripwires, pick-lists)
    │  ├─ auth.ts, password.ts# sessions, password hashing, reset tokens
-   │  ├─ db.ts, env.ts, mail.ts, turnstile.ts, ratelimit.ts, sanitize.ts, feeds.ts, si.ts, personas.js
+   │  ├─ feeds.ts, feed-parse.ts  # RSS/Atom/JSON Feed: fetch + cache, and the parser (post text, date, category, picture)
+   │  ├─ db.ts, env.ts, mail.ts, turnstile.ts, ratelimit.ts, sanitize.ts, si.ts, personas.js
    ├─ middleware.ts          # login gate, security headers (CSP/HSTS in production), legacy redirects
    ├─ layouts/               # Base (public), Landing (persona pages), Dashboard
    ├─ components/            # Header, Footer, Cta, ContactForm, FeedList, cms/ (editor fields)
@@ -98,7 +99,7 @@ All variables are read when the server handles a request, so changing a Secret n
 - **Collections:** Services, Who-we-serve situations, Team, Testimonials, Insights posts, and **Custom pages** (page builder with Hero, Text, Two columns, Bullets, Pull quote, Image and Call to action blocks; appears at `/p/<slug>` and in the sitemap when published).
 - **Images:** upload in any image field. Files are stored in the database (Autoscale has no persistent disk) and served from `/media/…`. Keep images ≤ 1600px wide, WebP or JPEG.
 - **Pricing:** each service has a price and a *Show price* switch. Prices stay hidden until it's on.
-- **Insights feed (RSS):** toggle the home section and add feed sources (any RSS/Atom URL or an rss.app .xml/.json URL). Posts from enabled feeds merge with the site's own Insights posts, newest first.
+- **Insights feed (RSS):** feed sources (any RSS/Atom URL — for a WordPress blog, the site address followed by `/feed` — or an rss.app .xml/.json URL; the blog at blog.eichenbergassociates.com is set up by default), how many posts the Insights page shows, whether to show each post's picture, the “Read the post” link text, and the home-page section. The Insights page features the newest post full-width and lists the rest three across; every card links straight to the post's own page. Posts from enabled feeds merge with the site's own Insights posts, newest first; each post's picture comes from the feed (featured image, enclosure or the first image in the post). The *Feed check* at the top of that page shows whether each feed loads and how many posts carry a picture; a feed that stops responding keeps showing its last good copy. Feeds are fetched on the server and cached (default 30 minutes).
 
 Privacy and Terms are code files (`src/pages/privacy.astro`, `terms.astro`) so legal-reviewed wording can't be changed by accident. Ask a developer to update them.
 

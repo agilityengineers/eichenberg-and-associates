@@ -1,31 +1,85 @@
 ---
-// Merged feed posts: rendered on the server, then refreshed in the browser from /api/feed.
+// Merged feed posts (the site's own Insights posts + RSS feeds), newest first. Rendered on the server, then refreshed
+// in the browser from /api/feed when the list has changed. Every card links straight to the post's own page (the
+// feed's <link>); remote posts open in a new tab. `images` shows each post's picture when the feed has one.
+//   cards — the home page: text cards, three across.
+//   grid  — the Insights page: the newest post featured full-width, the rest three across with their pictures.
 import { allPosts, fmtDate } from '../lib/feeds';
 import { setting } from '../lib/content';
-interface Props { limit?: number; variant?: 'cards' | 'list' }
-const { limit = 3, variant = 'cards' } = Astro.props;
+interface Props { limit?: number; variant?: 'cards' | 'grid'; images?: boolean }
+const { limit = 3, variant = 'cards', images = false } = Astro.props;
 const { items, errors } = await allPosts(limit);
 const feeds = await setting('feeds');
+const grid = variant === 'grid';
+const Title = grid ? 'h2' : 'h3';
+const more = String(feeds.readMore || 'Read the post');
 ---
-<div class={'feed feed--' + variant} data-feed data-limit={limit}>
-  {items.map((p) => <a href={p.link} target={p.local ? undefined : '_blank'} rel={p.local ? undefined : 'noopener'} class="feed__item"><p class="label" style="color:var(--teal);margin:0">{p.source}</p><h3>{p.title}</h3><p class="feed__x">{p.excerpt}</p><p class="note" style="margin:0">{fmtDate(p.date)}</p></a>)}
+<div class={'feed feed--' + variant} data-feed data-limit={limit} data-variant={variant} data-images={images ? '1' : undefined} data-more={more}>
+  {items.map((p, i) => { const featured = grid && i === 0; return (
+    <a href={p.link} target={p.local ? undefined : '_blank'} rel={p.local ? undefined : 'noopener'} class:list={['feed__item', 'rise', { 'feed__item--img': images, 'feed__item--featured': featured }]} style={`animation-delay:${Math.min(i, 8) * 0.08}s`}>
+      {images && <span class:list={['feed__media', { 'feed__media--none': !p.image }]}>
+        {p.image ? <img src={p.image} alt="" loading={i < 3 ? 'eager' : 'lazy'} decoding="async" /> : <img src="/images/mark-teal.png" alt="" loading="lazy" decoding="async" />}
+      </span>}
+      <span class="feed__body">
+        <span class="feed__tag">{p.tag || p.source}</span>
+        <Title class="feed__title">{p.title}</Title>
+        {p.excerpt && <span class="feed__x">{p.excerpt}</span>}
+        <span class="feed__meta">{fmtDate(p.date) && <time datetime={p.date}>{fmtDate(p.date)}</time>}{!p.local && <>{fmtDate(p.date) && ' · '}{p.source}</>}</span>
+        {grid && <span class="feed__more">{more} {p.local ? '→' : '↗'}</span>}
+      </span>
+    </a>); })}
   {!items.length && <p class="note feed__empty">{feeds.emptyText}</p>}
 </div>
-{import.meta.env.DEV && errors.length > 0 && <p class="note">Feed errors (dev only): {errors.join(' · ')}</p>}
+{(import.meta.env.DEV || Astro.locals.user) && errors.length > 0 && <p class="note" style="margin:10px 0 0">Feed problems (only you can see this): {errors.join(' · ')}</p>}
 <style is:global>
-.feed--cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}.feed--list{display:grid;gap:10px}
-.feed__item{display:grid;gap:10px;align-content:start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 28px;color:var(--ink);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s}.feed--list .feed__item{background:#fff;padding:28px 32px}
+.feed--cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.feed--grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:24px}
+.feed__item{display:grid;align-content:start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 28px;color:var(--ink);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s}
 .feed__item:hover{transform:translateY(-4px);box-shadow:0 20px 36px rgba(18,15,56,.1);color:var(--ink)}
-.feed__item h3{margin:0;font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.15}.feed--list .feed__item h3{font-size:28px;line-height:1.1}.feed__x{margin:0;font-size:15px;line-height:1.5;color:var(--muted)}
-.feed--list .feed__item p.note{font-size:14px}
+.feed__item.rise{animation-fill-mode:backwards}   /* `both` would pin transform:none after the entrance and cancel the hover lift */
+.feed__body{display:grid;gap:10px;align-content:start;min-width:0}
+.feed__tag{font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--teal)}
+.feed__title{margin:0;font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.15;text-wrap:balance}
+.feed__x{font-size:15px;line-height:1.5;color:var(--muted)}
+.feed__meta{font-size:13px;color:var(--faint)}
+.feed__more{margin-top:4px;font-size:14px;font-weight:600;color:var(--indigo)}.feed__item:hover .feed__more{color:var(--navy)}
+.feed__media{position:relative;display:block;overflow:hidden;background:var(--paper)}
+.feed__media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.feed__item:hover .feed__media img{transform:scale(1.03)}
+/* No picture in the feed: the mark on paper keeps the cards level. */
+.feed__media--none{background:var(--paper);border-bottom:1px solid var(--line)}
+.feed__media--none img{position:absolute;inset:auto;left:50%;top:50%;width:auto;height:40%;max-height:110px;transform:translate(-50%,-50%);object-fit:contain;opacity:.2}
+.feed__item:hover .feed__media--none img{transform:translate(-50%,-50%)}
+/* cards (home) */
+.feed--cards .feed__item--img{padding:0}.feed--cards .feed__media{aspect-ratio:16/9;border-radius:9px 9px 0 0}.feed--cards .feed__item--img .feed__body{padding:22px 28px 26px}
+/* grid (Insights page) */
+.feed--grid .feed__item{background:#fff;padding:0}
+.feed--grid .feed__body{padding:24px 26px 26px}
+.feed--grid .feed__media{aspect-ratio:16/10;border-radius:9px 9px 0 0}
+.feed--grid .feed__item--featured{grid-column:1/-1}
+.feed--grid .feed__item--featured .feed__title{font-size:clamp(30px,3.4vw,42px);line-height:1.06}
+.feed--grid .feed__item--featured .feed__x{font-size:17px;line-height:1.55;max-width:60ch}
+.feed--grid .feed__item--featured .feed__body{padding:30px 32px 32px}
+@media (min-width:800px){
+  /* Featured: picture beside the text. No aspect-ratio here: the picture stretches to the row, and an aspect ratio would set its width from that height. */
+  .feed--grid .feed__item--featured.feed__item--img{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:stretch}
+  .feed--grid .feed__item--featured .feed__media{aspect-ratio:auto;min-height:380px;border-radius:9px 0 0 9px}
+  .feed--grid .feed__item--featured .feed__body{padding:44px 48px;align-self:center}
+}
+@media (prefers-reduced-motion:reduce){.feed__item:hover .feed__media img{transform:none}.feed__item:hover .feed__media--none img{transform:translate(-50%,-50%)}}
 </style>
 <script>
-  // Refresh with the live merged feed so new remote posts show without a reload of the server cache.
+  // Refresh from the live merged feed when it differs from what the server rendered (new posts since its cache).
   document.querySelectorAll<HTMLElement>('[data-feed]').forEach(async (el) => {
-    try { const r = await fetch('/api/feed?limit=' + el.dataset.limit); const { items } = await r.json(); if (!items?.length) return;
-      const fmt = (d: string) => { const x = new Date(d); return isNaN(+x) ? '' : x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
-      const esc = (s: string) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
-      const safe = (u: string) => (/^(https?:|\/)/.test(u) ? u : '#');
-      el.innerHTML = items.map((p: any) => `<a href="${esc(safe(p.link))}" ${p.local ? '' : 'target="_blank" rel="noopener"'} class="feed__item"><p class="label" style="color:var(--teal);margin:0">${esc(p.source)}</p><h3>${esc(p.title)}</h3><p class="feed__x">${esc(p.excerpt || '')}</p><p class="note" style="margin:0">${fmt(p.date)}</p></a>`).join('');
+    try {
+      const r = await fetch('/api/feed?limit=' + el.dataset.limit); const { items } = await r.json(); if (!items?.length) return;
+      const shown = [...el.querySelectorAll<HTMLAnchorElement>('a.feed__item')].map((a) => a.getAttribute('href')).join('\n');
+      if (shown === items.map((p: any) => p.link).join('\n')) return;
+      const grid = el.dataset.variant === 'grid', images = el.dataset.images === '1', tag = grid ? 'h2' : 'h3', more = el.dataset.more || 'Read the post';
+      const fmt = (d: string) => { const x = new Date(d); return isNaN(+x) ? '' : x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }); };
+      const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+      const safe = (u: unknown) => (/^(https?:|\/)/.test(String(u)) ? String(u) : '');
+      el.innerHTML = items.map((p: any, i: number) => { const img = safe(p.image), featured = grid && i === 0, date = fmt(p.date);
+        return `<a href="${esc(safe(p.link) || '#')}" ${p.local ? '' : 'target="_blank" rel="noopener"'} class="feed__item${images ? ' feed__item--img' : ''}${featured ? ' feed__item--featured' : ''}">${images ? `<span class="feed__media${img ? '' : ' feed__media--none'}"><img src="${esc(img || '/images/mark-teal.png')}" alt="" loading="lazy" decoding="async"></span>` : ''}<span class="feed__body"><span class="feed__tag">${esc(p.tag || p.source)}</span><${tag} class="feed__title">${esc(p.title)}</${tag}>${p.excerpt ? `<span class="feed__x">${esc(p.excerpt)}</span>` : ''}<span class="feed__meta">${date ? `<time datetime="${esc(p.date)}">${esc(date)}</time>` : ''}${p.local ? '' : `${date ? ' · ' : ''}${esc(p.source)}`}</span>${grid ? `<span class="feed__more">${esc(more)} ${p.local ? '→' : '↗'}</span>` : ''}</span></a>`; }).join('');
     } catch {} });
 </script>

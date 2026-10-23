@@ -1,21 +1,19 @@
 {
-  "showOnHome": true,
-  "homeHeading": "Readiness, one post a month",
-  "homeEyebrow": "Latest insights",
-  "homeCount": 3,
-  "cacheMinutes": 30,
   "sources": [
     {
-      "name": "PLACEHOLDER: existing blog",
-      "url": "https://PLACEHOLDER.example.com/feed",
-      "enabled": false
-    },
-    {
-      "name": "PLACEHOLDER: rss.app feed",
-      "url": "https://rss.app/feeds/PLACEHOLDER.xml",
-      "enabled": false
+      "name": "Blog",
+      "url": "https://blog.eichenbergassociates.com/feed",
+      "enabled": true
     }
   ],
+  "insightsCount": 12,
+  "showImages": true,
+  "readMore": "Read the post",
+  "emptyText": "First post coming soon.",
+  "cacheMinutes": 30,
+  "showOnHome": true,
+  "homeEyebrow": "Latest insights",
+  "homeHeading": "Readiness, one post a month",
   "homeLink": "All insights →",
-  "emptyText": "First post coming soon."
+  "homeCount": 3
 }

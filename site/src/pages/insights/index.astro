@@ -1,33 +1,43 @@
 ---
 import Base from '../../layouts/Base.astro';
 import FeedList from '../../components/FeedList.astro';
-import { page } from '../../lib/content';
+import { page, setting } from '../../lib/content';
 import { si } from '../../lib/si';
-const c = await page('insights');
+const [c, feeds] = await Promise.all([page('insights'), setting('feeds')]);
+// How many posts and whether to show their pictures: Dashboard → Website content → Insights feed (RSS).
+const count = Math.min(50, Math.max(1, Number(feeds.insightsCount) || 12));
 ---
 <Base title={c.title} description={c.description}>
-  <section class="wrap" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(40px,5vw,64px)">
+  <section class="wrap" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(36px,4vw,48px)">
     <p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="max-width:14ch;animation-delay:.1s">{c.heading}</h1>
     <p class="lead rise" style="margin-top:28px;animation-delay:.3s" set:html={si(c.lead)} />
   </section>
-  <section class="wrap grid" style="padding-bottom:clamp(64px,8vw,104px)">
-    <FeedList limit={24} variant="list" />
-    <aside class="dark nl rise" style="animation-delay:.4s">
-      <p class="eyebrow" style="margin:0">{c.newsletterEyebrow}</p><h2 class="h3" style="font-size:30px">{c.newsletterHeading}</h2>
-      <p style="margin:0;color:rgba(255,255,255,.82)">{c.newsletterText}{c.newsletterNote && <> <span style="color:var(--faint)">{c.newsletterNote}</span></>}</p>
-      <form id="nl" method="post" action="/api/newsletter" style="display:grid;gap:10px" data-msg={JSON.stringify({ sending: c.subscribing, ok: c.subscribed, error: c.subscribeError })}>
+  <section class="wrap" style="padding-bottom:clamp(64px,8vw,104px)">
+    <aside class="dark nl rise" style="animation-delay:.4s" aria-label={c.newsletterEyebrow}>
+      <div class="nl__text">
+        <p class="eyebrow" style="margin:0">{c.newsletterEyebrow}</p><h2 class="h3 nl__h">{c.newsletterHeading}</h2>
+        <p style="margin:0;color:rgba(255,255,255,.82)">{c.newsletterText}{c.newsletterNote && <> <span style="color:var(--faint)">{c.newsletterNote}</span></>}</p>
+      </div>
+      <form id="nl" method="post" action="/api/newsletter" data-msg={JSON.stringify({ sending: c.subscribing, ok: c.subscribed, error: c.subscribeError })}>
         <label for="nl-email" style="font-size:13px;font-weight:500">{c.emailLabel}</label>
-        <input id="nl-email" name="email" type="email" required placeholder={c.emailPlaceholder} autocomplete="email" />
-        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
-        <button type="submit" class="btn btn--teal" style="padding:13px 20px">{c.subscribeLabel}</button>
+        <div class="nl__row">
+          <input id="nl-email" name="email" type="email" required placeholder={c.emailPlaceholder} autocomplete="email" />
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
+          <button type="submit" class="btn btn--teal" style="padding:13px 22px">{c.subscribeLabel}</button>
+        </div>
         <p role="status" aria-live="polite" id="nl-status" style="margin:0;font-size:14px;color:var(--teal);min-height:1.4em"></p>
       </form>
     </aside>
+    <FeedList limit={count} variant="grid" images={feeds.showImages !== false} />
   </section>
 </Base>
 <style>
-.nl{padding:36px 32px;border-radius:10px;display:grid;gap:16px;position:relative;align-content:start}.nl p{font-size:16px;line-height:1.55}
-.nl input{font:inherit;width:100%;min-width:0;padding:12px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.06);color:#fff}
+/* Newsletter: a slim band between the headline and the posts, text left and the form right on wide screens. */
+.nl{padding:30px 34px;border-radius:10px;display:grid;gap:22px 48px;align-items:center;position:relative;margin-bottom:40px}
+@media (min-width:820px){.nl{grid-template-columns:minmax(0,1.15fr) minmax(320px,1fr)}}
+.nl__text{display:grid;gap:10px}.nl__text p{font-size:16px;line-height:1.55}.nl__h{font-size:clamp(24px,2.4vw,30px)}
+.nl form{display:grid;gap:8px;min-width:0}.nl__row{display:flex;gap:10px;flex-wrap:wrap}
+.nl input[type=email]{flex:1 1 220px;min-width:0;padding:12px 14px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.06);color:#fff}
 .nl input::placeholder{color:rgba(255,255,255,.55)}
 </style>
 <script>
