@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import FeedList from '../components/FeedList.astro';
 import { getDocs, page, setting } from '../lib/content';
 import { si } from '../lib/si';
+import { accent, headlineLines } from '../lib/accent';
 const [site, hero, c, feeds, golive, grid] = await Promise.all([setting('site'), setting('hero'), page('home'), setting('feeds'), setting('golive'), setting('grid')]);
 const services = await getDocs('services');
 const quotes = await getDocs('testimonials');
@@ -12,6 +13,7 @@ const tintA = hasBg ? tint : 1, tintB = hasBg ? Math.max(0, tint - 0.15) : 1;
 const rotating: string[] = (hero.rotating || []).filter(Boolean);
 const marquee: string[] = [...rotating, ...(hero.marqueeExtra || [])].filter(Boolean);
 const card = hero.card || {};
+const [line1, line2] = headlineLines(hero);
 const q = String(card.quoteText || ''), qEnd = q.endsWith('?') ? '?' : '', qMain = qEnd ? q.slice(0, -1) : q;
 const borders = ['var(--navy)', 'var(--indigo)', 'var(--teal)', 'var(--navy)'];
 const goliveCfg = JSON.stringify({ monthsOut: golive.monthsOut, daysOut: golive.daysOut, afterGoLive: golive.afterGoLive, advice: golive.advice });
@@ -26,7 +28,7 @@ const goliveCfg = JSON.stringify({ monthsOut: golive.monthsOut, daysOut: golive.
     <div class="wrap hero__in">
       <div>
         <p class="eyebrow rise">{hero.eyebrow}</p>
-        <h1 class="hero__h"><span class="word" style="animation-delay:.1s"><em>{hero.headlineAccent1}</em> {hero.headlineRest1}</span><br /><span class="word" style="animation-delay:.35s"><em>{hero.headlineAccent2}</em> {hero.headlineRest2}</span></h1>
+        <h1 class="hero__h"><span class="word" style="animation-delay:.1s" set:html={accent(line1)} /><br /><span class="word" style="animation-delay:.35s" set:html={accent(line2)} /></h1>
         <p class="hero__sub rise" style="animation-delay:.6s">{hero.subtitle}</p>
         {rotating.length > 0 && <p class="hero__pos" aria-live="polite" data-lines={JSON.stringify(rotating)}><span id="rotator" class="rise">{rotating[0]}</span></p>}
         <div class="hero__cta rise" style="animation-delay:.85s"><a href={hero.ctaHref} class="btn btn--teal">{hero.ctaLabel}</a><a href={hero.secondaryHref} class="btn btn--ghost">{hero.secondaryLabel}</a></div>
@@ -62,7 +64,7 @@ const goliveCfg = JSON.stringify({ monthsOut: golive.monthsOut, daysOut: golive.
         <div><p class="eyebrow">{c.offers.eyebrow}</p><h2 class="h2">{c.offers.heading}</h2></div>
         <div class="slider" data-golive={goliveCfg}>
           <div class="slider__hd"><label for="golive">{golive.label}</label><output id="golive-out" for="golive" aria-live="polite"></output></div>
-          <input id="golive" type="range" min="0" max="12" step="1" value="9" />
+          <input id="golive" type="range" min="0" max="12" step="1" value="3" />
           <div class="slider__ticks">{(golive.ticks || []).map((t: string) => <span>{t}</span>)}</div>
           <p data-advice></p>
         </div>
@@ -121,7 +123,7 @@ const goliveCfg = JSON.stringify({ monthsOut: golive.monthsOut, daysOut: golive.
 .hero__tint{position:absolute;inset:0;z-index:1;pointer-events:none}
 .hero__half{z-index:1}.hero__in{z-index:2}
 .hero .eyebrow{margin-bottom:28px}
-.hero__h{margin:0;font-family:Poppins,var(--sans);font-weight:600;font-size:clamp(44px,6.4vw,88px);line-height:1.04;letter-spacing:-.02em;text-wrap:balance}.hero__h em{font-style:normal;color:var(--teal)}
+.hero__h{margin:0;font-family:Poppins,var(--sans);font-weight:600;font-size:clamp(44px,6.4vw,88px);line-height:1.04;letter-spacing:-.02em;text-wrap:balance}.hero__h :global(em){font-style:normal;color:var(--teal)}
 .hero__sub{margin:26px 0 0;font-size:clamp(17px,1.5vw,20px);line-height:1.55;max-width:50ch;color:#fff}
 .hero__half{position:absolute;left:50%;top:-6%;height:118%;width:auto;pointer-events:none}
 .hero__half--l{margin-left:-28vw;opacity:.05;animation:driftL 2.4s cubic-bezier(.2,.7,.2,1) both}.hero__half--r{margin-left:-4vw;opacity:.1;animation:driftR 2.4s cubic-bezier(.2,.7,.2,1) both}

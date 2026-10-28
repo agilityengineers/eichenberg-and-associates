@@ -5,7 +5,8 @@ document.querySelectorAll<HTMLElement>('[data-golive]').forEach((box) => {
   const r = box.querySelector<HTMLInputElement>('input[type=range]'), out = box.querySelector('output'), adv = box.querySelector('[data-advice]');
   if (!r || !out || !adv) return;
   const update = () => {
-    const m = +r.value; const stage = m >= 7 ? 'kickoff' : m >= 4 ? 'delivery' : m >= 1 ? 'assess' : 'after';
+    // The scale runs left → right from kickoff (12 months out) to go-live + 90 days, like the labels and the Services timeline.
+    const m = 12 - +r.value; const stage = m >= 7 ? 'kickoff' : m >= 4 ? 'delivery' : m >= 1 ? 'assess' : 'after';
     const label = m === 0 ? cfg.afterGoLive : m <= 3 ? cfg.daysOut.replace('{n}', String(m * 30)) : cfg.monthsOut.replace('{n}', String(m));
     out.textContent = label; r.setAttribute('aria-valuetext', label); adv.textContent = cfg.advice?.[stage] || '';
     // Home: offer cards that fit now (by service order: kickoff → 1st + 2nd, delivery → 2nd, ≤ 90 days → 3rd).
