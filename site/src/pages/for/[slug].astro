@@ -20,7 +20,7 @@ const field = (x: any) => ({ id: 'q-' + x.key, star: x.required ? '*' : '' });
 ---
 <Landing title={p.headline} description={p.situation} cta={p.cta}>
   <section class="lp-hero dark">
-    <img class="lp-hero__bg" src="/images/hero-bg.jpg" alt="" aria-hidden="true" />
+    <img class="lp-hero__bg" src={p.hero_image || '/images/hero-bg.jpg'} alt="" aria-hidden="true" />
     <div class="lp-hero__tint" aria-hidden="true"></div>
     <img class="lp-hero__mark" src="/images/mark-half-right-teal.png" alt="" aria-hidden="true" />
     <div class="lwrap lp-hero__in">

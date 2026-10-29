@@ -1,17 +1,17 @@
 {
-  "soundFamiliar": "Sound familiar?",
-  "stepsHint": "4 short steps · about 2 minutes",
+  "soundFamiliar": "The Gap:",
+  "stepsHint": "4 short questions · a 15-min call to see if there’s a fit",
   "goalsLabel": "What you’re after",
   "painsLabel": "What you’re dealing with",
   "engagementLabel": "The engagement",
   "proof": [
     {
       "title": "System-agnostic",
-      "text": "Readiness across ERP, PM, and HR"
+      "text": "Readiness across ERP, CRM, and HR"
     },
     {
-      "title": "Senior lead, flexible bench",
-      "text": "Contract associates for production work"
+      "title": "One accountable lead",
+      "text": "Associates handle build work under my direction."
     },
     {
       "title": "WBENC certified",

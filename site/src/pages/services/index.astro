@@ -15,7 +15,7 @@ const goliveCfg = JSON.stringify({ monthsOut: golive.monthsOut, daysOut: golive.
   <section class="wrap" style="padding-bottom:clamp(64px,8vw,96px)">
     <div class="tlbox" data-golive={goliveCfg}>
       <div class="tlbox__hd"><label for="golive2">{golive.label}</label><output id="golive2-out" for="golive2" aria-live="polite"></output></div>
-      <input id="golive2" type="range" min="0" max="12" step="1" value="9" />
+      <input id="golive2" type="range" min="0" max="12" step="1" value="3" />
       <ol class="tl">{(c.timeline || []).map((t: { when: string; what: string }, i: number) => <li data-stage={stages[i]}><span class="tl__w">{t.when}</span><span class="tl__t">{t.what}</span></li>)}</ol>
       <p data-advice style="margin:18px 0 0;font-size:15px;line-height:1.45;color:var(--ink)"></p>
     </div>

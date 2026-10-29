@@ -43,8 +43,9 @@ export const DOCS: DocType[] = [
       str('linkedinLabel', 'LinkedIn link text'), str('privacyLabel', 'Privacy link text'), str('termsLabel', 'Terms link text')]),
   ] },
   { collection: 'settings', slug: 'hero', group: 'Site-wide', label: 'Homepage hero', fields: [
-    str('eyebrow', 'Eyebrow line'), str('headlineAccent1', 'Headline line 1 — teal word'), str('headlineRest1', 'Headline line 1 — rest'),
-    str('headlineAccent2', 'Headline line 2 — teal word'), str('headlineRest2', 'Headline line 2 — rest'), text('subtitle', 'Subtitle'),
+    str('eyebrow', 'Eyebrow line'),
+    str('headlineLine1', 'Headline line 1', { hint: 'Wrap the teal words in asterisks, e.g. *Change* is inevitable, — they can sit anywhere in the line.' }),
+    str('headlineLine2', 'Headline line 2', { hint: 'e.g. Will they be *ready?*' }), text('subtitle', 'Subtitle'),
     items('rotating', 'Rotating lines (italic, change every 4 seconds)', text('', 'Line'), { singular: 'line' }),
     str('ctaLabel', 'Primary button label'), str('ctaHref', 'Primary button link'), str('secondaryLabel', 'Secondary button label'), str('secondaryHref', 'Secondary button link'),
     img('backgroundImage', 'Background image', { hint: 'JPEG or WebP, about 1920px wide, under 400 KB. Leave empty for a solid navy hero.' }),
@@ -58,8 +59,8 @@ export const DOCS: DocType[] = [
     items('marqueeExtra', 'Extra lines in the teal ticker (after the rotating lines)', str('', 'Line'), { singular: 'line' }),
   ] },
   { collection: 'settings', slug: 'golive', group: 'Site-wide', label: '“Where is your go-live?” slider', description: 'Shown on the home page and the Services page.', fields: [
-    str('label', 'Question'), items('ticks', 'Scale labels (left, middle, right)', str('', 'Label'), { fixed: true }),
-    str('monthsOut', 'Months label ({n} = number)'), str('daysOut', 'Days label ({n} = number)'), str('afterGoLive', 'Label at the far left'),
+    str('label', 'Question'), items('ticks', 'Scale labels (left, middle, right)', str('', 'Label'), { fixed: true, hint: 'Left is kickoff (12 months out), right is go-live + 90 days.' }),
+    str('monthsOut', 'Months label ({n} = number)'), str('daysOut', 'Days label ({n} = number)'), str('afterGoLive', 'Label at the far right (after go-live)'),
     obj('advice', 'Advice shown under the slider', [text('kickoff', '7–12 months out'), text('delivery', '4–6 months out'), text('assess', '90 days or less'), text('after', 'After go-live')]),
   ] },
   { collection: 'settings', slug: 'grid', group: 'Site-wide', label: '“Who can lead it? Who can do it?” grid', description: 'The four quadrants on the home page and in step 3 of every landing-page form.', fields: [
@@ -121,10 +122,12 @@ export const DOCS: DocType[] = [
   { collection: 'pages', slug: 'contact', group: 'Pages', label: 'Contact', description: 'The “Where are you?” choices are under Dashboard → Settings → Pick-lists.', fields: [
     ...meta, str('eyebrow', 'Eyebrow'), str('heading', 'Heading'), text('lead', 'Lead'),
     str('emailLabel', 'Email label'), str('phoneLabel', 'Phone label'), str('linkedinLabel', 'LinkedIn label'), str('linkedinText', 'LinkedIn link text'),
-    obj('form', 'Form', [str('name', 'Name label'), str('email', 'Email label'), str('company', 'Company label'), str('role', 'Role label'), str('situation', 'Situation label'),
+    obj('form', 'Form', [str('name', 'Name label'), str('email', 'Email label'), str('company', 'Company label'), str('role', 'Role label'), str('situation', 'Situation label', { hint: 'The choices themselves are under Dashboard → Settings → Pick-lists.' }),
       str('choose', 'Empty choice'), str('message', 'Message label'), str('submit', 'Button label'), text('note', 'Note under the button'), str('sending', 'While sending'),
       str('nameError', 'Missing name'), str('emailError', 'Invalid email'), str('situationError', 'Missing situation'), str('failure', 'Generic error'), str('fallback', 'Error suffix before the email address')]),
     str('successHeading', 'Success heading'), text('successText', 'Success text'),
+    obj('booking', 'Book a call (Calendly)', [str('url', 'Calendly event URL', { optional: true, hint: 'Leave empty to hide the booking button and the calendar shown after sending.' }),
+      str('intro', 'Line above the button'), str('label', 'Button label'), str('afterText', 'Line above the calendar after sending'), str('frameTitle', 'Booking frame title (screen readers)')]),
   ] },
   { collection: 'pages', slug: 'landing', group: 'Pages', label: 'Landing pages (shared copy)', description: 'Wording used on all five /for/… pages. Each page’s own copy is under Dashboard → Landing pages.', fields: [
     str('soundFamiliar', 'Lead-in before the situation'), str('stepsHint', 'Hint next to the hero button'),
@@ -210,6 +213,7 @@ export const LANDING_FIELDS: Field[] = [
   rows('messages', 'Lead message (quote) and key messages', [str('label', 'Label'), text('text', 'Message')], { singular: 'message', hint: 'The first message is the quote in the hero; all of them appear under “The engagement”.' }),
   str('cta', 'Button label'), str('magnet_title', 'Lead magnet title', { optional: true }),
   str('booking_url', 'Calendly event URL', { optional: true, hint: 'e.g. https://calendly.com/eichenberg/exploration — loads inline after the form.' }),
+  img('hero_image', 'Hero background image', { hint: 'JPEG or WebP, about 1920px wide, under 400 KB. Leave empty for the default office photo.' }),
   // …then the rest of what the page shows.
   str('frame', 'Frame (after the eyebrow)'),
   { name: 'magnet_url', label: 'Lead magnet PDF', widget: 'file', optional: true, hint: 'Upload the PDF, or paste a link. It is emailed to people who submit the form.' },

@@ -1,9 +1,9 @@
 {
   "label": "Where is your go-live?",
   "ticks": [
-    "Go-live + 90 days",
+    "Kickoff · 12 months",
     "≤ 90 days",
-    "Kickoff · 12 months"
+    "Go-live + 90 days"
   ],
   "monthsOut": "{n} months out",
   "daysOut": "{n} days out",

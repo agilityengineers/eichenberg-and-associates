@@ -4,18 +4,24 @@ import ContactForm from '../components/ContactForm.astro';
 import { page, setting } from '../lib/content';
 import { getSettings } from '../lib/settings';
 const [c, site, settings] = await Promise.all([page('contact'), setting('site'), getSettings()]);
+const booking = c.booking || {};
+const bookUrl = /^https:\/\//.test(String(booking.url || '')) ? String(booking.url) : '';   // the same Calendly event the landing pages use
 ---
 <Base title={c.title} description={c.description}>
   <section class="wrap grid" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px);gap:56px">
     <div>
       <p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="font-size:clamp(44px,6.4vw,88px);animation-delay:.1s">{c.heading}</h1>
       <p class="lead rise" style="margin-top:28px;max-width:46ch;animation-delay:.3s">{c.lead}</p>
-      <dl class="dl rise" style="margin-top:40px;grid-template-columns:1fr;gap:20px;animation-delay:.45s">
+      {bookUrl && <div class="book rise" style="animation-delay:.4s"><p class="book__t">{booking.intro}</p><a href={bookUrl} class="btn btn--teal" target="_blank" rel="noopener">{booking.label}</a></div>}
+      <dl class="dl rise" style="margin-top:40px;grid-template-columns:1fr;gap:20px;animation-delay:.5s">
         <div><dt class="label" style="margin-bottom:6px">{c.emailLabel}</dt><dd><a href={`mailto:${site.email}`}>{site.email}</a></dd></div>
         <div><dt class="label" style="margin-bottom:6px">{c.phoneLabel}</dt><dd><a href={`tel:${site.phoneHref}`}>{site.phone}</a></dd></div>
         <div><dt class="label" style="margin-bottom:6px">{c.linkedinLabel}</dt><dd><a href={site.linkedin} target="_blank" rel="noopener">{c.linkedinText}</a></dd></div>
       </dl>
     </div>
-    <ContactForm c={c} email={site.email} situations={settings.lists.situations} />
+    <ContactForm c={c} email={site.email} situations={settings.lists.situations} booking={bookUrl ? booking : null} />
   </section>
 </Base>
+<style>
+.book{margin-top:32px;display:grid;gap:14px;justify-items:start}.book__t{margin:0;font-size:17px;line-height:1.5;color:var(--muted)}.book .btn{white-space:nowrap}
+</style>

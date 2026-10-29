@@ -1,12 +1,17 @@
 ---
 import { env } from '../lib/env';
-interface Props { c: any; email: string; situations: { value: string; label: string }[] }
-const { c, email, situations } = Astro.props; const f = c.form;
+interface Props { c: any; email: string; situations: { value: string; label: string }[]; booking?: { url: string; afterText?: string; frameTitle?: string } | null }
+const { c, email, situations, booking } = Astro.props; const f = c.form;
+const bookUrl = booking && /^https:\/\//.test(String(booking.url || '')) ? String(booking.url) : '';
 const siteKey = env('PUBLIC_TURNSTILE_SITE_KEY');
-const msg = { name: f.nameError, email: f.emailError, situation: f.situationError, sending: f.sending, failure: f.failure, fallback: `${f.fallback} ${email}.` };
+const msg = { name: f.nameError, email: f.emailError, situation: f.situationError, sending: f.sending, failure: f.failure, fallback: `${f.fallback} ${email}.`, booking: booking?.frameTitle || 'Book a call' };
 ---
-<form id="contact" class="cf rise" style="animation-duration:.8s;animation-delay:.3s" method="post" action="/api/contact" novalidate data-msg={JSON.stringify(msg)}>
-  <div class="cf__sent" role="status" hidden><p class="cf__sent-h">{c.successHeading}</p><p class="cf__sent-t">{c.successText}</p></div>
+<form id="contact" class="cf rise" style="animation-duration:.8s;animation-delay:.3s" method="post" action="/api/contact" novalidate data-msg={JSON.stringify(msg)} data-booking={bookUrl}>
+  <div class="cf__sent" role="status" hidden>
+    <p class="cf__sent-h">{c.successHeading}</p><p class="cf__sent-t">{c.successText}</p>
+    {bookUrl && <p class="cf__sent-t cf__sent-b">{booking!.afterText}</p>}
+    {bookUrl && <div id="cf-booking" class="cf__booking"></div>}
+  </div>
   <div class="cf__row">
     <div class="field"><label for="c-name">{f.name} <span aria-hidden="true" style="color:var(--indigo)">*</span></label><input id="c-name" name="name" autocomplete="name" required maxlength="120" aria-describedby="e-name" /><span class="err" id="e-name" aria-live="polite"></span></div>
     <div class="field"><label for="c-email">{f.email} <span aria-hidden="true" style="color:var(--indigo)">*</span></label><input id="c-email" name="email" type="email" autocomplete="email" required maxlength="200" aria-describedby="e-email" /><span class="err" id="e-email" aria-live="polite"></span></div>
@@ -36,7 +41,8 @@ const msg = { name: f.nameError, email: f.emailError, situation: f.situationErro
 .cf__btn{justify-self:start;padding:15px 24px}
 .hp{position:absolute;left:-9999px}
 .cf.sent > :not(.cf__sent){display:none}.cf.sent > .cf__sent{display:block}
-.cf__sent{padding:24px;background:var(--paper);border-radius:8px;animation:dropIn .7s cubic-bezier(.2,.8,.2,1) both}.cf__sent-h{margin:0 0 8px;font-family:var(--serif);font-size:28px;color:var(--navy)}.cf__sent-t{margin:0;font-size:16px;color:var(--muted)}
+.cf__sent{padding:24px;background:var(--paper);border-radius:8px;animation:dropIn .7s cubic-bezier(.2,.8,.2,1) both}.cf__sent-h{margin:0 0 8px;font-family:var(--serif);font-size:28px;color:var(--navy)}.cf__sent-t{margin:0;font-size:16px;color:var(--muted)}.cf__sent-b{margin-top:16px;color:var(--navy);font-weight:500}
+.cf__booking{margin-top:12px;border:1px dashed rgba(18,15,56,.3);border-radius:10px;background:#fff;min-height:220px;overflow:hidden}.cf__booking :global(iframe){display:block;width:100%;height:660px;border:0}
 </style>
 <script>
   const form = document.getElementById('contact') as HTMLFormElement;
@@ -56,6 +62,9 @@ const msg = { name: f.nameError, email: f.emailError, situation: f.situationErro
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || m.failure);
       form.classList.add('sent'); form.querySelector<HTMLElement>('.cf__sent')?.removeAttribute('hidden');
+      // Same inline Calendly embed as the landing pages, pre-filled with the sender's name and email.
+      const bk = document.getElementById('cf-booking'); const url = form.dataset.booking;
+      if (bk && url && /^https:\/\//.test(url)) { const f = document.createElement('iframe'); f.src = url + (url.includes('?') ? '&' : '?') + 'hide_gdpr_banner=1&name=' + encodeURIComponent(String(fd.get('name') || '')) + '&email=' + encodeURIComponent(String(fd.get('email') || '')); f.title = m.booking; f.loading = 'lazy'; bk.replaceChildren(f); }
       (window as any).plausible?.('Contact submitted', { props: { situation: fd.get('situation') } });
     } catch (err: any) { status.textContent = (err.message || m.failure) + ' ' + m.fallback; (window as any).turnstile?.reset(); }
   });

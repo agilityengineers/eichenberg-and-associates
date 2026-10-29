@@ -68,6 +68,7 @@ create table if not exists landing_pages (
   published boolean not null default true,
   updated_at timestamptz not null default now()
 );
+alter table landing_pages add column if not exists hero_image text;   -- per-page hero photo (/images/… or /media/…); empty = the default office photo
 
 create table if not exists form_questions (
   id uuid primary key default gen_random_uuid(),

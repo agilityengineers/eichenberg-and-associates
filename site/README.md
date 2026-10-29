@@ -94,7 +94,7 @@ All variables are read when the server handles a request, so changing a Secret n
 
 **Everything a visitor reads is editable at `/dashboard` → *Website content* — no code.** Changes are live as soon as you save.
 
-- **Site-wide:** firm details, navigation and footer, homepage hero (headline, rotating lines, background image, tint), the go-live slider, the "Who can lead it / who can do it" grid, the closing call to action, the Insights feed sources.
+- **Site-wide:** firm details, navigation and footer, homepage hero (headline — wrap the teal words in asterisks, e.g. `Will they be *ready?*` — rotating lines, background image, tint), the go-live slider (the scale runs from kickoff on the left to go-live + 90 days on the right), the "Who can lead it / who can do it" grid, the closing call to action, the Insights feed sources.
 - **Pages:** every headline, paragraph, button and list on Home, Services, Who we serve, For SI partners, About, Insights, Contact, the landing-page form labels and the 404 page. Each page is one form, grouped by section in page order. Lists have add, remove and reorder controls.
 - **Collections:** Services, Who-we-serve situations, Team, Testimonials, Insights posts, and **Custom pages** (page builder with Hero, Text, Two columns, Bullets, Pull quote, Image and Call to action blocks; appears at `/p/<slug>` and in the sitemap when published).
 - **Images:** upload in any image field. Files are stored in the database (Autoscale has no persistent disk) and served from `/media/…`. Keep images ≤ 1600px wide, WebP or JPEG.
@@ -105,13 +105,15 @@ Privacy and Terms are code files (`src/pages/privacy.astro`, `terms.astro`) so l
 
 `src/content/` holds the original copy. It is copied into the database once; editing a file there afterwards does not change the live site (the dashboard copy wins). A brand-new page or setting file added there is picked up on the next boot.
 
+When the client changes wording after launch, change the default **and** add the old → new pair to the copy updates at the end of `src/lib/bootstrap.ts`. On every boot each pair is applied only while the stored text still equals the old wording, so a site that was edited in the dashboard keeps its edits and a site that still shows the original wording picks up the new one. The boot log lists what was applied (`[boot] copy update: …`).
+
 ## Persona landing pages + sales dashboard
 
-Five unlisted campaign pages at `/for/<slug>` (`operations`, `sponsor-90-days`, `pmo`, `integration`, `si-partners`), each with a 4-step guided form (about you → situation → the "who can lead it / who can do it" grid → outcome + Calendly + lead magnet). Copy and questions are seeded from `src/lib/personas.js` and edited in the dashboard.
+Five unlisted campaign pages at `/for/<slug>` (`operations`, `sponsor-90-days`, `pmo`, `integration`, `si-partners`), each with a 4-step guided form (about you → situation → the "who can lead it / who can do it" grid → outcome + Calendly + lead magnet). Copy and questions are seeded from `src/lib/personas.js` and edited in the dashboard. Each page can have its own hero photo (*Dashboard → Landing pages → Hero background image*; `public/images/hero-operations.jpg`, `hero-pmo.jpg` and `hero-integration.jpg` are the defaults, the other two pages use the home-page photo).
 
 Dashboard views: **Overview** (KPIs, measures vs targets, learning questions, tripwires, log BD time), **Lead inbox**, **Pipeline** (five stages, drag-and-drop, 10%-of-fee BD budget, deal detail page), **Form builder**, **Systems Integrator (SI) partners**, **Landing pages** (copy, fee toggle, magnet, Calendly URL, publish), **Subscribers**, **Content calendar**, **Website content**, and **Settings** (stage names and questions, measures and targets, tripwire rules, the KPI "Kept" figure, pick-lists for offers/sources/situations, who can sign in).
 
-Every landing-form submission inserts a lead **and** an Exploration-stage deal, emails Jennifer, and sends the acknowledgement + lead magnet link to the sender. Server validation reads the live question list, so required questions can't be bypassed. Contact-form submissions land in the Lead inbox too.
+Every landing-form submission inserts a lead **and** an Exploration-stage deal, emails Jennifer, and sends the acknowledgement + lead magnet link to the sender. Server validation reads the live question list, so required questions can't be bypassed. Contact-form submissions land in the Lead inbox too. The Contact page shows the same Calendly booking link beside the form and embeds the calendar after a message is sent (*Website content → Contact → Book a call*).
 
 ## Motion
 

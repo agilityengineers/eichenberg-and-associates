@@ -33,11 +33,11 @@ export const DEFAULT_SETTINGS = {
     sources: ['Partner', 'Signal', 'Content'],
     platforms: ['NetSuite', 'Dynamics', 'Epicor', 'Workday'],
     situations: [
-      { value: 'funded', label: 'Program funded, Systems Integrator (SI) selected, go-live 6–12 months out' },
+      { value: 'funded', label: 'Program funded, SI selected, go-live 6–12 months out' },
       { value: '90days', label: 'Go-live within 90 days and cracks are showing' },
       { value: 'portfolio', label: 'Several go-lives at once' },
       { value: 'merger', label: 'Deal closed; integration lead named' },
-      { value: 'partner', label: "I'm an SI partner with a won deal" },
+      { value: 'partner', label: "I'm an SI partner" },
       { value: 'other', label: 'Something else' },
     ],
   },

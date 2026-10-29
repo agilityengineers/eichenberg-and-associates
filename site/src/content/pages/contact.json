@@ -10,6 +10,13 @@
   "phoneLabel": "Phone",
   "linkedinLabel": "LinkedIn",
   "linkedinText": "linkedin.com/in/jennifer-eichenberg",
+  "booking": {
+    "url": "https://calendly.com/jennifer-eichenbergassociates/15min",
+    "intro": "Want to talk sooner? Pick a time.",
+    "label": "Book a 15-min call",
+    "afterText": "Pick a time below if you’d rather talk sooner.",
+    "frameTitle": "Book a call"
+  },
   "form": {
     "name": "Name",
     "email": "Work email",
