@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const user = await one<{ id: string; name: string; email: string }>('select id, name, email from users where lower(email) = lower($1)', [parsed.data.email]);
   if (user) {
     const link = `${publicOrigin(request)}/login?token=${await createResetToken(user.id)}`;
-    try { await sendMail({ to: user.email, subject: 'Reset your dashboard password', html: `<p>Hi${user.name ? ' ' + escapeHtml(user.name.split(' ')[0]) : ''},</p><p>Use this link within the next hour to choose a new password for the Eichenberg & Associates dashboard:</p><p><a href="${link}">${link}</a></p><p>If you didn’t ask for this, you can ignore this email.</p>` }); }
+    try { await sendMail({ to: user.email, category: 'password-reset', subject: 'Reset your dashboard password', html: `<p>Hi${user.name ? ' ' + escapeHtml(user.name.split(' ')[0]) : ''},</p><p>Use this link within the next hour to choose a new password for the Eichenberg & Associates dashboard:</p><p><a href="${link}">${link}</a></p><p>If you didn’t ask for this, you can ignore this email.</p>` }); }
     catch (e) { console.error('[forgot] email failed', e); }
     if (!mailConfigured()) console.log('[forgot] reset link for', user.email, '→', link);
   }

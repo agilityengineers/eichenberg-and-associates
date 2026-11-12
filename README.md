@@ -28,7 +28,7 @@ Files under `design-references/` are **design references created in HTML** — i
 - **Replit** hosting: the Run button for development, an **Autoscale deployment** for production (`.replit` at the repo root). Security headers (CSP/HSTS) and legacy redirects live in `src/middleware.ts`.
 - **Replit's built-in PostgreSQL** (`DATABASE_URL`) for site content, uploaded images, leads, deals, partners, form builder, landing-page copy, dashboard settings and logins. Schema: `site/db/schema.sql`, applied on every boot.
 - **Email + password sign-in at `/login`** (built into the app) for the dashboard. The website content editor lives inside the dashboard (*Website content*), so there is one login for everything.
-- **Resend** (email), **Cloudflare Turnstile** (spam), **Plausible** (analytics, optional), **fast-xml-parser** (RSS).
+- **SendGrid** (email; setup in `site/docs/email-sendgrid.md`), **Cloudflare Turnstile** (spam), **Plausible** (analytics, optional), **fast-xml-parser** (RSS).
 See `site/README.md` for setup, env vars, deployment and content editing.
 
 ## Deploying
