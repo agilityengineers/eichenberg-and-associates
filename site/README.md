@@ -7,7 +7,7 @@ Marketing site, five persona landing pages and a private sales dashboard for Eic
 - **Astro 4** with the Node adapter (`output: 'server'`). Pages render on request, so a change saved in the dashboard is live on the next page load. No rebuild, no Git commit.
 - **Replit PostgreSQL** (`DATABASE_URL`) holds site content, uploaded images, leads, deals, partners, subscribers, settings and dashboard logins. The schema is `db/schema.sql`; it runs on every boot and is safe to re-run.
 - **Email + password sign-in** built into the app: scrypt-hashed passwords, sessions in Postgres, an httpOnly cookie, password reset by email.
-- **Resend** for transactional email (contact notifications, acknowledgements, password resets). **Cloudflare Turnstile** for spam protection. **Plausible** for cookieless analytics (optional).
+- **SendGrid** for transactional email (contact notifications, acknowledgements, password resets); see [`docs/email-sendgrid.md`](docs/email-sendgrid.md). **Cloudflare Turnstile** for spam protection. **Plausible** for cookieless analytics (optional).
 
 ## Project structure
 
@@ -18,7 +18,8 @@ site/
 ├─ .env.example              # every environment variable (Replit: put them in Secrets)
 ├─ db/
 │  ├─ schema.sql             # all tables; idempotent, runs on boot
-│  └─ user.ts                # npm run user:add — create a login / reset a password
+│  ├─ user.ts                # npm run user:add — create a login / reset a password
+│  └─ mail-test.ts           # npm run mail:test — send one test email
 ├─ public/images/            # logos, hero image, OG image
 └─ src/
    ├─ content/               # DEFAULT copy, verbatim from the client documents.
@@ -48,7 +49,7 @@ cp .env.example .env        # set DATABASE_URL and ADMIN_EMAIL / ADMIN_PASSWORD 
 npm run dev                  # http://localhost:5000
 ```
 
-Without `RESEND_API_KEY` emails are logged to the console instead of sent (a password-reset link is printed there too). Without `TURNSTILE_SECRET_KEY` the spam check is skipped. Set both in production.
+Without `SENDGRID_API_KEY` emails are logged to the console instead of sent (a password-reset link is printed there too). Without `TURNSTILE_SECRET_KEY` the spam check is skipped. Set both in production.
 
 ## Running on Replit
 
@@ -61,7 +62,7 @@ First-time setup:
 
 1. **Import** the GitHub repo into Replit.
 2. **Add the database:** open the *Database* tool and create a PostgreSQL database. Replit adds `DATABASE_URL` to the workspace for you.
-3. **Secrets** (padlock icon): add at least `ADMIN_EMAIL`, `ADMIN_PASSWORD` (10+ characters), `ADMIN_NAME`, `PUBLIC_SITE_URL`. Add the Resend, Turnstile, Calendly and newsletter variables when you have them (table below).
+3. **Secrets** (padlock icon): add at least `ADMIN_EMAIL`, `ADMIN_PASSWORD` (10+ characters), `ADMIN_NAME`, `PUBLIC_SITE_URL`. Add the SendGrid, Turnstile, Calendly and newsletter variables when you have them (table below).
 4. Press **Run**. On first boot the app creates the tables, copies the default copy into the database, seeds the five landing pages and their questions, and creates the first login from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. Open `/login` and sign in.
 5. **Publish:** *Deploy → Autoscale*. Make sure the deployment has the same Secrets. The deployed app uses its **own production database**, so first boot happens again there: it seeds content and creates the admin login from the deployment's `ADMIN_*` secrets.
 6. **Custom domain:** *Deployments → Settings → Link a domain*, then add the DNS records Replit shows at the domain registrar. Set `PUBLIC_SITE_URL` to `https://eichenbergassociates.com`.
@@ -72,7 +73,7 @@ The workspace preview pane shows the site inside an iframe. Sign-in works there 
 
 - After the first sign-in, change the password in **Dashboard → Settings → Change your password**. `ADMIN_PASSWORD` is only read when no logins exist, so it can then be removed from Secrets.
 - Add or remove other people in **Dashboard → Settings → Who can sign in**.
-- **Forgot password** on `/login` emails a one-hour, single-use link (needs Resend). Without Resend the link is printed in the deployment logs.
+- **Forgot password** on `/login` emails a one-hour, single-use link (needs SendGrid). Without it the link is printed in the deployment logs.
 - From the Replit Shell, `npm run user:add -- email@example.com 'a-long-password' 'Full Name'` creates a login or resets a password **in the workspace database**. For the production database, use the dashboard.
 
 ## Configuration
@@ -83,8 +84,8 @@ The workspace preview pane shows the site inside an iframe. Sign-in works there 
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | First dashboard login, created on first boot when no logins exist. |
 | `PUBLIC_SITE_URL` | Canonical URL, sitemap, Open Graph tags. |
 | `PUBLIC_TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile (dash.cloudflare.com → Turnstile). Add the Replit and custom domains to the widget. |
-| `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL` | Email delivery. Verify the sending domain in Resend first. |
-| `NEWSLETTER_PROVIDER` | `none`, `buttondown` (+`BUTTONDOWN_API_KEY`) or `resend-audience` (+`RESEND_AUDIENCE_ID`). Subscribers are always stored in the dashboard too. |
+| `SENDGRID_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_FROM_NAME`, `CONTACT_REPLY_TO`, `CONTACT_TO_EMAIL` | Email delivery through SendGrid. Step-by-step setup and testing: [`docs/email-sendgrid.md`](docs/email-sendgrid.md). Check it at *Dashboard → Settings → Email delivery → Send test*. `SENDGRID_SANDBOX=true` validates without delivering (workspace only). `RESEND_API_KEY` is a fallback used only when there is no SendGrid key. |
+| `NEWSLETTER_PROVIDER` | `none`, `buttondown` (+`BUTTONDOWN_API_KEY`), `sendgrid` (+ optional `SENDGRID_LIST_ID`; the key needs Marketing access) or `resend-audience` (+`RESEND_AUDIENCE_ID`). Subscribers are always stored in the dashboard too. |
 | `CALENDLY_URL` | Default booking link for the landing pages, used when they're first seeded. Edit per page in the dashboard after that. |
 | `PUBLIC_PLAUSIBLE_DOMAIN` | Set to enable analytics; leave blank to disable. |
 

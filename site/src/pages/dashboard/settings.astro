@@ -5,9 +5,18 @@ import { SETTINGS_FIELDS } from '../../lib/cms-schema';
 import { getSettings } from '../../lib/settings';
 import { q } from '../../lib/db';
 import { PASSWORD_RULE } from '../../lib/password';
-import { mailConfigured } from '../../lib/mail';
+import { mailConfigured, mailProvider, fromAddress, defaultReplyTo } from '../../lib/mail';
+import { env } from '../../lib/env';
+import { setting } from '../../lib/content';
 const [s, users] = await Promise.all([getSettings(), q('select id, email, name, last_login_at from users order by created_at')]);
 const me = Astro.locals.user!;
+const provider = mailProvider(); const from = fromAddress(); const siteEmail = (await setting('site'))?.email || '';
+const mail = [
+  ['Provider', provider === 'sendgrid' ? 'SendGrid' + (env('SENDGRID_SANDBOX') === 'true' ? ' (sandbox: nothing is delivered)' : '') : provider === 'resend' ? 'Resend (fallback; add SENDGRID_API_KEY to switch)' : 'Not set up: emails are only logged'],
+  ['Sends from', from.email ? `${from.name} <${from.email}>` : 'CONTACT_FROM_EMAIL is not set'],
+  ['Replies go to', defaultReplyTo() || 'CONTACT_REPLY_TO is not set (replies would go to the from address)'],
+  ['New leads go to', env('CONTACT_TO_EMAIL', siteEmail) || 'CONTACT_TO_EMAIL is not set'],
+];
 ---
 <Dashboard title="Settings" eyebrow="Dashboard" active="settings">
   <div class="setl">
@@ -27,6 +36,14 @@ const me = Astro.locals.user!;
           <span class="cms-hint">{PASSWORD_RULE} Share it privately; they can change it here after signing in{mailConfigured() ? ', or use “Forgot your password?”' : ''}.</span>
           <div style="display:flex;gap:10px;align-items:center"><button class="dbtn dbtn--sm" type="submit">Add login</button><span role="status" class="faint" style="font-size:12px"></span></div></form>
       </section>
+      <section class="panel" style="padding:22px;display:grid;gap:12px">
+        <h2 class="ph2">Email delivery</h2>
+        <p class="cms-hint" style="margin:0">Lead and contact notifications, the thank-you emails visitors get, and password resets. Set in Replit Secrets; restart after a change.</p>
+        <dl class="mailcfg">{mail.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+        <form id="mail-test" class="uform"><h3>Send a test email</h3>
+          <input name="to" type="email" required class="inp" value={me.email} aria-label="Send the test to" />
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="dbtn dbtn--sm" type="submit" disabled={!mailConfigured()}>Send test</button><span role="status" class="faint" style="font-size:12px;overflow-wrap:anywhere"></span></div></form>
+      </section>
       <section class="panel" style="padding:22px">
         <form id="my-pw" class="uform"><h3 style="margin-top:0">Change your password</h3>
           <input name="current" type="password" required autocomplete="current-password" class="inp" placeholder="Current password" aria-label="Current password" />
@@ -40,6 +57,7 @@ const me = Astro.locals.user!;
 .setl{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr);gap:20px;align-items:start}@media (max-width:1100px){.setl{grid-template-columns:1fr}}
 .users{list-style:none;margin:0;padding:0;display:grid;gap:8px}.users li{display:flex;justify-content:space-between;gap:10px;align-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:14px}
 .users li div{display:grid;gap:2px;min-width:0}.users span{color:var(--muted);word-break:break-all}.users small{color:var(--faint);font-size:12px}.users em{font-style:normal;font-size:12px;font-weight:600;color:#0E7C6E}
+.mailcfg{margin:0;display:grid;gap:8px;font-size:13px}.mailcfg div{display:grid;gap:2px}.mailcfg dt{color:var(--faint);font-size:12px}.mailcfg dd{margin:0;overflow-wrap:anywhere}
 .uform{display:grid;gap:8px}.uform h3{margin:8px 0 2px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
 </style>
 <script>
@@ -50,6 +68,11 @@ const me = Astro.locals.user!;
     f.addEventListener('submit', async (e) => { e.preventDefault(); if (!f.reportValidity()) return; st.textContent = 'Saving…';
       try { await api('users', method, Object.fromEntries(new FormData(f))); f.reset(); st.textContent = ok; if (reload) location.reload(); } catch { st.textContent = ''; } });
   };
+  const mt = document.getElementById('mail-test') as HTMLFormElement; const mts = mt.querySelector('[role=status]')!;
+  mt.addEventListener('submit', async (e) => { e.preventDefault(); if (!mt.reportValidity()) return; mts.textContent = 'Sending…';
+    const r = await fetch('/api/admin/mail-test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(mt))) });
+    const j = await r.json().catch(() => ({}));
+    mts.textContent = r.ok ? 'Sent. Check the inbox, and the spam folder.' : (j.error || 'Could not send.'); });
   wire('add-user', 'POST', 'Added.', true); wire('my-pw', 'PATCH', 'Password changed.');
   document.querySelectorAll<HTMLButtonElement>('[data-user-rm]').forEach((b) => b.addEventListener('click', async () => { if (!confirm(`Remove ${b.dataset.email}? They will no longer be able to sign in.`)) return; await api('users', 'DELETE', { id: b.dataset.userRm }); location.reload(); }));
 </script>

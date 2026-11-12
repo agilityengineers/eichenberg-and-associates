@@ -21,6 +21,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     if (provider === 'buttondown') {
       const r = await fetch('https://api.buttondown.email/v1/subscribers', { method: 'POST', headers: { Authorization: `Token ${env('BUTTONDOWN_API_KEY')}`, 'content-type': 'application/json' }, body: JSON.stringify({ email_address: email, tags: ['website'] }) });
       if (!r.ok && r.status !== 400) throw new Error('provider ' + r.status);
+    } else if (provider === 'sendgrid') {
+      // SendGrid Marketing Contacts (needs a key with Marketing access). Optional SENDGRID_LIST_ID adds them to a list.
+      const list = env('SENDGRID_LIST_ID');
+      const r = await fetch('https://api.sendgrid.com/v3/marketing/contacts', { method: 'PUT', headers: { Authorization: `Bearer ${env('SENDGRID_API_KEY')}`, 'content-type': 'application/json' }, body: JSON.stringify({ ...(list ? { list_ids: [list] } : {}), contacts: [{ email }] }) });
+      if (!r.ok) throw new Error('provider ' + r.status);
     } else if (provider === 'resend-audience') {
       const { Resend } = await import('resend');
       await new Resend(env('RESEND_API_KEY')).contacts.create({ email, audienceId: env('RESEND_AUDIENCE_ID') });

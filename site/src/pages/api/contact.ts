@@ -37,9 +37,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const site = await setting('site'); const to = env('CONTACT_TO_EMAIL', site.email);
   const rows = [['Name', d.name], ['Email', d.email], ['Company', d.company], ['Role', d.role], ['Situation', situation], ['Message', d.message]];
   try {
-    await sendMail({ to, replyTo: d.email, subject: `Website inquiry — ${situation} — ${d.name}`,
+    await sendMail({ to, replyTo: d.email, category: 'contact-notify', subject: `Website inquiry — ${situation} — ${d.name}`,
       html: `<h2 style="font-family:Georgia,serif">New inquiry</h2><table cellpadding="6">${rows.map(([k, v]) => `<tr><td><b>${k}</b></td><td>${escapeHtml(v || '—').replace(/\n/g, '<br>')}</td></tr>`).join('')}</table><p><a href="${siteUrl()}/dashboard/inbox">Open the Lead inbox</a></p>` });
-    await sendMail({ to: d.email, subject: `Thanks — ${site.name}`, html: `<p>Thanks, ${escapeHtml(d.name)}. We've got your note and will reply within ${escapeHtml(site.responseWindow || 'two business days')}.</p><p>If your go-live is inside 90 days, reply to this email and say so — we'll move faster.</p><p>— Jennifer Eichenberg</p>` });
+    await sendMail({ to: d.email, category: 'contact-ack', subject: `Thanks — ${site.name}`, html: `<p>Thanks, ${escapeHtml(d.name)}. We've got your note and will reply within ${escapeHtml(site.responseWindow || 'two business days')}.</p><p>If your go-live is inside 90 days, reply to this email and say so — we'll move faster.</p><p>— Jennifer Eichenberg</p>` });
   } catch (e) { console.error('[contact] email failed', e); if (!dbConfigured()) return json({ error: 'Could not send right now.' }, 502); }
   return json({ ok: true });
 };
