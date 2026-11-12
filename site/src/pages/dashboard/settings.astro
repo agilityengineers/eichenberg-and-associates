@@ -40,9 +40,10 @@ const mail = [
         <h2 class="ph2">Email delivery</h2>
         <p class="cms-hint" style="margin:0">Lead and contact notifications, the thank-you emails visitors get, and password resets. Set in Replit Secrets; restart after a change.</p>
         <dl class="mailcfg">{mail.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
-        <form id="mail-test" class="uform"><h3>Send a test email</h3>
-          <input name="to" type="email" required class="inp" value={me.email} aria-label="Send the test to" />
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="dbtn dbtn--sm" type="submit" disabled={!mailConfigured()}>Send test</button><span role="status" class="faint" style="font-size:12px;overflow-wrap:anywhere"></span></div></form>
+        <form id="mail-test" class="uform"><h3>Send test emails</h3>
+          <input name="to" type="email" required class="inp" value="eichenberg-ocm-aaaasmkozvuhbeobcbs4olbnjy@expertmakermediasales.slack.com" aria-label="Send test emails to" />
+          <span class="cms-hint">The full test sends the email check plus sample lead, contact, acknowledgment, and password-reset messages. Sample messages do not create records or reset accounts.</span>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="dbtn dbtn--sm" type="submit" data-all-templates="false" disabled={!mailConfigured()}>Send one test</button><button class="dbtn dbtn--sm" type="submit" data-all-templates="true" disabled={!mailConfigured()}>Send all test emails</button><span role="status" class="faint" style="font-size:12px;overflow-wrap:anywhere"></span></div></form>
       </section>
       <section class="panel" style="padding:22px">
         <form id="my-pw" class="uform"><h3 style="margin-top:0">Change your password</h3>
@@ -75,4 +76,23 @@ const mail = [
     mts.textContent = r.ok ? 'Sent. Check the inbox, and the spam folder.' : (j.error || 'Could not send.'); });
   wire('add-user', 'POST', 'Added.', true); wire('my-pw', 'PATCH', 'Password changed.');
   document.querySelectorAll<HTMLButtonElement>('[data-user-rm]').forEach((b) => b.addEventListener('click', async () => { if (!confirm(`Remove ${b.dataset.email}? They will no longer be able to sign in.`)) return; await api('users', 'DELETE', { id: b.dataset.userRm }); location.reload(); }));
+  const mailForm = document.getElementById('mail-test') as HTMLFormElement;
+  const mailStatus = mailForm.querySelector('[role=status]')!;
+  mailForm.querySelectorAll<HTMLButtonElement>('[data-all-templates]').forEach((button) => button.addEventListener('click', async (event) => {
+    event.preventDefault();
+    if (!mailForm.reportValidity()) return;
+    const allTemplates = button.dataset.allTemplates === 'true';
+    const recipient = (new FormData(mailForm).get('to') as string).trim();
+    if (!confirm(`${allTemplates ? 'Send six test emails' : 'Send one test email'} to ${recipient}?${allTemplates ? ' All are sample messages; no real account or lead data is used.' : ''}`)) return;
+    mailStatus.textContent = 'Sending…';
+    mailForm.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.disabled = true);
+    try {
+      const result = await api('mail-test', 'POST', { to: recipient, allTemplates }) as { sent: number };
+      mailStatus.textContent = `${result.sent} test email${result.sent === 1 ? '' : 's'} accepted by the mail provider.`;
+    } catch {
+      mailStatus.textContent = 'Some or all emails failed. Check the mail provider response and try again.';
+    } finally {
+      mailForm.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.disabled = false);
+    }
+  }));
 </script>

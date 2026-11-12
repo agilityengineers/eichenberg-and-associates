@@ -25,6 +25,7 @@
 
 - Email delivery is not configured. The app logs messages in development when `RESEND_API_KEY` is missing.
 - Cloudflare Turnstile is not configured; the app skips its spam check without `TURNSTILE_SECRET_KEY`.
+- Dashboard → Settings → Email delivery can send one verification message or six test messages (delivery check, lead/contact notifications and acknowledgments, and password reset) to a selected recipient. Samples do not create records or reset accounts.
 - Configure and verify Resend, Turnstile, sender addresses, and the intended public URL before launching publicly. Booking and newsletter settings are documented in `site/.env.example`.
 - The existing Autoscale build is `cd site && npm ci --include=dev --no-audit --no-fund && npm run build`; the run command is `cd site && npm start`.
 - Publishing is a separate user action. Replit's Publish flow manages production schema changes; do not add production migration scripts or new startup-time DDL.
