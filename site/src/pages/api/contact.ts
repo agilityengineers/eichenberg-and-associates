@@ -38,11 +38,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const site = await setting('site'); const to = env('CONTACT_TO_EMAIL', site.email);
   const rows = [['Name', d.name], ['Email', d.email], ['Company', d.company], ['Role', d.role], ['Situation', situation], ['Message', d.message]];
   try {
-    await sendMail({ to, replyTo: d.email, subject: `Website inquiry — ${situation} — ${d.name}`,
+    await sendMail({ to, replyTo: d.email, category: 'contact-notify', subject: `Website inquiry — ${situation} — ${d.name}`,
       html: `<h2 style="font-family:Georgia,serif">New inquiry</h2><table cellpadding="6">${rows.map(([k, v]) => `<tr><td><b>${k}</b></td><td>${escapeHtml(v || '—').replace(/\n/g, '<br>')}</td></tr>`).join('')}</table><p><a href="${siteUrl()}/dashboard/inbox">Open the Lead inbox</a></p>` });
     const em = await setting('emails'); const c = em.contact || {};
     const vars = { name: d.name, first: d.name.split(' ')[0], window: site.responseWindow || 'two business days', site: site.name };
-    await sendMail({ to: d.email, subject: fillText(c.subject, vars), html: paragraph(c.thanks, vars) + paragraph(c.faster, vars) + paragraph(em.signoff, vars) });
+    await sendMail({ to: d.email, category: 'contact-ack', subject: fillText(c.subject, vars), html: paragraph(c.thanks, vars) + paragraph(c.faster, vars) + paragraph(em.signoff, vars) });
   } catch (e) { console.error('[contact] email failed', e); if (!dbConfigured()) return json({ error: 'Could not send right now.' }, 502); }
   return json({ ok: true });
 };
