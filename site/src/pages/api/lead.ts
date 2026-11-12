@@ -6,6 +6,7 @@ import { rateLimit } from '../../lib/ratelimit';
 import { clean, escapeHtml } from '../../lib/sanitize';
 import { verifyTurnstile } from '../../lib/turnstile';
 import { sendMail } from '../../lib/mail';
+import { fillText, paragraph } from '../../lib/email-template';
 import { env, siteUrl } from '../../lib/env';
 import { clientIp, ipHash, json } from '../../lib/http';
 
@@ -55,7 +56,12 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const rows = [['Page', page.eyebrow], ['Name', d.name], ['Email', d.email], ['Company', d.company], ['Title', d.title], ['Grid', cell.result], ...Object.entries(answers).map(([k, v]) => [qs.find((x) => x.key === k)?.label || k, v])];
   try {
     await sendMail({ to, replyTo: d.email, category: 'lead-notify', subject: `New lead — ${page.eyebrow} — ${d.name}`, html: `<h2 style="font-family:Georgia,serif">${escapeHtml(cell.result)}</h2><table cellpadding="6">${rows.map(([k, v]) => `<tr><td><b>${escapeHtml(k)}</b></td><td>${escapeHtml(v || '—')}</td></tr>`).join('')}</table><p><a href="${siteUrl()}/dashboard/inbox">Open in the dashboard</a></p>` });
-    await sendMail({ to: d.email, category: 'lead-ack', subject: `Thanks — ${site.name}`, html: `<p>Thanks, ${escapeHtml(d.name.split(' ')[0])}. We've got your answers and will reply within ${escapeHtml(site.responseWindow || 'two business days')}.</p>${page.magnet_url ? `<p>Here's <a href="${escapeHtml(page.magnet_url.startsWith('/') ? siteUrl() + page.magnet_url : page.magnet_url)}">${escapeHtml(page.magnet_title || 'the guide')}</a>.</p>` : ''}${page.booking_url ? `<p>Want to talk sooner? <a href="${escapeHtml(page.booking_url)}">Pick a time</a>.</p>` : ''}<p>— Jennifer Eichenberg</p>` });
+    const em = await setting('emails'); const l = em.lead || {};
+    const guideUrl = page.magnet_url ? (page.magnet_url.startsWith('/') ? siteUrl() + page.magnet_url : page.magnet_url) : '';
+    const guideTitle = page.magnet_title || l.guideFallback || '';
+    const vars = { name: d.name, first: d.name.split(' ')[0], window: site.responseWindow || 'two business days', site: site.name, guideTitle, guideUrl, bookingUrl: page.booking_url || '' };
+    const links = { guide: { href: guideUrl, text: guideTitle }, booking: { href: page.booking_url || '', text: l.bookingLabel || '' } };
+    await sendMail({ to: d.email, category: 'lead-ack', subject: fillText(l.subject, vars), html: paragraph(l.thanks, vars, links) + (guideUrl ? paragraph(l.guide, vars, links) : '') + (page.booking_url ? paragraph(l.booking, vars, links) : '') + paragraph(em.signoff, vars, links) });
   } catch (e) { console.error('[lead] email', e); }
   return json({ ok: true, id: leadId });
 };

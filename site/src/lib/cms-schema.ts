@@ -69,6 +69,22 @@ export const DOCS: DocType[] = [
   { collection: 'settings', slug: 'cta', group: 'Site-wide', label: 'Closing call to action', description: 'The navy band at the end of service detail pages and insight posts.', fields: [
     str('heading', 'Heading'), text('text', 'Text'), str('label', 'Button label'), str('href', 'Button link'),
   ] },
+  { collection: 'settings', slug: 'emails', group: 'Site-wide', label: 'Acknowledgement emails', description: 'The automatic replies sent to visitors after they submit a form. Words in {braces} are filled in when the email is sent; clear a line to leave it out.', fields: [
+    obj('contact', 'Contact form reply', [
+      str('subject', 'Subject', { hint: '{site} = firm name.' }),
+      text('thanks', 'First paragraph', { hint: '{name} = their name, {first} = first name, {window} = reply window (Firm details), {site} = firm name.' }),
+      text('faster', 'Second paragraph', { optional: true }),
+    ]),
+    obj('lead', 'Landing-page form reply', [
+      str('subject', 'Subject', { hint: '{site} = firm name.' }),
+      text('thanks', 'First paragraph', { hint: '{name} = their name, {first} = first name, {window} = reply window (Firm details), {site} = firm name.' }),
+      text('guide', 'Lead magnet paragraph (only when the page has a lead magnet)', { optional: true, hint: '{guide} = the lead magnet title, linked to the PDF. {guideTitle} and {guideUrl} give the title or address alone.' }),
+      str('guideFallback', 'Lead magnet title if the page has none'),
+      text('booking', 'Booking paragraph (only when the page has a Calendly link)', { optional: true, hint: '{booking} = the link text below, linked to the page’s Calendly URL. {bookingUrl} gives the address alone.' }),
+      str('bookingLabel', 'Booking link text'),
+    ]),
+    str('signoff', 'Sign-off (both emails)', { optional: true }),
+  ] },
   { collection: 'settings', slug: 'feeds', group: 'Site-wide', label: 'Insights feed (RSS)', description: 'Posts from these feeds appear on the Insights page, merged with the site’s own Insights posts, newest first. The home page can show the latest few.', fields: [
     rows('sources', 'Feed sources', [str('name', 'Display name (shown under each post)'), str('url', 'Feed URL'), bool('enabled', 'Enabled')], { singular: 'feed', hint: 'A standard RSS/Atom address (for a WordPress blog: the site address followed by /feed) or an rss.app URL (.xml or .json). Untick “Enabled” to pause a feed.' }),
     num('insightsCount', 'Posts on the Insights page', { min: 1, max: 50 }),
