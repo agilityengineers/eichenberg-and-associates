@@ -1,0 +1,16 @@
+{
+  "contact": {
+    "subject": "Thanks — {site}",
+    "thanks": "Thanks, {name}. We've got your note and will reply within {window}.",
+    "faster": "If your go-live is inside 90 days, reply to this email and say so — we'll move faster."
+  },
+  "lead": {
+    "subject": "Thanks — {site}",
+    "thanks": "Thanks, {first}. We've got your answers and will reply within {window}.",
+    "guide": "Here's {guide}.",
+    "guideFallback": "the guide",
+    "booking": "Want to talk sooner? {booking}.",
+    "bookingLabel": "Pick a time"
+  },
+  "signoff": "— Jennifer Eichenberg"
+}

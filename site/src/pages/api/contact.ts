@@ -7,6 +7,7 @@ import { getSettings } from '../../lib/settings';
 import { setting } from '../../lib/content';
 import { dbConfigured, q } from '../../lib/db';
 import { sendMail } from '../../lib/mail';
+import { fillText, paragraph } from '../../lib/email-template';
 import { env, siteUrl } from '../../lib/env';
 import { clientIp, ipHash, json } from '../../lib/http';
 
@@ -39,7 +40,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   try {
     await sendMail({ to, replyTo: d.email, subject: `Website inquiry — ${situation} — ${d.name}`,
       html: `<h2 style="font-family:Georgia,serif">New inquiry</h2><table cellpadding="6">${rows.map(([k, v]) => `<tr><td><b>${k}</b></td><td>${escapeHtml(v || '—').replace(/\n/g, '<br>')}</td></tr>`).join('')}</table><p><a href="${siteUrl()}/dashboard/inbox">Open the Lead inbox</a></p>` });
-    await sendMail({ to: d.email, subject: `Thanks — ${site.name}`, html: `<p>Thanks, ${escapeHtml(d.name)}. We've got your note and will reply within ${escapeHtml(site.responseWindow || 'two business days')}.</p><p>If your go-live is inside 90 days, reply to this email and say so — we'll move faster.</p><p>— Jennifer Eichenberg</p>` });
+    const em = await setting('emails'); const c = em.contact || {};
+    const vars = { name: d.name, first: d.name.split(' ')[0], window: site.responseWindow || 'two business days', site: site.name };
+    await sendMail({ to: d.email, subject: fillText(c.subject, vars), html: paragraph(c.thanks, vars) + paragraph(c.faster, vars) + paragraph(em.signoff, vars) });
   } catch (e) { console.error('[contact] email failed', e); if (!dbConfigured()) return json({ error: 'Could not send right now.' }, 502); }
   return json({ ok: true });
 };
