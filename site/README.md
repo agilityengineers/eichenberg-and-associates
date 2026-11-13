@@ -122,7 +122,7 @@ All motion is CSS keyframes plus a small script (`src/scripts/motion.ts`): scrol
 
 ## Security notes
 
-Server-side validation (zod) and sanitisation on every input; honeypot + Turnstile + per-IP rate limiting on public forms; passwords hashed with scrypt; sessions stored server-side and revocable; dashboard writes refused unless they come from the site's own origin; CSP, HSTS and frame headers in production; no secrets in client code (only `PUBLIC_*` values reach the browser). The rate limiter is in memory per instance; if Autoscale runs several instances and abuse appears, move it to a shared store.
+Server-side validation (zod) and sanitisation on every input; honeypot + Turnstile + per-IP rate limiting on public forms; passwords hashed with scrypt; sessions stored server-side and revocable; dashboard writes refused unless they come from the site's own origin; CSP, HSTS and frame headers in production; no secrets in client code (only `PUBLIC_*` values reach the browser). The short-window rate limiter is in memory per instance; behind it, `src/lib/spam.ts` enforces a database-backed limit (5 stored submissions per address in 24 hours) and a block list of senders, managed at Dashboard → Settings → Spam protection and with “Block sender” in the Lead inbox. That panel also shows whether Turnstile is actually on: without both Turnstile keys the captcha is skipped.
 
 ## Accessibility & SEO
 
