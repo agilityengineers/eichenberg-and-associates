@@ -8,7 +8,7 @@ export const PERSONAS = [
     pains:['The Systems Integrator (SI) plan covers cutover; people readiness is a line item for training sessions','Status reports are green, but you can’t see whether operations is ready','Internal HR and L&D don’t have capacity for a program this size','SMEs in design sessions rebuild today’s workarounds in the new system'],
     messages:[{label:'Anchor', text:'One senior change lead, accountable to you from the first design session to go-live. No team for you to manage.'},{label:'Role Readiness', text:'Your SMEs start design sessions with the Systems Integrator (SI) soon. Do they know not to rebuild today’s workarounds?'}],
     offer:{ name:'OCM Leadership (anchor) + Project Role Readiness', detail:'Anchor, $100–150K phased, plus Role Readiness modules at kickoff.', price:'$100–150K phased · Role Readiness $15–20K' },
-    magnet:'PLACEHOLDER: Go-live sponsor guide', cta:'Scope the Prepare phase', heroImage:'/images/hero-operations.jpg',
+    magnet:'', cta:'Scope the Prepare phase', heroImage:'/images/hero-operations.jpg',
     questions:[
       { id:'golive', type:'date', label:'When is go-live?', required:true },
       { id:'si', type:'select', label:'Which Systems Integrator (SI) is implementing?', options:['NetSuite partner','Dynamics partner','Epicor partner','Workday partner','Other / not selected yet'], required:true },
@@ -22,7 +22,7 @@ export const PERSONAS = [
     pains:['Training completion is high, but nobody has proven people can do the job','Managers and the project team tell you different stories','Everyone reporting on readiness has a stake in the answer','Too late to start a full OCM program from scratch'],
     messages:[{label:'Assessment', text:'Training completion tells you who clicked through. It doesn’t tell you who can do the job on day one.'}],
     offer:{ name:'Readiness Assessment', detail:'A 3–4 week diagnostic 90 days or less before go-live. Converts to a gap-closure anchor.', price:'$15–20K fixed fee' },
-    magnet:'PLACEHOLDER: 90-day readiness checklist', cta:'Book the assessment',
+    magnet:'', cta:'Book the assessment',
     questions:[
       { id:'golive', type:'date', label:'When is go-live?', required:true },
       { id:'signal', type:'select', label:'What showed the cracks?', options:['Pilot','UAT','Dress rehearsal','Manager feedback','Nothing yet, just a feeling'], required:true },
@@ -36,7 +36,7 @@ export const PERSONAS = [
     pains:['Program teams grade their own readiness','Your metrics track scope, schedule, and budget, not adoption','Every program defines “ready” differently','No internal capacity to assess programs independently'],
     messages:[{label:'Assessment', text:'Your programs grade their own readiness. An independent assessment gives you one standard across every go-live.'},{label:'Role Readiness', text:'Give every program team the same start: how governance works, what resistance looks like, and their role in both.'}],
     offer:{ name:'Repeat Readiness Assessments + Role Readiness license', detail:'An assessment per program, plus a Role Readiness license across programs.', price:'Assessment $15–20K each · License $15–20K' },
-    magnet:'PLACEHOLDER: One-standard readiness scorecard', cta:'Standardize the gate', heroImage:'/images/hero-pmo.jpg',
+    magnet:'', cta:'Standardize the gate', heroImage:'/images/hero-pmo.jpg',
     questions:[
       { id:'programs', type:'number', label:'How many go-lives in the next 12 months?', required:true },
       { id:'recent', type:'radio', label:'Did a recent program go live and stumble?', options:['Yes','No','Still live-and-wobbly'], required:true },
@@ -50,7 +50,7 @@ export const PERSONAS = [
     pains:['The deal timeline leaves no room for a slow business case','Finance, legal, and IT have integration owners. Employees don’t.','Anxious employees fill communication gaps with rumor','Acquired-company managers aren’t equipped to lead the change'],
     messages:[{label:'Anchor', text:'Integration plans cover systems and contracts. I own the people side, so two workforces can work as one.'},{label:'Role Readiness', text:'Your integration teams are designing how the combined company will work. Do they know their role before they start?'}],
     offer:{ name:'OCM Leadership phased to Day 1 and Day 100 + Role Readiness', detail:'Anchor phased to Day 1 and Day 100, plus Role Readiness for integration teams.', price:'$100–150K phased · Role Readiness $15–20K' },
-    magnet:'PLACEHOLDER: Day 1 / Day 100 people-risk brief', cta:'Name the people risk', heroImage:'/images/hero-integration.jpg',
+    magnet:'', cta:'Name the people risk', heroImage:'/images/hero-integration.jpg',
     questions:[
       { id:'day1', type:'date', label:'Day 1 date', required:true },
       { id:'deal', type:'radio', label:'Deal type', options:['PE-backed add-on','Strategic acquisition','Merger of equals','Carve-out'], required:true },
@@ -64,7 +64,7 @@ export const PERSONAS = [
     pains:['Your firm has no OCM practice of its own','OCM gets scoped thin to win the deal, then exposed late','When adoption stalls, the client blames the implementation','Vetting individual contractors takes time you don’t have'],
     messages:[{label:'Partner', text:'Jennifer Eichenberg, Change Management Lead. Preparing people for new systems since 2007; Prosci, CMCP and CCP certified. References on request.'}],
     offer:{ name:'Subcontracted anchor lead, or white-label assessments and modules', detail:'Refers all three offers. Subcontract or white-label.', price:'Anchor $100–150K · Assessment $15–20K · Role Readiness $15–20K' },
-    magnet:'PLACEHOLDER: “What we cover, what you cover” chart', cta:'Schedule the free “what we cover” session',
+    magnet:'', cta:'Schedule the free “what we cover” session',
     questions:[
       { id:'platform', type:'select', label:'Your platform', options:['NetSuite','Dynamics','Epicor','Workday','Other'], required:true },
       { id:'deal', type:'radio', label:'What’s on the table?', options:['A won deal with thin OCM scope','A go-live trending at risk','Building OCM into future proposals'], required:true },
