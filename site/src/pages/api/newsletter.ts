@@ -31,8 +31,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       const r = await fetch('https://api.sendgrid.com/v3/marketing/contacts', { method: 'PUT', headers: { Authorization: `Bearer ${env('SENDGRID_API_KEY')}`, 'content-type': 'application/json' }, body: JSON.stringify({ ...(list ? { list_ids: [list] } : {}), contacts: [{ email }] }) });
       if (!r.ok) throw new Error('provider ' + r.status);
     } else if (provider === 'resend-audience') {
-      const { Resend } = await import('resend');
-      await new Resend(env('RESEND_API_KEY')).contacts.create({ email, audienceId: env('RESEND_AUDIENCE_ID') });
+      const r = await fetch(`https://api.resend.com/audiences/${encodeURIComponent(env('RESEND_AUDIENCE_ID'))}/contacts`, { method: 'POST', headers: { Authorization: `Bearer ${env('RESEND_API_KEY')}`, 'content-type': 'application/json' }, body: JSON.stringify({ email }) });
+      if (!r.ok) throw new Error('provider ' + r.status);
     }
   } catch (e) { console.error('[newsletter]', e); if (!dbConfigured()) return json({ error: 'Could not subscribe right now.' }, 502); }
   return json({ ok: true });
