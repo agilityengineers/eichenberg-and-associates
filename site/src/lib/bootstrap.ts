@@ -70,11 +70,14 @@ const getPath = (o: any, path: (string | number)[]) => path.reduce((v, k) => (v 
 /** Text in a Website-content document: pages/landing, pages/partners, settings/hero … */
 const DOC_UPDATES: { collection: string; slug: string; path: (string | number)[]; from: string[]; to: string }[] = [
   { collection: 'pages', slug: 'landing', path: ['soundFamiliar'], from: ['Sound familiar?'], to: 'The Gap:' },
-  { collection: 'pages', slug: 'landing', path: ['stepsHint'], from: ['4 short steps · about 2 minutes'], to: '4 short questions · a 15-min call to see if there’s a fit' },
+  { collection: 'pages', slug: 'landing', path: ['stepsHint'], from: ['4 short steps · about 2 minutes', '4 quick steps · about 2 minutes'], to: '4 short questions · a 15-min call to see if there’s a fit' },
   { collection: 'pages', slug: 'landing', path: ['proof', 0, 'text'], from: ['Readiness across ERP, PM, and HR'], to: 'Readiness across ERP, CRM, and HR' },
   { collection: 'pages', slug: 'landing', path: ['proof', 1, 'title'], from: ['Senior lead, flexible bench'], to: 'One accountable lead' },
   { collection: 'pages', slug: 'landing', path: ['proof', 1, 'text'], from: ['Contract associates for production work'], to: 'Associates handle build work under my direction.' },
   { collection: 'pages', slug: 'partners', path: ['chartNote'], from: ['PLACEHOLDER: replace this two-column summary with the final “what we cover, what you cover” chart.'], to: '' },
+  // Go-live slider (November 2026 live check): the far-right readout still carried the old right-hand label, and the kickoff advice had a typo.
+  { collection: 'settings', slug: 'golive', path: ['afterGoLive'], from: ['Kickoff · 12 months'], to: 'After go-live' },
+  { collection: 'settings', slug: 'golive', path: ['advice', 'kickoff'], from: ['Program funded, SI selected, date set. Start preparing the change, before deign sessions begins.'], to: 'Program funded, SI selected, date set. Start preparing the change, before design sessions begin.' },
   // Home hero, line 2: "ready?" in teal instead of "Will they be" (runs after the two-line conversion below).
   { collection: 'settings', slug: 'hero', path: ['headlineLine2'], from: ['*Will they be* ready?'], to: 'Will they be *ready?*' },
 ];
@@ -92,7 +95,8 @@ const SITUATION_UPDATES: { value: string; from: string[]; to: string }[] = [
   { value: 'funded', from: ['Program funded, Systems Integrator (SI) selected, go-live 6–12 months out'], to: 'Program funded, SI selected, go-live 6–12 months out' },
   { value: 'partner', from: ["I'm an SI partner with a won deal"], to: "I'm an SI partner" },
 ];
-const OLD_TICKS = ['Go-live + 90 days', '≤ 90 days', 'Kickoff · 12 months'];
+// Scale labels still in the old right-to-left order: the shipped originals, and the live relabelling ("After go-live").
+const OLD_TICK_SETS = [['Go-live + 90 days', '≤ 90 days', 'Kickoff · 12 months'], ['After go-live', '≤ 90 days', 'Kickoff · 12 months']];
 
 async function applyCopyUpdates() {
   let n = 0;
@@ -110,8 +114,9 @@ async function applyCopyUpdates() {
   }
   // Go-live slider: the scale now runs kickoff (left) → go-live + 90 days (right). Flip the labels if they are still the originals.
   const golive = await doc('settings', 'golive');
-  if (golive && Array.isArray(golive.data.ticks) && golive.data.ticks.length === 3 && golive.data.ticks.every((t: unknown, i: number) => norm(t) === norm(OLD_TICKS[i]))) {
-    golive.data.ticks = [...OLD_TICKS].reverse();
+  const oldTicks = golive && Array.isArray(golive.data.ticks) && golive.data.ticks.length === 3 ? OLD_TICK_SETS.find((set) => golive.data.ticks.every((t: unknown, i: number) => norm(t) === norm(set[i]))) : undefined;
+  if (golive && oldTicks) {
+    golive.data.ticks = [...oldTicks].reverse();
     await saveDoc('settings', 'golive', golive.data); applied('go-live slider labels reversed');
   }
   for (const u of DOC_UPDATES) {
