@@ -42,7 +42,7 @@ async function boot() {
     for (const p of PERSONAS) {
       await q(`insert into landing_pages (slug, persona, eyebrow, frame, headline, situation, awareness, goals, pains, messages, offer, cta, magnet_title, booking_url, hero_image)
                values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) on conflict do nothing`,
-        [p.slug, p.internal, p.eyebrow, p.frame, p.headline, p.situation, p.awareness, JSON.stringify(p.goals), JSON.stringify(p.pains), JSON.stringify(p.messages), JSON.stringify(p.offer), p.cta, p.magnet, env('CALENDLY_URL') || null, p.heroImage || null]);
+        [p.slug, p.internal, p.eyebrow, p.frame, p.headline, p.situation, p.awareness, JSON.stringify(p.goals), JSON.stringify(p.pains), JSON.stringify(p.messages), JSON.stringify(p.offer), p.cta, p.magnet || null, env('CALENDLY_URL') || null, p.heroImage || null]);
       const rows = [...BASE_QUESTIONS.map((x, i) => ({ ...x, step: 1, position: i })), ...p.questions.map((x, i) => ({ ...x, step: 2, position: i }))];
       for (const x of rows as any[]) await q('insert into form_questions (page_slug, step, position, key, label, type, options, required, locked) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict do nothing',
         [p.slug, x.step, x.position, x.id, x.label, x.type, x.options ? JSON.stringify(x.options) : null, !!x.required, !!x.locked]);
@@ -69,7 +69,8 @@ const getPath = (o: any, path: (string | number)[]) => path.reduce((v, k) => (v 
 
 /** Text in a Website-content document: pages/landing, pages/partners, settings/hero … */
 const DOC_UPDATES: { collection: string; slug: string; path: (string | number)[]; from: string[]; to: string }[] = [
-  { collection: 'pages', slug: 'landing', path: ['soundFamiliar'], from: ['Sound familiar?'], to: 'The Gap:' },
+  // The lead-in went to "The Gap:" in October; after reworking the landing copy the client asked for the original back (November 2026).
+  { collection: 'pages', slug: 'landing', path: ['soundFamiliar'], from: ['The Gap:'], to: 'Sound familiar?' },
   { collection: 'pages', slug: 'landing', path: ['stepsHint'], from: ['4 short steps · about 2 minutes', '4 quick steps · about 2 minutes'], to: '4 short questions · a 15-min call to see if there’s a fit' },
   { collection: 'pages', slug: 'landing', path: ['proof', 0, 'text'], from: ['Readiness across ERP, PM, and HR'], to: 'Readiness across ERP, CRM, and HR' },
   { collection: 'pages', slug: 'landing', path: ['proof', 1, 'title'], from: ['Senior lead, flexible bench'], to: 'One accountable lead' },
@@ -133,6 +134,8 @@ async function applyCopyUpdates() {
     messages[u.index].text = u.to;
     await q('update landing_pages set messages = $2, updated_at = now() where slug = $1', [u.slug, JSON.stringify(messages)]); applied(`landing ${u.slug} message ${u.index + 1}`);
   }
+  // Lead-magnet titles that are still the shipped placeholders: clear them, so the thank-you panel shows no guide box until a real title is set.
+  for (const r of await q<{ slug: string }>("update landing_pages set magnet_title = null, updated_at = now() where magnet_title like 'PLACEHOLDER:%' returning slug")) applied(`landing ${r.slug} placeholder guide title cleared`);
   // Per-page hero photos, for pages that have none yet.
   for (const p of PERSONAS as any[]) if (p.heroImage) {
     const r = await q('update landing_pages set hero_image = $2, updated_at = now() where slug = $1 and hero_image is null returning slug', [p.slug, p.heroImage]);
