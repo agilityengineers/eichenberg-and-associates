@@ -1,7 +1,8 @@
 ---
 // <head> shared by the public site and the landing pages: SEO, Open Graph, JSON-LD, fonts, analytics.
 import { setting } from '../lib/content';
-import { env, siteUrl } from '../lib/env';
+import { siteUrl } from '../lib/env';
+import { analytics } from '../lib/analytics';
 interface Props { title: string; description: string; image?: string; type?: string; noindex?: boolean; jsonLd?: Record<string, unknown> | Record<string, unknown>[] }
 const { title, description, image = '/images/og-default.png', type = 'website', noindex = false, jsonLd } = Astro.props;
 const site = await setting('site');
@@ -10,7 +11,14 @@ const canonical = base + (Astro.url.pathname === '/' ? '/' : Astro.url.pathname.
 const fullTitle = title.includes('Eichenberg') ? title : `${title} · ${site.name}`;
 const org = { '@context': 'https://schema.org', '@type': 'ProfessionalService', name: site.name, url: base, email: site.email, telephone: site.phone, description: site.description, logo: base + '/images/logo-color.png', sameAs: [site.linkedin], areaServed: 'US', knowsAbout: ['Organizational change management', 'ERP go-live readiness', 'Merger integration'] };
 const ld: Record<string, unknown>[] = [org, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [])];
-const plausible = env('PUBLIC_PLAUSIBLE_DOMAIN');
+const ga = await analytics();
+// Consent Mode: with the banner on, analytics cookies stay off until the visitor accepts (the choice is in localStorage).
+// Advertising signals are always denied. ga.gaId is validated in lib/analytics.ts, so it is safe to inline.
+const gtm = ga.gaId.startsWith('GTM-');
+// window.eaTrack(name, params) is what the forms call: a GA event with a G- ID, a dataLayer event (for a GTM trigger) with a GTM- ID.
+const gtag = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}var c=null;try{c=localStorage.getItem('ea_consent')}catch(e){}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:${ga.banner ? "c==='granted'?'granted':'denied'" : "'granted'"}});`
+  + (gtm ? `dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});window.eaTrack=function(n,p){dataLayer.push(Object.assign({event:n},p||{}))};`
+         : `gtag('js',new Date());gtag('config','${ga.gaId}');window.eaTrack=function(n,p){gtag('event',n,p||{})};`);
 ---
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,4 +39,6 @@ const plausible = env('PUBLIC_PLAUSIBLE_DOMAIN');
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Albert+Sans:wght@400;500;600;700&family=Poppins:wght@500;600&display=swap" rel="stylesheet" />
 <script type="application/ld+json" set:html={JSON.stringify(ld).replace(/</g, '\\u003c')} />
-{plausible && <script defer data-domain={plausible} src="https://plausible.io/js/script.outbound-links.js"></script>}
+{ga.verification && <meta name="google-site-verification" content={ga.verification} />}
+{ga.gaId && <script is:inline set:html={gtag} />}
+{ga.gaId && <script is:inline async src={`https://www.googletagmanager.com/${gtm ? 'gtm.js' : 'gtag/js'}?id=${ga.gaId}`}></script>}

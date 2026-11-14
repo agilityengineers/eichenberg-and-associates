@@ -1,7 +1,9 @@
 ---
 import { setting } from '../lib/content';
 import { si } from '../lib/si';
+import { analytics } from '../lib/analytics';
 const site = await setting('site'); const f = site.footer;
+const ga = await analytics();
 const year = new Date().getFullYear();
 type L = { label: string; href: string };
 ---
@@ -17,7 +19,7 @@ type L = { label: string; href: string };
     <nav aria-label="Footer firm"><h2 class="ft__h">{f.firmHeading}</h2><ul>{f.firm.map((l: L) => <li><a href={l.href} set:html={si(l.label)} /></li>)}</ul></nav>
     <div><h2 class="ft__h">{f.contactHeading}</h2><ul><li><a href={`mailto:${site.email}`}>{site.email}</a></li><li><a href={`tel:${site.phoneHref}`}>{site.phone}</a></li><li><a href={site.linkedin} target="_blank" rel="noopener">{f.linkedinLabel}</a></li></ul></div>
   </div>
-  <div class="wrap ft__bar"><span>© {year} {site.name}</span><span style="display:flex;gap:16px"><a href="/privacy">{f.privacyLabel}</a><a href="/terms">{f.termsLabel}</a></span></div>
+  <div class="wrap ft__bar"><span>© {year} {site.name}</span><span style="display:flex;gap:16px"><a href="/privacy">{f.privacyLabel}</a><a href="/terms">{f.termsLabel}</a>{ga.banner && <button type="button" class="ft__btn" data-cookie-settings>{ga.consent.manageLabel}</button>}</span></div>
 </footer>
 <style>
 .ft{border-top:1px solid rgba(255,255,255,.1);position:relative;overflow:hidden}
@@ -28,4 +30,5 @@ type L = { label: string; href: string };
 .ft__h{margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.6)}
 .ft ul{list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:15px}.ft a{color:#fff}.ft a:hover{color:var(--teal)}
 .ft__bar{position:relative;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-top:20px;padding-bottom:32px;border-top:1px solid rgba(255,255,255,.1);font-size:13px;color:rgba(255,255,255,.6)}.ft__bar a{color:rgba(255,255,255,.6)}
+.ft__btn{font:inherit;color:rgba(255,255,255,.6);background:none;border:0;padding:0;cursor:pointer}.ft__btn:hover{color:var(--teal)}
 </style>

@@ -7,7 +7,7 @@ Marketing site, five persona landing pages and a private sales dashboard for Eic
 - **Astro 4** with the Node adapter (`output: 'server'`). Pages render on request, so a change saved in the dashboard is live on the next page load. No rebuild, no Git commit.
 - **Replit PostgreSQL** (`DATABASE_URL`) holds site content, uploaded images, leads, deals, partners, subscribers, settings and dashboard logins. The schema is `db/schema.sql`; it runs on every boot and is safe to re-run.
 - **Email + password sign-in** built into the app: scrypt-hashed passwords, sessions in Postgres, an httpOnly cookie, password reset by email.
-- **SendGrid** for transactional email (contact notifications, acknowledgements, password resets); see [`docs/email-sendgrid.md`](docs/email-sendgrid.md). **Cloudflare Turnstile** for spam protection. **Plausible** for cookieless analytics (optional).
+- **SendGrid** for transactional email (contact notifications, acknowledgements, password resets); see [`docs/email-sendgrid.md`](docs/email-sendgrid.md). **Cloudflare Turnstile** for spam protection. **Google Analytics 4** (optional, behind a cookie banner) and **Google Search Console** verification.
 
 ## Project structure
 
@@ -87,7 +87,8 @@ The workspace preview pane shows the site inside an iframe. Sign-in works there 
 | `SENDGRID_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_FROM_NAME`, `CONTACT_REPLY_TO`, `CONTACT_TO_EMAIL` | Email delivery through SendGrid. Step-by-step setup and testing: [`docs/email-sendgrid.md`](docs/email-sendgrid.md). Check it at *Dashboard → Settings → Email delivery → Send test*. `SENDGRID_SANDBOX=true` validates without delivering (workspace only). `RESEND_API_KEY` is a fallback used only when there is no SendGrid key. |
 | `NEWSLETTER_PROVIDER` | `none`, `buttondown` (+`BUTTONDOWN_API_KEY`), `sendgrid` (+ optional `SENDGRID_LIST_ID`; the key needs Marketing access) or `resend-audience` (+`RESEND_AUDIENCE_ID`). Subscribers are always stored in the dashboard too. |
 | `CALENDLY_URL` | Default booking link for the landing pages, used when they're first seeded. Edit per page in the dashboard after that. |
-| `PUBLIC_PLAUSIBLE_DOMAIN` | Set to enable analytics; leave blank to disable. |
+| `PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 measurement ID (`G-…`) or Tag Manager container ID (`GTM-…`). Optional; see *Analytics and Search Console* below. |
+| `GOOGLE_SITE_VERIFICATION` | Search Console “HTML tag” verification code. Optional; not needed with DNS verification. |
 
 All variables are read when the server handles a request, so changing a Secret needs only a restart, not a rebuild.
 
@@ -107,6 +108,15 @@ Privacy and Terms are code files (`src/pages/privacy.astro`, `terms.astro`) so l
 `src/content/` holds the original copy. It is copied into the database once; editing a file there afterwards does not change the live site (the dashboard copy wins). A brand-new page or setting file added there is picked up on the next boot.
 
 When the client changes wording after launch, change the default **and** add the old → new pair to the copy updates at the end of `src/lib/bootstrap.ts`. On every boot each pair is applied only while the stored text still equals the old wording, so a site that was edited in the dashboard keeps its edits and a site that still shows the original wording picks up the new one. The boot log lists what was applied (`[boot] copy update: …`).
+
+## Analytics and Search Console
+
+Both are set at *Dashboard → Website content → Site-wide → Google Analytics & Search Console*, or as Replit Secrets (`PUBLIC_GA_MEASUREMENT_ID`, `GOOGLE_SITE_VERIFICATION`). A value saved in the dashboard wins over the Secret; with neither, nothing is loaded.
+
+- **Google Analytics 4:** paste the measurement ID (`G-…`) or a Google Tag Manager container ID (`GTM-…`; the default is the firm's container, and the GA4 tag is then configured inside Tag Manager). The tag loads on the public site and the landing pages, never on `/login` or the dashboard. It runs in Consent Mode: a banner asks before analytics cookies are set, the choice is kept in the browser, and the footer's cookie settings link reopens it. Advertising signals are always off. The banner wording is editable on the same page.
+- **Events:** `generate_lead` when the contact form (`form: contact`) or a landing-page form (`form: landing`, with `landing_page` and `grid`) is sent, and `sign_up` for the newsletter. Mark `generate_lead` as a key event in GA. With a Tag Manager container these arrive as dataLayer events of the same names: add a Custom Event trigger and a GA4 event tag for each. Calendly bookings happen inside Calendly's frame; connect Google Analytics in Calendly's own integrations to see them.
+- **Search Console:** verify the domain with the DNS record Google gives you (covers the blog subdomain too, no setting needed), or choose the “HTML tag” method and paste the code. Then submit `/sitemap.xml` and link Search Console to the GA property.
+- The Privacy Policy (`src/pages/privacy.astro`) describes Google Analytics and the cookie choice; keep the two in step.
 
 ## Persona landing pages + sales dashboard
 

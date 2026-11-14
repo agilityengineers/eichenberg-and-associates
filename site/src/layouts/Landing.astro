@@ -1,11 +1,14 @@
 ---
 // Unlisted persona landing pages (/for/<slug>): compact header and footer, as in Persona Landing Pages.dc.html.
 import Head from '../components/Head.astro';
+import ConsentBanner from '../components/ConsentBanner.astro';
+import { analytics } from '../lib/analytics';
 import { page, setting } from '../lib/content';
 import '../styles/global.css';
 interface Props { title: string; description: string; cta: string }
 const { cta, ...head } = Astro.props;
 const [site, l] = await Promise.all([setting('site'), page('landing')]);
+const ga = await analytics();
 const year = new Date().getFullYear();
 ---
 <!doctype html>
@@ -23,9 +26,10 @@ const year = new Date().getFullYear();
   <footer class="lft">
     <div class="lwrap lft__in">
       <img src="/images/logo-white.png" alt={site.name} width="120" height="87" />
-      <span>© {year} {site.name} · <a href="/privacy">{site.footer.privacyLabel}</a> · <a href="/terms">{site.footer.termsLabel}</a> · {l.footerNote}</span>
+      <span>© {year} {site.name} · <a href="/privacy">{site.footer.privacyLabel}</a> · <a href="/terms">{site.footer.termsLabel}</a> · {ga.banner && <><button type="button" class="lft__btn" data-cookie-settings>{ga.consent.manageLabel}</button> · </>}{l.footerNote}</span>
     </div>
   </footer>
+  <ConsentBanner />
   <script>
     document.querySelectorAll<HTMLAnchorElement>('[data-to-form]').forEach((a) => a.addEventListener('click', (e) => { const el = document.getElementById('form'); if (!el) return; e.preventDefault(); window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 24, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }));
   </script>
@@ -39,5 +43,6 @@ const year = new Date().getFullYear();
 .lbrand>span{display:flex;flex-direction:column;line-height:1}.lbrand>span span:first-child{font-weight:600;letter-spacing:.22em;font-size:14px}.lbrand>span span:last-child{font-weight:500;letter-spacing:.3em;font-size:8.5px;margin-top:4px;color:var(--indigo)}
 .lhdr__cta{display:inline-block;padding:10px 18px;font-size:14px;font-weight:600;color:#fff;background:var(--navy);border-radius:6px;transition:background .2s}.lhdr__cta:hover{background:var(--indigo);color:#fff}
 .lft{background:var(--navy);color:rgba(255,255,255,.7);font-size:13px}.lft a{color:rgba(255,255,255,.7)}.lft a:hover{color:var(--teal)}
+.lft__btn{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}.lft__btn:hover{color:var(--teal)}
 .lft__in{padding-top:28px;padding-bottom:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}.lft__in img{width:120px;height:auto}
 </style>

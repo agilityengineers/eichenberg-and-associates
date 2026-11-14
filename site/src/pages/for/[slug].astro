@@ -185,7 +185,7 @@ const field = (x: any) => ({ id: 'q-' + x.key, star: x.required ? '*' : '' });
       const bk = document.getElementById('booking'); const url = form.dataset.booking;
       if (bk && url && /^https:\/\//.test(url)) { const f = document.createElement('iframe'); f.src = url + (url.includes('?') ? '&' : '?') + 'hide_gdpr_banner=1&name=' + encodeURIComponent(String(fd.get('name') || '')) + '&email=' + encodeURIComponent(String(fd.get('email') || '')); f.title = m.booking; f.loading = 'lazy'; bk.replaceChildren(f); }
       const dm = document.getElementById('done-magnet'); if (dm) dm.textContent = m.magnet.replace('{email}', String(fd.get('email') || ''));
-      (window as any).plausible?.('Lead submitted', { props: { page: form.dataset.slug, grid: grid.dataset.grid } });
+      (window as any).eaTrack?.('generate_lead', { form: 'landing', landing_page: form.dataset.slug, grid: grid.dataset.grid });
       panels[3].focus?.();
     } catch (err: any) { status.textContent = (err.message || m.failure) + ' ' + m.fallback; next.disabled = false; (window as any).turnstile?.reset(); }
   });
