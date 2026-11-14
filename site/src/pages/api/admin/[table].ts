@@ -15,7 +15,7 @@ const TABLES: Record<string, { cols: z.ZodRawShape; required?: string[]; stamp?:
   partners: { cols: { firm: str(160), platform: str(80), contact: str(160), email: str(200), status: z.coerce.number().int().min(0).max(2), last_touch: date, next_step: str(200), notes: str(5000) }, required: ['firm'] },
   subscribers: { cols: { email: z.string().email().max(200), source: str(160), in_profile: z.enum(['in', 'out', 'unknown', 'partner']) }, required: ['email'] },
   content_items: { cols: { month, title: str(300), status: z.coerce.number().int().min(0).max(2), cuts: z.coerce.number().int().min(1).max(20), cuts_done: z.coerce.number().int().min(0).max(20), newsletter: str(200), url: str(500) }, required: ['month', 'title'] },
-  activities: { cols: { deal_id: uuidOrNull, partner_id: uuidOrNull, kind: z.enum(['bd', 'bridge']).default('bd'), hours: z.coerce.number().min(0).max(200), note: str(300) }, required: ['hours'] },
+  activities: { cols: { deal_id: uuidOrNull, partner_id: uuidOrNull, kind: z.enum(['bd', 'bridge']), hours: z.coerce.number().min(0).max(200), note: str(300) }, required: ['hours'] },
   leads: { cols: {} },
 };
 

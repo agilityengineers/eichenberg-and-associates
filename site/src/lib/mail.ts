@@ -34,9 +34,12 @@ export async function sendMail(m: Mail): Promise<boolean> {
   if (!provider || !from.email) { console.log('[mail] (no SENDGRID_API_KEY / CONTACT_FROM_EMAIL) would send:', m.to, '·', m.subject); return false; }
 
   if (provider === 'resend') {
-    const { Resend } = await import('resend');
-    const r = await new Resend(env('RESEND_API_KEY')).emails.send({ from: `${from.name} <${from.email}>`, to: m.to, subject: m.subject, html: m.html, ...(replyTo ? { replyTo } : {}) });
-    if (r.error) throw new Error(r.error.message);
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST', signal: AbortSignal.timeout(10_000),
+      headers: { Authorization: `Bearer ${env('RESEND_API_KEY')}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ from: `${from.name} <${from.email}>`, to: [m.to], subject: m.subject, html: m.html, ...(replyTo ? { reply_to: replyTo } : {}) }),
+    });
+    if (!r.ok) { const b = await r.json().catch(() => null) as { message?: string } | null; throw new Error(`Resend ${r.status}: ${b?.message || r.statusText}`); }
     return true;
   }
 
