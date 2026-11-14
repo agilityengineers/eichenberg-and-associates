@@ -3,10 +3,14 @@ import Dashboard from '../../layouts/Dashboard.astro';
 import { q } from '../../lib/db';
 import { getSettings } from '../../lib/settings';
 import { GRID_SHORT } from '../../lib/dashboard';
+import { blockedSenders } from '../../lib/spam';
 const filter = Astro.url.searchParams.get('page') || 'all';
 const [pages, s] = await Promise.all([q('select slug, eyebrow from landing_pages order by slug'), getSettings()]);
 const where = filter === 'all' ? '' : filter === 'contact' ? "where l.source = 'contact'" : 'where l.page_slug = $1';
 const leads = await q(`select l.*, d.stage from leads l left join deals d on d.id = l.deal_id ${where} order by l.created_at desc limit 300`, where.includes('$1') ? [filter] : []);
+// Senders are recognised by the hashed address stored with each submission: how many each has sent, and who is blocked.
+const counts = new Map((await q<{ ip_hash: string; n: number }>('select ip_hash, count(*)::int as n from leads where ip_hash is not null group by ip_hash')).map((r) => [r.ip_hash, r.n]));
+const blocked = new Set((await blockedSenders()).map((b) => b.ip_hash));
 const label = (slug: string | null) => (slug ? pages.find((p) => p.slug === slug)?.eyebrow || slug : 'Contact form');
 const order = ['operations', 'sponsor-90-days', 'pmo', 'integration', 'si-partners'];
 const filters = [['all', 'All pages'], ...pages.slice().sort((a, b) => order.indexOf(a.slug) - order.indexOf(b.slug)).map((p) => [p.slug, p.eyebrow]), ['contact', 'Contact form']];
@@ -20,18 +24,48 @@ const key = (l: { page_slug: string | null; answers: Record<string, string> }) =
   <section class="panel" style="overflow:hidden">
     <div style="display:flex;gap:8px;padding:14px 18px;border-bottom:1px solid rgba(18,15,56,.08);flex-wrap:wrap;align-items:center">
       {filters.map(([k, l]) => <a class="fpill" href={k === 'all' ? '/dashboard/inbox' : '/dashboard/inbox?page=' + k} aria-current={filter === k ? 'page' : undefined}>{l}</a>)}
-      <span style="margin-left:auto;font-size:13px;color:var(--faint)">{leads.length} submissions</span>
+      <span style="margin-left:auto;font-size:13px;color:var(--faint)" id="sel-count" role="status" aria-live="polite" data-total={leads.length}>{leads.length} submissions</span>
+      <button type="button" class="dbtn dbtn--sm" id="sel-del" disabled>Delete selected</button>
     </div>
-    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Received</th><th>Lead</th><th>Page</th><th>Grid</th><th>Key answer</th><th></th></tr></thead><tbody>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th style="width:1%"><input type="checkbox" id="sel-all" aria-label="Select all submissions on this page" disabled={!leads.length} /></th><th>Received</th><th>Lead</th><th>Page</th><th>Grid</th><th>Key answer</th><th></th></tr></thead><tbody>
       {leads.map((l) => <tr>
+        <td><input type="checkbox" class="sel" value={l.id} aria-label={'Select the submission from ' + l.name} /></td>
         <td style="white-space:nowrap;color:var(--muted)">{when(new Date(l.created_at))}</td>
         <td><strong style="display:block">{l.name}</strong><span class="muted">{[l.title, l.company].filter(Boolean).join(', ')}</span><br /><a href={'mailto:' + l.email} style="font-size:13px">{l.email}</a></td>
         <td><span class="pill pill--indigo">{label(l.page_slug)}</span></td>
         <td style="font-size:13px;color:var(--muted);white-space:nowrap">{GRID_SHORT[l.grid] || '—'}</td>
         <td style="color:var(--muted);max-width:280px">{key(l) || '—'}</td>
-        <td style="white-space:nowrap">{l.deal_id ? <a href="/dashboard/pipeline" style="font-size:13px;color:var(--teal);font-weight:600">In {s.stages[l.stage ?? 0]?.name} ✓</a> : <button class="dbtn dbtn--sm" data-action="convert" data-id={l.id}>Add to pipeline</button>}</td>
+        <td style="white-space:nowrap">{l.deal_id ? <a href="/dashboard/pipeline" style="font-size:13px;color:var(--teal);font-weight:600">In {s.stages[l.stage ?? 0]?.name} ✓</a> : <button class="dbtn dbtn--sm" data-action="convert" data-id={l.id}>Add to pipeline</button>}
+          {l.ip_hash && <div class="snd">{(counts.get(l.ip_hash) || 1) > 1 && <span>{counts.get(l.ip_hash)} from this sender</span>}{blocked.has(l.ip_hash) ? <span class="pill pill--indigo">Blocked</span> : <button type="button" class="lnk-rm" data-block={l.id} data-name={l.name} data-n={counts.get(l.ip_hash) || 1}>Block sender</button>}</div>}</td>
       </tr>)}
-      {!leads.length && <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--faint)">No submissions yet.</td></tr>}
+      {!leads.length && <tr><td colspan="7" style="padding:40px;text-align:center;color:var(--faint)">No submissions yet.</td></tr>}
     </tbody></table></div>
   </section>
 </Dashboard>
+<style>
+.sel,#sel-all{width:16px;height:16px;accent-color:var(--indigo);cursor:pointer}#sel-del:disabled{opacity:.45;cursor:not-allowed}
+.snd{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12px;color:var(--faint)}
+</style>
+<script>
+  import { api } from '../../scripts/dashboard';
+  // Select several (or all) submissions and delete them together.
+  const all = document.getElementById('sel-all') as HTMLInputElement; const del = document.getElementById('sel-del') as HTMLButtonElement; const cnt = document.getElementById('sel-count')!;
+  const boxes = [...document.querySelectorAll<HTMLInputElement>('input.sel')];
+  const picked = () => boxes.filter((b) => b.checked);
+  const sync = () => { const n = picked().length;
+    del.disabled = !n; cnt.textContent = n ? `${n} selected` : `${cnt.dataset.total} submissions`;
+    all.checked = n > 0 && n === boxes.length; all.indeterminate = n > 0 && n < boxes.length; };
+  all.addEventListener('change', () => { boxes.forEach((b) => (b.checked = all.checked)); sync(); });
+  boxes.forEach((b) => b.addEventListener('change', sync));
+  del.addEventListener('click', async () => { const ids = picked().map((b) => b.value); if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} submission${ids.length === 1 ? '' : 's'}? This cannot be undone. Deals already in the pipeline are kept.`)) return;
+    del.disabled = true;
+    try { await api('leads', 'DELETE', { ids }); location.reload(); } catch { sync(); } });
+  sync();   // the browser may restore ticked boxes after a reload
+  document.querySelectorAll<HTMLButtonElement>('[data-block]').forEach((b) => b.addEventListener('click', async () => {
+    const n = Number(b.dataset.n) || 1;
+    if (!confirm(`Block the sender of “${b.dataset.name}”? The contact, landing-page and newsletter forms will refuse anything more from their address. You can undo this in Settings → Spam protection.`)) return;
+    const purge = confirm(`Also delete what this sender has already sent (${n} submission${n === 1 ? '' : 's'})? Anything already added to the pipeline is kept.\n\nOK = block and delete. Cancel = block only.`);
+    try { await api('blocklist', 'POST', { leadId: b.dataset.block, purge }); location.reload(); } catch {}
+  }));
+</script>

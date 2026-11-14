@@ -3,8 +3,10 @@ import Base from '../../layouts/Base.astro';
 import FeedList from '../../components/FeedList.astro';
 import { page, setting } from '../../lib/content';
 import { si } from '../../lib/si';
+import { env } from '../../lib/env';
 const [c, feeds] = await Promise.all([page('insights'), setting('feeds')]);
 // How many posts and whether to show their pictures: Dashboard → Website content → Insights feed (RSS).
+const turnstile = env('PUBLIC_TURNSTILE_SITE_KEY');
 const count = Math.min(50, Math.max(1, Number(feeds.insightsCount) || 12));
 ---
 <Base title={c.title} description={c.description}>
@@ -25,9 +27,11 @@ const count = Math.min(50, Math.max(1, Number(feeds.insightsCount) || 12));
           <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
           <button type="submit" class="btn btn--teal" style="padding:13px 22px">{c.subscribeLabel}</button>
         </div>
+        {turnstile && <div class="cf-turnstile" data-sitekey={turnstile} data-theme="dark" data-appearance="interaction-only"></div>}
         <p role="status" aria-live="polite" id="nl-status" style="margin:0;font-size:14px;color:var(--teal);min-height:1.4em"></p>
       </form>
     </aside>
+    {turnstile && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
     <FeedList limit={count} variant="grid" images={feeds.showImages !== false} />
   </section>
 </Base>
@@ -44,5 +48,6 @@ const count = Math.min(50, Math.max(1, Number(feeds.insightsCount) || 12));
   const f = document.getElementById('nl') as HTMLFormElement; const s = document.getElementById('nl-status')!; const m = JSON.parse(f.dataset.msg || '{}');
   f.addEventListener('submit', async (e) => { e.preventDefault(); s.textContent = m.sending;
     try { const r = await fetch('/api/newsletter', { method: 'POST', body: new FormData(f) }); const j = await r.json();
-      s.textContent = r.ok ? m.ok : (j.error || m.error); if (r.ok) f.reset(); } catch { s.textContent = m.error; } });
+      s.textContent = r.ok ? m.ok : (j.error || m.error); if (r.ok) f.reset(); } catch { s.textContent = m.error; }
+    (window as any).turnstile?.reset(); });   // a captcha token works once; fetch a fresh one for the next try
 </script>
