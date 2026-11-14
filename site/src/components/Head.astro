@@ -14,7 +14,11 @@ const ld: Record<string, unknown>[] = [org, ...(jsonLd ? (Array.isArray(jsonLd) 
 const ga = await analytics();
 // Consent Mode: with the banner on, analytics cookies stay off until the visitor accepts (the choice is in localStorage).
 // Advertising signals are always denied. ga.gaId is validated in lib/analytics.ts, so it is safe to inline.
-const gtag = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}var c=null;try{c=localStorage.getItem('ea_consent')}catch(e){}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:${ga.banner ? "c==='granted'?'granted':'denied'" : "'granted'"}});gtag('js',new Date());gtag('config','${ga.gaId}');`;
+const gtm = ga.gaId.startsWith('GTM-');
+// window.eaTrack(name, params) is what the forms call: a GA event with a G- ID, a dataLayer event (for a GTM trigger) with a GTM- ID.
+const gtag = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}var c=null;try{c=localStorage.getItem('ea_consent')}catch(e){}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:${ga.banner ? "c==='granted'?'granted':'denied'" : "'granted'"}});`
+  + (gtm ? `dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});window.eaTrack=function(n,p){dataLayer.push(Object.assign({event:n},p||{}))};`
+         : `gtag('js',new Date());gtag('config','${ga.gaId}');window.eaTrack=function(n,p){gtag('event',n,p||{})};`);
 ---
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -37,4 +41,4 @@ const gtag = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.pu
 <script type="application/ld+json" set:html={JSON.stringify(ld).replace(/</g, '\\u003c')} />
 {ga.verification && <meta name="google-site-verification" content={ga.verification} />}
 {ga.gaId && <script is:inline set:html={gtag} />}
-{ga.gaId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${ga.gaId}`}></script>}
+{ga.gaId && <script is:inline async src={`https://www.googletagmanager.com/${gtm ? 'gtm.js' : 'gtag/js'}?id=${ga.gaId}`}></script>}

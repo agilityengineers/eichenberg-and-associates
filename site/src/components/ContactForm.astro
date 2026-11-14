@@ -65,7 +65,7 @@ const msg = { name: f.nameError, email: f.emailError, situation: f.situationErro
       // Same inline Calendly embed as the landing pages, pre-filled with the sender's name and email.
       const bk = document.getElementById('cf-booking'); const url = form.dataset.booking;
       if (bk && url && /^https:\/\//.test(url)) { const f = document.createElement('iframe'); f.src = url + (url.includes('?') ? '&' : '?') + 'hide_gdpr_banner=1&name=' + encodeURIComponent(String(fd.get('name') || '')) + '&email=' + encodeURIComponent(String(fd.get('email') || '')); f.title = m.booking; f.loading = 'lazy'; bk.replaceChildren(f); }
-      (window as any).gtag?.('event', 'generate_lead', { form: 'contact', situation: fd.get('situation') });
+      (window as any).eaTrack?.('generate_lead', { form: 'contact', situation: fd.get('situation') });
     } catch (err: any) { status.textContent = (err.message || m.failure) + ' ' + m.fallback; (window as any).turnstile?.reset(); }
   });
 </script>

@@ -86,7 +86,7 @@ export const DOCS: DocType[] = [
     str('signoff', 'Sign-off (both emails)', { optional: true }),
   ] },
   { collection: 'settings', slug: 'analytics', group: 'Site-wide', label: 'Google Analytics & Search Console', description: 'Visitor statistics (Google Analytics) and proof of ownership for Google Search Console. Leave a box empty to switch that part off. The dashboard and sign-in pages are never tracked.', fields: [
-    str('gaId', 'Google Analytics measurement ID', { optional: true, hint: 'Starts with G-, e.g. G-AB12CD34EF. In Google Analytics: Admin → Data streams → your website. Anything else is ignored.' }),
+    str('gaId', 'Google Analytics measurement ID or Tag Manager container ID', { optional: true, hint: 'Either a Google Analytics ID (starts with G-; in Google Analytics: Admin → Data streams → your website) or a Google Tag Manager container ID (starts with GTM-). Anything else is ignored.' }),
     str('searchConsole', 'Search Console verification code', { optional: true, hint: 'Only needed for the “HTML tag” method in Search Console. Paste the code, or the whole <meta …> tag. Not needed if the domain was verified with a DNS record.' }),
     obj('consent', 'Cookie banner', [
       bool('enabled', 'Ask visitors before setting analytics cookies', { hint: 'Keep this on: the Privacy Policy says analytics cookies are set only after a visitor accepts.' }),

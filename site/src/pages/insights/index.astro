@@ -48,6 +48,6 @@ const count = Math.min(50, Math.max(1, Number(feeds.insightsCount) || 12));
   const f = document.getElementById('nl') as HTMLFormElement; const s = document.getElementById('nl-status')!; const m = JSON.parse(f.dataset.msg || '{}');
   f.addEventListener('submit', async (e) => { e.preventDefault(); s.textContent = m.sending;
     try { const r = await fetch('/api/newsletter', { method: 'POST', body: new FormData(f) }); const j = await r.json();
-      s.textContent = r.ok ? m.ok : (j.error || m.error); if (r.ok) { f.reset(); (window as any).gtag?.('event', 'sign_up', { method: 'newsletter' }); } } catch { s.textContent = m.error; }
+      s.textContent = r.ok ? m.ok : (j.error || m.error); if (r.ok) { f.reset(); (window as any).eaTrack?.('sign_up', { method: 'newsletter' }); } } catch { s.textContent = m.error; }
     (window as any).turnstile?.reset(); });   // a captcha token works once; fetch a fresh one for the next try
 </script>
