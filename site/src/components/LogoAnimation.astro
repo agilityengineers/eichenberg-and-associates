@@ -1,0 +1,44 @@
+---
+// Two open hands sweep in, morph into the two halves of the mark and meet; the wordmark then fades in. Plays once.
+// The finished logo is rendered on the server, so it is what shows without JavaScript or with reduced motion.
+import shapes from '../lib/logo-shapes.json';
+interface Props { label: string }
+const { label } = Astro.props;
+const m = shapes.mark;
+let d = 'M'; for (let i = 0; i < m.length; i += 2) d += `${i ? 'L' : ''}${m[i]} ${m[i + 1]}`; d += 'Z';
+---
+<div class="ea">
+  <svg class="ea__svg" viewBox="-975 -40 1950 1430" role="img" aria-label={label}>
+    <g class="ea__l" transform="translate(-345 0)"><path d={d} fill="#343C97" /></g>
+    <g transform="scale(-1,1)"><g class="ea__r" transform="translate(-345 0)"><path d={d} fill="#14B6A1" /></g></g>
+    <image class="ea__wm" x="-935" y="981" width="1870" height="364" href="/images/wordmark-navy.png" />
+  </svg>
+</div>
+<script is:inline define:vars={{ shapes }}>
+(function () {
+  var box = document.currentScript.previousElementSibling, svg = box && box.querySelector('svg');
+  if (!svg || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var H = shapes.hand, M = shapes.mark, C = shapes.c, n = H.length, MOVE = 1.55, END = 2.1, t0 = 0;
+  var gl = svg.querySelector('.ea__l'), gr = svg.querySelector('.ea__r'), pl = gl.firstElementChild, pr = gr.firstElementChild, wm = svg.querySelector('.ea__wm');
+  function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function ease(x) { x = cl(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+  function travel() { var w = svg.getBoundingClientRect().width; return Math.max(380, Math.min(838, box.clientWidth * (w ? 1950 / w : 1) / 2 - 260)); }
+  function draw(t) {
+    var ep = ease(t / MOVE), es = ease((t - .25) / .8), s = 'M', i;
+    for (i = 0; i < n; i += 2) s += (i ? 'L' : '') + (H[i] + (M[i] - H[i]) * es).toFixed(1) + ' ' + (H[i + 1] + (M[i + 1] - H[i + 1]) * es).toFixed(1);
+    s += 'Z';
+    var tf = 'translate(' + (-travel() * (1 - ep) - 345).toFixed(1) + ' ' + (222 * (1 - ep)).toFixed(1) + ') rotate(' + (-10 * (1 - ep)).toFixed(2) + ' ' + C[0] + ' ' + C[1] + ')';
+    pl.setAttribute('d', s); pr.setAttribute('d', s); gl.setAttribute('transform', tf); gr.setAttribute('transform', tf);
+    gl.style.opacity = gr.style.opacity = cl(t / .3);
+    var w = cl((t - 1.45) / .6); w = w * w * (3 - 2 * w);
+    wm.style.opacity = w; wm.style.filter = w < 1 ? 'blur(' + ((1 - w) * 10).toFixed(1) + 'px)' : 'none';
+    wm.setAttribute('transform', 'translate(0 ' + ((1 - w) * 26).toFixed(1) + ')');
+  }
+  function frame(now) { if (!t0) t0 = now; var t = (now - t0) / 1000; draw(Math.min(t, END)); if (t < END) requestAnimationFrame(frame); }
+  draw(0); requestAnimationFrame(frame);
+})();
+</script>
+<style>
+.ea{display:grid;place-items:center;overflow:hidden;padding:clamp(40px,5vw,64px) 24px 0}
+.ea__svg{width:min(70%,340px);height:auto;overflow:visible;display:block}
+</style>

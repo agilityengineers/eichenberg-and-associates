@@ -125,6 +125,7 @@ export const DOCS: DocType[] = [
   ] },
   { collection: 'pages', slug: 'about', group: 'Pages', label: 'About', description: 'Name, role, photo and bio are under Team.', fields: [
     ...meta, str('eyebrow', 'Eyebrow'), str('portraitPlaceholder', 'Text shown until a photo is uploaded'),
+    bool('logoAnimation', 'Play the logo animation at the top of the page', { hint: 'Two hands come together to form the logo, once per visit to the page. Untick to hide it.' }),
     str('missionLabel', 'Mission label'), text('mission', 'Mission'), str('visionLabel', 'Vision label'), text('vision', 'Vision'),
     str('valuesLabel', 'Values label'), rows('values', 'Values', [str('name', 'Name'), text('text', 'Text')], { singular: 'value' }),
     rows('how', 'How we work', [str('label', 'Label'), text('text', 'Text')], { singular: 'item' }),

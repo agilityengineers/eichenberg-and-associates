@@ -1,9 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
-import { getDocs, md, page } from '../lib/content';
+import LogoAnimation from '../components/LogoAnimation.astro';
+import { getDocs, md, page, setting } from '../lib/content';
 import { si, siRaw } from '../lib/si';
 import { escapeHtml } from '../lib/sanitize';
-const c = await page('about');
+const [c, site] = await Promise.all([page('about'), setting('site')]);
 const [person] = await getDocs('team');
 const name = person?.data.name || '', role = person?.data.role || '';
 const bio = md(siRaw(person?.body || ''));
@@ -11,6 +12,7 @@ const PH = `<div class="ph"><img src="/images/mark-color.png" alt="" aria-hidden
 const ld = { '@context': 'https://schema.org', '@type': 'Person', name, jobTitle: role, worksFor: { '@type': 'Organization', name: 'Eichenberg & Associates' } };
 ---
 <Base title={c.title} description={c.description} jsonLd={ld}>
+  {c.logoAnimation && <LogoAnimation label={site.name} />}
   <section class="wrap grid" style="padding-top:clamp(64px,8vw,112px);padding-bottom:clamp(64px,8vw,112px)">
     <div><p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="font-size:clamp(44px,6.4vw,88px);animation-delay:.1s">{name}</h1><p class="rise" style="margin:12px 0 28px;font-size:15px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--indigo);animation-delay:.25s">{role}</p><div class="bio rise" style="animation-delay:.4s" set:html={bio} /></div>
     <div class="portrait rise" style="animation-duration:.8s;animation-delay:.3s">{person?.data.photo ? <img src={person.data.photo} alt={`Portrait of ${name}`} width="800" height="1000" loading="lazy" onerror={`this.outerHTML=${JSON.stringify(PH)}`} /> : <Fragment set:html={PH} />}</div>
