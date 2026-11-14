@@ -8,8 +8,11 @@ import { PASSWORD_RULE } from '../../lib/password';
 import { mailConfigured, mailProvider, fromAddress, defaultReplyTo } from '../../lib/mail';
 import { env } from '../../lib/env';
 import { setting } from '../../lib/content';
+import { DAILY_LIMIT, blockedSenders, turnstileOn } from '../../lib/spam';
 const [s, users] = await Promise.all([getSettings(), q('select id, email, name, last_login_at from users order by created_at')]);
 const me = Astro.locals.user!;
+const blocked = await blockedSenders();
+const captcha = turnstileOn() ? 'On: every public form asks Cloudflare Turnstile to confirm the visitor is a person.' : !env('PUBLIC_TURNSTILE_SITE_KEY') && !env('TURNSTILE_SECRET_KEY') ? 'OFF: PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY are not set.' : 'OFF: ' + (env('TURNSTILE_SECRET_KEY') ? 'PUBLIC_TURNSTILE_SITE_KEY' : 'TURNSTILE_SECRET_KEY') + ' is not set.';
 const provider = mailProvider(); const from = fromAddress(); const siteEmail = (await setting('site'))?.email || '';
 const mail = [
   ['Provider', provider === 'sendgrid' ? 'SendGrid' + (env('SENDGRID_SANDBOX') === 'true' ? ' (sandbox: nothing is delivered)' : '') : provider === 'resend' ? 'Resend (fallback; add SENDGRID_API_KEY to switch)' : 'Not set up: emails are only logged'],
@@ -45,6 +48,20 @@ const mail = [
           <span class="cms-hint">The full test sends the email check plus sample lead, contact, acknowledgment, and password-reset messages. Sample messages do not create records or reset accounts.</span>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="dbtn dbtn--sm" type="submit" data-all-templates="false" disabled={!mailConfigured()}>Send one test</button><button class="dbtn dbtn--sm" type="submit" data-all-templates="true" disabled={!mailConfigured()}>Send all test emails</button><span role="status" class="faint" style="font-size:12px;overflow-wrap:anywhere"></span></div></form>
       </section>
+      <section class="panel" style="padding:22px;display:grid;gap:12px">
+        <h2 class="ph2">Spam protection</h2>
+        <dl class="mailcfg">
+          <div><dt>Captcha</dt><dd class={turnstileOn() ? '' : 'warn'}>{captcha}</dd></div>
+          <div><dt>Daily limit</dt><dd>{DAILY_LIMIT} submissions per address in 24 hours; more are refused.</dd></div>
+        </dl>
+        {!turnstileOn() && <p class="cms-hint" style="margin:0">Create a free Turnstile widget at dash.cloudflare.com → Turnstile, add eichenbergassociates.com as a hostname, then put the two keys in Replit Secrets and redeploy.</p>}
+        <h3 class="uh3">Blocked senders</h3>
+        <p class="cms-hint" style="margin:0">A blocked sender cannot use the contact, landing-page or newsletter forms. To block someone who has already written, use “Block sender” in the Lead inbox. Addresses are stored as a one-way hash, so they are not shown here.</p>
+        {blocked.length ? <ul class="users">{blocked.map((b) => <li><div><strong>{b.note || 'Blocked sender'}</strong><small>Blocked {new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</small></div><button type="button" class="lnk-rm" data-unblock={b.ip_hash}>Unblock</button></li>)}</ul> : <p class="cms-hint" style="margin:0">Nobody is blocked.</p>}
+        <form id="block-ip" class="uform"><h3>Block an IP address</h3>
+          <input name="ip" required class="inp" placeholder="203.0.113.25" aria-label="IP address" autocomplete="off" /><input name="note" class="inp" maxlength="200" placeholder="Note (optional)" aria-label="Note" />
+          <div style="display:flex;gap:10px;align-items:center"><button class="dbtn dbtn--sm" type="submit">Block</button><span role="status" class="faint" style="font-size:12px"></span></div></form>
+      </section>
       <section class="panel" style="padding:22px">
         <form id="my-pw" class="uform"><h3 style="margin-top:0">Change your password</h3>
           <input name="current" type="password" required autocomplete="current-password" class="inp" placeholder="Current password" aria-label="Current password" />
@@ -59,6 +76,7 @@ const mail = [
 .users{list-style:none;margin:0;padding:0;display:grid;gap:8px}.users li{display:flex;justify-content:space-between;gap:10px;align-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:14px}
 .users li div{display:grid;gap:2px;min-width:0}.users span{color:var(--muted);word-break:break-all}.users small{color:var(--faint);font-size:12px}.users em{font-style:normal;font-size:12px;font-weight:600;color:#0E7C6E}
 .mailcfg{margin:0;display:grid;gap:8px;font-size:13px}.mailcfg div{display:grid;gap:2px}.mailcfg dt{color:var(--faint);font-size:12px}.mailcfg dd{margin:0;overflow-wrap:anywhere}
+.mailcfg dd.warn{color:#B3261E;font-weight:600}.uh3{margin:8px 0 0;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
 .uform{display:grid;gap:8px}.uform h3{margin:8px 0 2px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
 </style>
 <script>
@@ -74,6 +92,10 @@ const mail = [
     const r = await fetch('/api/admin/mail-test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(mt))) });
     const j = await r.json().catch(() => ({}));
     mts.textContent = r.ok ? 'Sent. Check the inbox, and the spam folder.' : (j.error || 'Could not send.'); });
+  const bi = document.getElementById('block-ip') as HTMLFormElement; const bis = bi.querySelector('[role=status]')!;
+  bi.addEventListener('submit', async (e) => { e.preventDefault(); if (!bi.reportValidity()) return; bis.textContent = 'Saving…';
+    try { await api('blocklist', 'POST', Object.fromEntries([...new FormData(bi)].filter(([, v]) => v))); location.reload(); } catch { bis.textContent = ''; } });
+  document.querySelectorAll<HTMLButtonElement>('[data-unblock]').forEach((b) => b.addEventListener('click', async () => { if (!confirm('Unblock this sender? They will be able to use the forms again.')) return; await api('blocklist', 'DELETE', { ip_hash: b.dataset.unblock }); location.reload(); }));
   wire('add-user', 'POST', 'Added.', true); wire('my-pw', 'PATCH', 'Password changed.');
   document.querySelectorAll<HTMLButtonElement>('[data-user-rm]').forEach((b) => b.addEventListener('click', async () => { if (!confirm(`Remove ${b.dataset.email}? They will no longer be able to sign in.`)) return; await api('users', 'DELETE', { id: b.dataset.userRm }); location.reload(); }));
   const mailForm = document.getElementById('mail-test') as HTMLFormElement;

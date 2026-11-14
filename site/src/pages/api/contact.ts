@@ -10,12 +10,14 @@ import { sendMail } from '../../lib/mail';
 import { fillText, paragraph } from '../../lib/email-template';
 import { env, siteUrl } from '../../lib/env';
 import { clientIp, ipHash, json } from '../../lib/http';
+import { refuse } from '../../lib/spam';
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ip = clientIp(request, clientAddress);
   if (!rateLimit('contact:' + ip).ok) return json({ error: 'Too many requests. Try again in a few minutes.' }, 429);
   const fd = await request.formData();
   if (fd.get('website')) return json({ ok: true }); // honeypot: pretend success
+  const refused = await refuse(ip); if (refused) return refused; // blocked sender, or over the daily limit
   if (!(await verifyTurnstile(fd.get('cf-turnstile-response') as string | null, ip)).ok) return json({ error: 'Spam check failed. Please try again.' }, 400);
 
   const { lists } = await getSettings();

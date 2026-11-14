@@ -5,11 +5,15 @@ import { clean } from '../../lib/sanitize';
 import { dbConfigured, q } from '../../lib/db';
 import { env } from '../../lib/env';
 import { clientIp, json } from '../../lib/http';
+import { verifyTurnstile } from '../../lib/turnstile';
+import { refuse } from '../../lib/spam';
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ip = clientIp(request, clientAddress);
   if (!rateLimit('nl:' + ip, 5).ok) return json({ error: 'Too many requests.' }, 429);
   const fd = await request.formData(); if (fd.get('website')) return json({ ok: true });
+  const refused = await refuse(ip, 'none'); if (refused) return refused; // blocked sender
+  if (!(await verifyTurnstile(fd.get('cf-turnstile-response') as string | null, ip)).ok) return json({ error: 'Spam check failed. Please try again.' }, 400);
   const parsed = z.string().email().max(200).safeParse(clean(fd.get('email'), 200));
   if (!parsed.success) return json({ error: 'Enter a valid email.' }, 400);
   const email = parsed.data;

@@ -141,3 +141,12 @@ create table if not exists content_items (
   month date not null, title text not null, status smallint not null default 0,   -- 0 drafting, 1 published, 2 cut & scheduled
   cuts int not null default 6, cuts_done int not null default 0, newsletter text, url text
 );
+
+-- Senders blocked from the public forms (Dashboard → Settings → Spam protection, or "Block sender" in the Lead inbox).
+-- Only the one-way hash of the IP address is kept, the same hash stored with each lead.
+create table if not exists blocked_senders (
+  ip_hash text primary key,
+  note text,
+  created_at timestamptz not null default now()
+);
+create index if not exists leads_ip_hash_idx on leads (ip_hash, created_at);
