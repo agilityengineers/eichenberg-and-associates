@@ -1,0 +1,39 @@
+---
+// Accept / decline for Google Analytics cookies. Rendered only when a GA ID is set and the banner is switched on.
+// The choice is kept in localStorage (ea_consent); Head.astro reads it before GA loads. Any element with
+// [data-cookie-settings] reopens the banner so a visitor can change their mind.
+import { analytics } from '../lib/analytics';
+const { banner, consent: c } = await analytics();
+---
+{banner && (
+  <section id="consent" class="cb" aria-label={c.regionLabel} hidden>
+    <p>{c.text} <a href="/privacy">{c.privacyLabel}</a></p>
+    <div class="cb__btns"><button type="button" class="cb__no" data-consent="denied">{c.declineLabel}</button><button type="button" class="cb__yes" data-consent="granted">{c.acceptLabel}</button></div>
+  </section>
+)}
+<script>
+  const el = document.getElementById('consent');
+  if (el) {
+    let saved: string | null = null; try { saved = localStorage.getItem('ea_consent'); } catch { /* storage blocked: ask each visit */ }
+    if (saved !== 'granted' && saved !== 'denied') el.hidden = false;
+    el.querySelectorAll<HTMLButtonElement>('[data-consent]').forEach((b) => b.addEventListener('click', () => {
+      const v = b.dataset.consent!; try { localStorage.setItem('ea_consent', v); } catch { /* ignore */ }
+      (window as any).gtag?.('consent', 'update', { analytics_storage: v });
+      if (v === 'denied') {   // remove GA cookies already set
+        const host = location.hostname; const domains = ['', host, '.' + host, '.' + host.split('.').slice(-2).join('.')];
+        document.cookie.split(';').map((p) => p.split('=')[0].trim()).filter((n) => n.startsWith('_ga')).forEach((n) => domains.forEach((d) => { document.cookie = `${n}=; Max-Age=0; path=/` + (d ? `; domain=${d}` : ''); }));
+      }
+      el.hidden = true;
+    }));
+    document.querySelectorAll<HTMLElement>('[data-cookie-settings]').forEach((b) => b.addEventListener('click', () => { el.hidden = false; el.querySelector<HTMLElement>('button')?.focus(); }));
+  }
+</script>
+<style>
+.cb{position:fixed;left:16px;right:16px;bottom:16px;z-index:90;max-width:760px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;padding:18px 22px;background:var(--navy);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:10px;box-shadow:0 20px 36px rgba(18,15,56,.25)}
+.cb[hidden]{display:none}
+.cb p{margin:0;flex:1 1 320px;font-size:15px;line-height:1.5}.cb a{color:#fff;text-decoration:underline;text-underline-offset:3px}.cb a:hover{color:var(--teal)}
+.cb__btns{display:flex;gap:10px}
+.cb button{padding:10px 18px;border-radius:6px;font-weight:600;font-size:14px;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.cb__yes{background:var(--teal);color:var(--navy);border:1px solid var(--teal)}.cb__yes:hover{background:#fff;border-color:#fff}
+.cb__no{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5)}.cb__no:hover{border-color:#fff}
+</style>

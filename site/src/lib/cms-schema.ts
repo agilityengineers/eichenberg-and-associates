@@ -85,6 +85,15 @@ export const DOCS: DocType[] = [
     ]),
     str('signoff', 'Sign-off (both emails)', { optional: true }),
   ] },
+  { collection: 'settings', slug: 'analytics', group: 'Site-wide', label: 'Google Analytics & Search Console', description: 'Visitor statistics (Google Analytics) and proof of ownership for Google Search Console. Leave a box empty to switch that part off. The dashboard and sign-in pages are never tracked.', fields: [
+    str('gaId', 'Google Analytics measurement ID', { optional: true, hint: 'Starts with G-, e.g. G-AB12CD34EF. In Google Analytics: Admin → Data streams → your website. Anything else is ignored.' }),
+    str('searchConsole', 'Search Console verification code', { optional: true, hint: 'Only needed for the “HTML tag” method in Search Console. Paste the code, or the whole <meta …> tag. Not needed if the domain was verified with a DNS record.' }),
+    obj('consent', 'Cookie banner', [
+      bool('enabled', 'Ask visitors before setting analytics cookies', { hint: 'Keep this on: the Privacy Policy says analytics cookies are set only after a visitor accepts.' }),
+      text('text', 'Banner text'), str('acceptLabel', 'Accept button'), str('declineLabel', 'Decline button'), str('privacyLabel', 'Privacy link text'),
+      str('manageLabel', 'Footer link that reopens the banner'), str('regionLabel', 'Screen-reader name for the banner'),
+    ]),
+  ] },
   { collection: 'settings', slug: 'feeds', group: 'Site-wide', label: 'Insights feed (RSS)', description: 'Posts from these feeds appear on the Insights page, merged with the site’s own Insights posts, newest first. The home page can show the latest few.', fields: [
     rows('sources', 'Feed sources', [str('name', 'Display name (shown under each post)'), str('url', 'Feed URL'), bool('enabled', 'Enabled')], { singular: 'feed', hint: 'A standard RSS/Atom address (for a WordPress blog: the site address followed by /feed) or an rss.app URL (.xml or .json). Untick “Enabled” to pause a feed.' }),
     num('insightsCount', 'Posts on the Insights page', { min: 1, max: 50 }),

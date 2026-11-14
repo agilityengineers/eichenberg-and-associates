@@ -1,0 +1,13 @@
+{
+  "gaId": "",
+  "searchConsole": "",
+  "consent": {
+    "enabled": true,
+    "text": "We use Google Analytics cookies to understand how this site is used. You can accept or decline.",
+    "acceptLabel": "Accept",
+    "declineLabel": "Decline",
+    "privacyLabel": "Privacy Policy",
+    "manageLabel": "Cookie settings",
+    "regionLabel": "Cookie choices"
+  }
+}

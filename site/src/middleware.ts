@@ -7,8 +7,8 @@ import { isProd } from './lib/env';
 // Old WordPress URLs.
 const REDIRECTS: Record<string, string> = { '/speaking-engagements': '/about', '/resources': '/insights', '/book-a-meeting': '/contact' };
 
-const CSP = ["default-src 'self'", "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://plausible.io", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: https:", "media-src 'self' https:", "connect-src 'self' https://plausible.io",
+const CSP = ["default-src 'self'", "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: https:", "media-src 'self' https:", "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
   "frame-src https://challenges.cloudflare.com https://calendly.com https://*.calendly.com", "form-action 'self'", "base-uri 'self'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
 
 const sameOrigin = (request: Request) => {
