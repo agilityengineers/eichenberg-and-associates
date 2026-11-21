@@ -7,7 +7,7 @@ const S = ['Drafting', 'Published', 'Cut & scheduled'], C = ['pill--grey', 'pill
 <Dashboard title="Monthly post → LinkedIn cuts → newsletter" eyebrow="Content engine" active="content">
   <section style="display:grid;gap:12px">
     <p style="margin:0 0 6px;font-size:14px;color:var(--muted)">One blog post a month, cut into 6–8 LinkedIn posts, plus the email newsletter. Click a status to advance.</p>
-    {items.map((c) => <article class="panel cc">
+    {items.map((c) => <article class="panel cc" title="Double-click to edit">
       <div><p class="cc__m">{new Date(c.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</p><h2 class="ph2" style="font-size:22px;margin-bottom:6px">{c.title}</h2>
         <button class={'pill ' + C[c.status]} data-action="patch" data-table="content_items" data-id={c.id} data-field="status" data-value={(c.status + 1) % 3}>{S[c.status]}</button></div>
       <div><p style="margin:0 0 8px;font-size:12px;color:var(--faint)">LinkedIn cuts · {c.cuts_done} of {c.cuts} posted
@@ -16,6 +16,13 @@ const S = ['Drafting', 'Published', 'Cut & scheduled'], C = ['pill--grey', 'pill
         <div style="display:flex;gap:4px;flex-wrap:wrap">{Array.from({ length: c.cuts }, (_, k) => <span class="cc__dot" style={`background:${k < c.cuts_done ? 'var(--teal)' : 'rgba(18,15,56,.1)'}`}></span>)}</div>
         <form data-save="content_items" class="cc__nl"><input type="hidden" name="id" value={c.id} /><label for={'nl-' + c.id}>Newsletter:</label><input id={'nl-' + c.id} name="newsletter" value={c.newsletter || ''} placeholder="Not started" class="cc__in" /><span role="status" class="faint" style="font-size:12px"></span></form>
         <button class="lnk-rm" style="font-size:12px;font-weight:500;margin-top:6px" data-action="delete" data-table="content_items" data-id={c.id} data-confirm="Remove this month?">Remove</button></div>
+      <details class="cc__edit"><summary>Edit</summary>
+        <form data-save="content_items" data-reload class="cc__ef"><input type="hidden" name="id" value={c.id} />
+          <label>Month <input name="month" type="month" required class="inp" value={new Date(c.month).toISOString().slice(0, 7)} /></label>
+          <label style="flex:1;min-width:220px">Post title <input name="title" required class="inp" value={c.title} /></label>
+          <label>LinkedIn cuts <input name="cuts" type="number" min="1" max="12" class="inp" style="width:80px" value={c.cuts} /></label>
+          <label style="flex:1;min-width:220px">Link to the post <input name="url" class="inp" value={c.url || ''} placeholder="https://…" /></label>
+          <button class="dbtn dbtn--sm" type="submit">Save</button><span role="status" class="faint" style="font-size:12px"></span></form></details>
     </article>)}
     <form class="panel" data-save="content_items" data-method="POST" data-reload style="padding:16px 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <input name="month" type="month" required class="inp" aria-label="Month" /><input name="title" placeholder="Post title" required class="inp" aria-label="Post title" style="flex:1;min-width:220px" />
@@ -26,12 +33,17 @@ const S = ['Drafting', 'Published', 'Cut & scheduled'], C = ['pill--grey', 'pill
 </Dashboard>
 <style>
 .cc{padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:center}@media (max-width:760px){.cc{grid-template-columns:1fr}}
+.cc__edit{grid-column:1/-1;border-top:1px solid rgba(18,15,56,.08);padding-top:10px}.cc__edit>summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--indigo);width:max-content}.cc__edit>summary:focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:4px}
+.cc__ef{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px}.cc__ef label{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}.cc__ef .inp{width:100%}
 .cc__m{margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--indigo)}
 .cc__dot{width:26px;height:26px;border-radius:6px;display:inline-block}
 .cc__b{border:0;background:none;color:var(--indigo);cursor:pointer;font-weight:600;font-size:12px;padding:0 4px;font-family:inherit}.cc__b:disabled{opacity:.3;cursor:default}
 .cc__nl{display:flex;gap:6px;align-items:center;margin:10px 0 0;font-size:13px;color:var(--muted)}.cc__in{border:0;border-bottom:1px dashed rgba(18,15,56,.2);background:transparent;font:inherit;font-size:13px;color:var(--muted);padding:2px 0;min-width:0;flex:1}.cc__in:focus{border-bottom-color:var(--teal);outline:none}
 </style>
 <script>
+  // Double-click a month to open its edit form.
+  document.querySelectorAll<HTMLElement>('.cc').forEach((a) => a.addEventListener('dblclick', (e) => { if ((e.target as HTMLElement).closest('a,button,input,select,textarea,label,summary')) return;
+    const d = a.querySelector<HTMLDetailsElement>('.cc__edit'); if (d) { d.open = true; d.querySelector<HTMLInputElement>('input[name=title]')?.focus(); } }));
   // Newsletter line saves when you leave the field.
   document.querySelectorAll<HTMLInputElement>('.cc__in').forEach((i) => i.addEventListener('change', () => i.form?.requestSubmit()));
 </script>

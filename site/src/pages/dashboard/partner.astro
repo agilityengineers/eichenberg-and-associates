@@ -1,0 +1,34 @@
+---
+import Dashboard from '../../layouts/Dashboard.astro';
+import { one, q } from '../../lib/db';
+import { getSettings } from '../../lib/settings';
+import { shortDate } from '../../lib/dashboard';
+const id = Astro.url.searchParams.get('id') || '';
+const p = /^[0-9a-f-]{36}$/.test(id) ? await one('select * from partners where id = $1', [id]) : null;
+if (!p) return Astro.redirect('/dashboard/partners');
+const [s, deals, leads] = await Promise.all([getSettings(), q('select id, company, stage, status from deals where partner_id = $1 order by created_at desc', [id]), q('select id, name, created_at from leads where partner_id = $1 order by created_at desc', [id])]);
+const S = ['Contacted', 'Meeting', 'Active partner'];
+const iso = (v: unknown) => (v && !isNaN(+new Date(v as string)) ? new Date(v as string).toISOString().slice(0, 10) : '');
+---
+<Dashboard title={p.firm} eyebrow="SI partners · Edit partner" active="partners">
+  <div class="rlay">
+    <form class="panel panel--pad" data-save="partners" style="display:grid;gap:14px;min-width:0"><input type="hidden" name="id" value={p.id} />
+      <div class="rgrid">
+        <div class="cms-f"><label for="p-firm">Firm</label><input id="p-firm" name="firm" class="cms-v" value={p.firm} required /></div>
+        <div class="cms-f"><label for="p-pf">Platform</label><input id="p-pf" name="platform" class="cms-v" list="pf" value={p.platform} /><datalist id="pf">{s.lists.platforms.map((x) => <option value={x} />)}</datalist></div>
+        <div class="cms-f"><label for="p-ct">Contact</label><input id="p-ct" name="contact" class="cms-v" value={p.contact} /></div>
+        <div class="cms-f"><label for="p-em">Email</label><input id="p-em" name="email" type="email" class="cms-v" value={p.email} /></div>
+        <div class="cms-f"><label for="p-st">Status</label><select id="p-st" name="status" class="cms-v">{S.map((x, i) => <option value={i} selected={i === p.status}>{x}</option>)}</select></div>
+        <div class="cms-f"><label for="p-lt">Last touch</label><input id="p-lt" name="last_touch" type="date" class="cms-v" value={iso(p.last_touch)} /></div>
+        <div class="cms-f" style="grid-column:1/-1"><label for="p-nx">Next step</label><input id="p-nx" name="next_step" class="cms-v" value={p.next_step} /></div>
+        <div class="cms-f" style="grid-column:1/-1"><label for="p-no">Notes</label><textarea id="p-no" name="notes" rows="6" class="cms-v">{p.notes}</textarea></div>
+      </div>
+      <div class="cms-save"><a href="/dashboard/partners" style="font-size:13px">← Back to SI partners</a><button type="button" class="lnk-rm" data-action="delete" data-table="partners" data-id={p.id} data-confirm={`Remove ${p.firm}? Deals linked to this partner are kept.`} data-redirect="/dashboard/partners">Remove partner</button><span role="status" aria-live="polite" class="cms-st"></span><button class="dbtn dbtn--teal" type="submit">Save</button></div>
+    </form>
+    <aside class="panel panel--pad" style="display:grid;gap:14px;font-size:14px;align-content:start">
+      <div><h2 class="ph2" style="font-size:20px;margin-bottom:8px">Deals with this partner</h2>
+        {deals.length ? <ul class="rlist">{deals.map((d) => <li><a href={'/dashboard/deal?id=' + d.id}>{d.company}</a><span class="muted">{d.status === 'open' ? s.stages[Math.min(d.stage, s.stages.length - 1)].name : 'Closed'}</span></li>)}</ul> : <p class="muted" style="margin:0">None yet. Choose this partner on a deal’s page to link it.</p>}</div>
+      {leads.length > 0 && <div><h2 class="ph2" style="font-size:20px;margin-bottom:8px">Form submissions</h2><ul class="rlist">{leads.map((l) => <li><a href={'/dashboard/lead?id=' + l.id}>{l.name}</a><span class="muted">{shortDate(l.created_at)}</span></li>)}</ul></div>}
+    </aside>
+  </div>
+</Dashboard>

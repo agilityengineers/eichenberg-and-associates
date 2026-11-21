@@ -21,7 +21,7 @@ const cardValue = (c: { type: string }, v: string) => (c.type === 'date' ? short
     <p style="margin:0 0 16px;font-size:14px"><a href="/dashboard/pipeline">← Back to the pipeline</a></p>
     <section class="panel" style="overflow:hidden">
       {closed.length ? <div style="overflow-x:auto"><table class="tbl tbl--tight"><thead><tr><th>Company</th><th>Closed as</th><th>Stage reached</th><th>Note</th><th>Come back on</th><th></th></tr></thead><tbody>
-        {closed.map((d) => <tr><td><a href={'/dashboard/deal?id=' + d.id}><strong>{d.company}</strong></a><br /><span class="muted" style="font-size:13px">{d.contact}</span></td>
+        {closed.map((d) => <tr data-open={'/dashboard/deal?id=' + d.id}><td><a href={'/dashboard/deal?id=' + d.id}><strong>{d.company}</strong></a><br /><span class="muted" style="font-size:13px">{d.contact}</span></td>
           <td><span class={'pill ' + (d.status === 'later' ? 'pill--teal' : 'pill--grey')}>{reason(d.status)}</span></td><td>{stageName(d.stage)}</td>
           <td class="muted" style="max-width:320px">{[d.closed_note, d.referred_to && 'Referred to ' + d.referred_to].filter(Boolean).join(' · ') || '—'}</td><td style="white-space:nowrap">{d.revisit_on ? shortDate(d.revisit_on) : '—'}</td>
           <td><button type="button" class="dbtn dbtn--sm" data-action="patch" data-table="deals" data-id={d.id} data-field="status" data-value="open">Reopen</button></td></tr>)}
@@ -29,13 +29,13 @@ const cardValue = (c: { type: string }, v: string) => (c.type === 'date' ? short
     </section>
   </> : <>
   <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:16px;font-size:13px;color:var(--muted)">
-    <span><strong style="color:var(--navy)">{money(proposed)}</strong> proposed across {deals.length} open {deals.length === 1 ? 'deal' : 'deals'}</span><span>·</span><span>Open a card for the call guide</span><span>·</span><span>Move a card with the arrows, or drag it</span>
+    <span><strong style="color:var(--navy)">{money(proposed)}</strong> proposed across {deals.length} open {deals.length === 1 ? 'deal' : 'deals'}</span><span>·</span><span>Double-click a card, or press Edit, to open and change it</span><span>·</span><span>Move a card with the arrows, or drag it</span>
     <a href="/dashboard/pipeline?view=closed" style="margin-left:auto;font-weight:600">Closed deals ({closed.length})</a>
   </div>
   <section class="cols" id="cols">{s.stages.map((st, i) => <div class="col" data-stage={i}>
     <div style="padding:4px 6px 8px"><h2 class="col__h">{st.name} <span>{deals.filter((d) => d.stage === i).length}</span></h2><p class="col__q">{st.question}</p>
       {st.gate.checks.length > 0 && <p class="col__gate"><b>{st.gate.label || 'Gate'}</b> {st.gate.checks.map((c) => c.label).join(' · ')}</p>}</div>
-    {deals.filter((d) => Math.min(d.stage, last) === i).map((d) => { const cap = bdCap(d.fee_estimate), g = gateState(st, d.gate); return <article class="deal" draggable="true" data-deal={d.id} data-gate-open={g.open ? st.gate.label || 'Gate' : undefined} style={`border-left-color:${accent(d.offer)}`}>
+    {deals.filter((d) => Math.min(d.stage, last) === i).map((d) => { const cap = bdCap(d.fee_estimate), g = gateState(st, d.gate); return <article class="deal" draggable="true" data-deal={d.id} data-open={'/dashboard/deal?id=' + d.id} title="Double-click to open and edit" data-gate-open={g.open ? st.gate.label || 'Gate' : undefined} style={`border-left-color:${accent(d.offer)}`}>
       <div style="display:flex;justify-content:space-between;gap:8px"><a href={'/dashboard/deal?id=' + d.id} class="deal__co">{d.company}</a><span style="font-weight:600;white-space:nowrap">{d.fee_estimate ? money(Number(d.fee_estimate)) : '—'}</span></div>
       {show.contact && d.contact && <span class="muted">{d.contact}</span>}
       {((show.offer && d.offer) || (show.source && d.source) || (show.gate && g.total > 0)) && <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -45,7 +45,7 @@ const cardValue = (c: { type: string }, v: string) => (c.type === 'date' ? short
         {show.hours && <><dt>Hours to win</dt><dd style={Number(d.bd_hours) > cap ? 'color:#B3261E' : ''}>{Number(d.bd_hours)} of {cap}h budget</dd></>}
         {onCard.filter((c) => d.capture?.[c.id]).map((c) => <><dt>{c.label}</dt><dd>{cardValue(c, d.capture[c.id])}</dd></>)}</dl>
       {show.nextStep && <p class="deal__next"><strong>Next:</strong> {d.next_step || '—'} <span class="faint">· {shortDate(d.next_due)}</span></p>}
-      <div class="deal__acts"><button type="button" data-action="patch" data-table="deals" data-id={d.id} data-field="stage" data-value={Math.max(0, i - 1)} disabled={i === 0} aria-label={'Move ' + d.company + ' back a stage'}>←</button><button type="button" class="adv" data-action="patch" data-table="deals" data-id={d.id} data-field="stage" data-value={Math.min(last, i + 1)} disabled={i === last} data-confirm={g.open ? `${st.gate.label || 'Gate'}: ${g.done} of ${g.total} checks are ticked for ${d.company}. Move it to ${stageName(i + 1)} anyway?` : undefined} aria-label={'Advance ' + d.company + ' to ' + stageName(i + 1)}>Advance →</button></div>
+      <div class="deal__acts"><button type="button" data-action="patch" data-table="deals" data-id={d.id} data-field="stage" data-value={Math.max(0, i - 1)} disabled={i === 0} aria-label={'Move ' + d.company + ' back a stage'}>←</button><a class="deal__edit" href={'/dashboard/deal?id=' + d.id} aria-label={'Edit ' + d.company}>Edit</a><button type="button" class="adv" data-action="patch" data-table="deals" data-id={d.id} data-field="stage" data-value={Math.min(last, i + 1)} disabled={i === last} data-confirm={g.open ? `${st.gate.label || 'Gate'}: ${g.done} of ${g.total} checks are ticked for ${d.company}. Move it to ${stageName(i + 1)} anyway?` : undefined} aria-label={'Advance ' + d.company + ' to ' + stageName(i + 1)}>Advance →</button></div>
     </article>; })}
     {deals.every((d) => Math.min(d.stage, last) !== i) && <p class="col__empty">No deals here.</p>}
   </div>)}</section>
@@ -66,7 +66,8 @@ const cardValue = (c: { type: string }, v: string) => (c.type === 'date' ? short
 .deal__co{font-size:14px;font-weight:600;color:var(--ink)}.deal__co:hover{color:var(--indigo)}
 .deal dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 10px;color:var(--muted)}.deal dd{margin:0;color:var(--ink);overflow-wrap:anywhere}.deal dl:empty{display:none}
 .deal__next{margin:0;padding-top:8px;border-top:1px solid rgba(18,15,56,.08)}
-.deal__acts{display:flex;justify-content:space-between;gap:6px}.deal__acts button{padding:6px 10px;border-radius:6px;border:1px solid rgba(18,15,56,.15);background:#fff;cursor:pointer;font-size:12px;font-family:inherit}.deal__acts button.adv{border:0;background:var(--navy);color:#fff;font-weight:600}.deal__acts button:disabled{opacity:.35;cursor:default}
+.deal__acts{display:flex;justify-content:space-between;gap:6px}.deal__acts button{padding:6px 10px;border-radius:6px;border:1px solid rgba(18,15,56,.15);background:#fff;cursor:pointer;font-size:12px;font-family:inherit}.deal__edit{margin-right:auto;padding:6px 10px;border-radius:6px;border:1px solid rgba(18,15,56,.15);font-size:12px;font-weight:600;color:var(--navy)}.deal__edit:hover{border-color:var(--navy);color:var(--navy)}
+.deal__acts button.adv{border:0;background:var(--navy);color:#fff;font-weight:600}.deal__acts button:disabled{opacity:.35;cursor:default}
 .addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
 </style>
 <script>

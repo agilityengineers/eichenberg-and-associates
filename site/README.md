@@ -130,6 +130,8 @@ Every landing-form submission inserts a lead **and** a first-stage deal. Contact
 
 ## Motion
 
+**Editing records:** double-click a pipeline card, an inbox submission or an SI partner row (or use its Edit / Open link) to open and change it. Submissions keep the visitor's answers as sent; only the contact details can be corrected.
+
 All motion is CSS keyframes plus a small script (`src/scripts/motion.ts`): scroll-reveal via IntersectionObserver, a top progress bar, count-ups. Home has three small interactive pieces in plain TypeScript: the rotating hero line, the "Where is your go-live?" slider (highlights the matching offer), and the "Who can lead it / who can do it" grid. Everything respects `prefers-reduced-motion`.
 
 ## Security notes
