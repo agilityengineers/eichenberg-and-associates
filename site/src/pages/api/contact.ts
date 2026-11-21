@@ -30,10 +30,11 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (!parsed.success) return json({ error: 'Please check the required fields.' }, 400);
   const d = parsed.data; const situation = lists.situations.find((s) => s.value === d.situation)!.label;
 
+  let leadId: string | undefined;
   // Store it in the Lead inbox (not auto-added to the pipeline: contact-form leads are triaged by hand).
   if (dbConfigured()) {
-    try { await q("insert into leads (page_slug, name, email, company, title, answers, source, ip_hash, user_agent) values (null, $1, $2, $3, $4, $5, 'contact', $6, $7)",
-      [d.name, d.email, d.company, d.role, JSON.stringify({ situation, ...(d.message ? { message: d.message } : {}) }), ipHash(ip), request.headers.get('user-agent')?.slice(0, 200) || null]); }
+    try { leadId = (await q("insert into leads (page_slug, name, email, company, title, answers, source, ip_hash, user_agent) values (null, $1, $2, $3, $4, $5, 'contact', $6, $7) returning id",
+      [d.name, d.email, d.company, d.role, JSON.stringify({ situation, ...(d.message ? { message: d.message } : {}) }), ipHash(ip), request.headers.get('user-agent')?.slice(0, 200) || null]))[0]?.id; }
     catch (e) { console.error('[contact] could not store lead', e); }
   }
 
@@ -46,5 +47,5 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const vars = { name: d.name, first: d.name.split(' ')[0], window: site.responseWindow || 'two business days', site: site.name };
     await sendMail({ to: d.email, category: 'contact-ack', subject: fillText(c.subject, vars), html: paragraph(c.thanks, vars) + paragraph(c.faster, vars) + paragraph(em.signoff, vars) });
   } catch (e) { console.error('[contact] email failed', e); if (!dbConfigured()) return json({ error: 'Could not send right now.' }, 502); }
-  return json({ ok: true });
+  return json({ ok: true, id: leadId });   // the id rides along on the Calendly booking that follows
 };
