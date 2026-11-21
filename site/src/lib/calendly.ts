@@ -115,7 +115,7 @@ export async function applyBooking(kind: string, p: any): Promise<{ ok: boolean;
     if (!dealId) {
       let lead = b.leadId ? (await c.query('select * from leads where id = $1', [b.leadId])).rows[0] : null;
       if (!lead && b.email) lead = (await c.query('select * from leads where lower(email) = $1 order by (deal_id is not null) desc, created_at desc limit 1', [b.email])).rows[0];
-      if (lead) { leadId = lead.id; dealId = lead.deal_id; }
+      if (lead) { leadId = lead.id; dealId = lead.deal_id; }   // a partner inquiry has no deal; booking a call opens one
       if (!dealId && b.email) dealId = (await c.query('select deal_id from bookings where lower(email) = $1 and deal_id is not null order by created_at desc limit 1', [b.email])).rows[0]?.deal_id || null;
       if (!dealId) {   // booked from a bare Calendly link (outreach, email signature), or a lead that was never added to the pipeline
         const company = lead?.company || lead?.name || b.name || b.email || 'Calendly booking';
