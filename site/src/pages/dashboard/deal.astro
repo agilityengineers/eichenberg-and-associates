@@ -4,6 +4,7 @@ import { one, q } from '../../lib/db';
 import { getSettings, gateState } from '../../lib/settings';
 import { GRID_SHORT, shortDate } from '../../lib/dashboard';
 import { page } from '../../lib/content';
+import { callTime, dealCalls, getState, timezone } from '../../lib/calendly';
 const id = Astro.url.searchParams.get('id') || '';
 const d = /^[0-9a-f-]{36}$/.test(id) ? await one('select * from deals where id = $1', [id]) : null;
 if (!d) return Astro.redirect('/dashboard/pipeline');
@@ -21,6 +22,7 @@ const lines = (t: string) => t.split('\n').map((x) => x.trim()).filter(Boolean);
 let labels: Record<string, string> = {};
 if (lead?.page_slug) labels = Object.fromEntries((await q('select key, label from form_questions where page_slug = $1', [lead.page_slug])).map((r) => [r.key, r.label]));
 else if (lead) { const f = (await page('contact')).form || {}; labels = { situation: f.situation, message: f.message }; }
+const calls = await dealCalls(d.id), tz = timezone(await getState()), soon = (c: { start_at: string }) => +new Date(c.start_at) > Date.now() - 3600_000;
 const firstGate = s.stages.findIndex((st) => st.gate.checks.length > 0);
 ---
 <Dashboard title={d.company} eyebrow={'Pipeline · ' + (closed ? 'Closed deal' : s.stages[at].name)} active="pipeline">
@@ -93,6 +95,11 @@ const firstGate = s.stages.findIndex((st) => st.gate.checks.length > 0);
 
     <div style="display:grid;gap:20px;align-content:start;min-width:0">
       {lead && <aside class="panel panel--pad" style="display:grid;gap:10px;font-size:14px"><h2 class="ph2" style="font-size:20px">From the {lead.source === 'contact' ? 'contact form' : 'landing page'}</h2><p style="margin:0"><strong>{lead.name}</strong>{lead.title && <>, {lead.title}</>}<br /><a href={'mailto:' + lead.email}>{lead.email}</a></p>{lead.grid_result && <p style="margin:0" class="muted">{lead.grid_result}</p>}<dl style="margin:0;display:grid;gap:8px">{Object.entries(lead.answers || {}).map(([k, v]) => <div><dt class="muted" style="font-size:12px">{labels[k] || k}</dt><dd style="margin:0">{String(v)}</dd></div>)}</dl></aside>}
+      {calls.length > 0 && <aside class="panel panel--pad calls"><h2 class="ph2" style="font-size:20px">Booked calls</h2>
+        <ul>{calls.map((c) => <li class={c.status === 'canceled' || !soon(c) ? 'past' : ''}><strong>{c.event_name}</strong><span>{c.start_at ? callTime(c.start_at, tz) : 'Time not set'}{c.status === 'canceled' ? ' · canceled' : !soon(c) ? ' · held' : ''}</span>
+          {c.name && <span class="muted">{c.name}{c.email && <> · <a href={'mailto:' + c.email}>{c.email}</a></>}</span>}
+          {c.status === 'active' && soon(c) && (c.join_url || c.reschedule_url) && <span class="calls__l">{c.join_url && <a href={c.join_url} target="_blank" rel="noopener">Join the call</a>}{c.reschedule_url && <a href={c.reschedule_url} target="_blank" rel="noopener">Reschedule</a>}</span>}</li>)}</ul>
+        <p class="cms-hint" style="margin:0">From Calendly. The next step and due date follow the next call.</p></aside>}
       {!closed && <form class="panel panel--pad closef" id="close-form" data-id={d.id}>
         <h2 class="ph2" style="font-size:20px">Close this deal</h2>
         <p class="cms-hint" style="margin:0">Not going ahead, or not yet? Close it with a reason. It leaves the board but is kept under Closed deals, and you can reopen it.</p>
@@ -114,6 +121,7 @@ const firstGate = s.stages.findIndex((st) => st.gate.checks.length > 0);
 .dlay{display:grid;gap:20px;grid-template-columns:minmax(0,2fr) minmax(240px,1fr);align-items:start}@media (max-width:1000px){.dlay{grid-template-columns:minmax(0,1fr)}}
 .closedbar{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 18px;margin-bottom:20px;font-size:14px}.closedbar p{margin:0}
 .closef{display:grid;gap:12px}
+.calls{display:grid;gap:12px;font-size:14px}.calls ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}.calls li{display:grid;gap:2px;padding-left:12px;border-left:3px solid var(--teal)}.calls li.past{border-left-color:rgba(18,15,56,.2);color:var(--muted)}.calls__l{display:flex;gap:14px;font-weight:600;margin-top:2px}
 .stages{display:grid;gap:10px;margin-top:14px}
 .stage{border:1px solid rgba(18,15,56,.12);border-radius:10px;background:var(--paper)}.stage[data-current]{border-color:var(--indigo);background:#fff}
 .stage>summary{cursor:pointer;padding:12px 14px;display:flex;gap:6px 12px;align-items:baseline;flex-wrap:wrap;list-style-position:outside}

@@ -33,11 +33,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   // Store it and route it, so nothing waits on a manual step: an SI partner goes to the partner tracker (the partner track
   // sits outside the sales process); everyone else gets a deal in the first stage, the same as the landing pages.
   let link = '/dashboard/inbox', linkText = 'Open the Lead inbox';
+  let leadId: string | undefined;   // rides along on the Calendly booking that follows
   if (dbConfigured()) {
     try {
       await tx(async (c) => {
         const lead = (await c.query("insert into leads (page_slug, name, email, company, title, answers, source, ip_hash, user_agent) values (null, $1, $2, $3, $4, $5, 'contact', $6, $7) returning id",
           [d.name, d.email, d.company, d.role, JSON.stringify({ situation, ...(d.message ? { message: d.message } : {}) }), ipHash(ip), request.headers.get('user-agent')?.slice(0, 200) || null])).rows[0];
+        leadId = lead.id;
         const contact = d.name + (d.role ? ', ' + d.role : '');
         if (d.situation === 'partner') {
           const known = (await c.query('select id from partners where lower(email) = lower($1) limit 1', [d.email])).rows[0];
@@ -64,5 +66,5 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const vars = { name: d.name, first: d.name.split(' ')[0], window: site.responseWindow || 'two business days', site: site.name };
     await sendMail({ to: d.email, category: 'contact-ack', subject: fillText(c.subject, vars), html: paragraph(c.thanks, vars) + paragraph(c.faster, vars) + paragraph(em.signoff, vars) });
   } catch (e) { console.error('[contact] email failed', e); if (!dbConfigured()) return json({ error: 'Could not send right now.' }, 502); }
-  return json({ ok: true });
+  return json({ ok: true, id: leadId });   // the id rides along on the Calendly booking that follows
 };

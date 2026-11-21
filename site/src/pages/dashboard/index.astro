@@ -2,6 +2,7 @@
 import Dashboard from '../../layouts/Dashboard.astro';
 import { q } from '../../lib/db';
 import { getSettings } from '../../lib/settings';
+import { callTime, getState, timezone, upcomingCalls } from '../../lib/calendly';
 import { money, shortDate, tripwireStatus, LEVEL_COLOR, isAnchor, isAssessment, isRoleReadiness } from '../../lib/dashboard';
 const s = await getSettings();
 const last = s.stages.length - 1, stageOf = (d: { stage: number }) => s.stages[Math.min(d.stage, last)];
@@ -32,7 +33,10 @@ const [inbox, due, back] = await Promise.all([
   q("select id, company, stage, next_step, next_due, (next_due < current_date) as overdue from deals where status = 'open' and next_due is not null and next_due <= current_date + 7 order by next_due limit 12"),
   q("select id, company, revisit_on, closed_note from deals where status = 'later' and revisit_on is not null and revisit_on <= current_date + 7 order by revisit_on limit 12"),
 ]);
-const nothing = !inbox[0].n && !due.length && !back.length;
+const calls = await upcomingCalls(14), tz = timezone(await getState());
+const booked = new Set(calls.map((c) => c.deal_id));
+const dueRest = due.filter((d) => !booked.has(d.id) || d.overdue);   // a deal with a booked call is listed once, as the call
+const nothing = !inbox[0].n && !dueRest.length && !back.length && !calls.length;
 const kpis = [
   { k: s.kept.label, v: money(s.kept.value), sub: `Signed so far: ${money(signedSum)}${signed.length ? ' (' + signed.slice(0, 3).map((d) => d.company).join(', ') + (signed.length > 3 ? '…' : '') + ')' : ''}` },
   { k: 'Proposed in pipeline', v: money(proposed), sub: `${deals.length} open ${deals.length === 1 ? 'deal' : 'deals'} across ${s.stages.length} stages` },
@@ -46,7 +50,8 @@ const kpis = [
       <h2 class="ph2" id="today-h">Today</h2>
       {nothing ? <p class="muted" style="margin:10px 0 0;font-size:14px">Nothing is due in the next week. New form submissions and next steps show up here.</p> : <ul>
         {inbox[0].n > 0 && <li><span class="pill pill--indigo">New</span><a href="/dashboard/inbox"><strong>{inbox[0].n} form {inbox[0].n === 1 ? 'submission' : 'submissions'}</strong> waiting in the Lead inbox</a></li>}
-        {due.map((d) => <li><span class={'pill ' + (d.overdue ? 'pill--red' : 'pill--grey')}>{d.overdue ? 'Overdue' : shortDate(d.next_due)}</span><a href={'/dashboard/deal?id=' + d.id}><strong>{d.company}</strong> · {d.next_step || 'Next step'}</a><span class="muted">{stageOf(d).name}{d.overdue && ' · due ' + shortDate(d.next_due)}</span></li>)}
+        {calls.map((c) => <li><span class="pill pill--teal">Call</span><a href={'/dashboard/deal?id=' + c.deal_id}><strong>{c.company}</strong> · {c.event_name}</a><span class="muted">{callTime(c.start_at, tz)}{c.name && ' · ' + c.name}</span></li>)}
+        {dueRest.map((d) => <li><span class={'pill ' + (d.overdue ? 'pill--red' : 'pill--grey')}>{d.overdue ? 'Overdue' : shortDate(d.next_due)}</span><a href={'/dashboard/deal?id=' + d.id}><strong>{d.company}</strong> · {d.next_step || 'Next step'}</a><span class="muted">{stageOf(d).name}{d.overdue && ' · due ' + shortDate(d.next_due)}</span></li>)}
         {back.map((d) => <li><span class="pill pill--teal">Follow up</span><a href={'/dashboard/deal?id=' + d.id}><strong>{d.company}</strong> · come back {shortDate(d.revisit_on)}</a>{d.closed_note && <span class="muted">{d.closed_note}</span>}</li>)}
       </ul>}
     </section>

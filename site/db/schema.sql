@@ -163,3 +163,18 @@ create table if not exists blocked_senders (
   created_at timestamptz not null default now()
 );
 create index if not exists leads_ip_hash_idx on leads (ip_hash, created_at);
+
+-- Calls booked through Calendly (kept in step by the webhook at /api/calendly/webhook and by Settings → Calendly → Sync now).
+create table if not exists bookings (
+  id uuid primary key default gen_random_uuid(),
+  invitee_uri text not null unique,             -- Calendly's id for this person on this call; makes repeat deliveries harmless
+  event_uri text, event_name text,
+  start_at timestamptz, end_at timestamptz,
+  status text not null default 'active',        -- active | canceled
+  name text, email text,
+  join_url text, reschedule_url text, cancel_url text,
+  deal_id uuid references deals(id) on delete cascade, lead_id uuid references leads(id) on delete set null,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create index if not exists bookings_deal_idx on bookings (deal_id);
+create index if not exists bookings_start_idx on bookings (start_at);

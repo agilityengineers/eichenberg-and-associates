@@ -9,9 +9,19 @@ import { mailConfigured, mailProvider, fromAddress, defaultReplyTo } from '../..
 import { env } from '../../lib/env';
 import { setting } from '../../lib/content';
 import { DAILY_LIMIT, blockedSenders, turnstileOn } from '../../lib/spam';
+import { calendlyToken, getState, signingKey, timezone, webhookUrl } from '../../lib/calendly';
 const [s, users] = await Promise.all([getSettings(), q('select id, email, name, last_login_at from users order by created_at')]);
 const me = Astro.locals.user!;
 const blocked = await blockedSenders();
+const cal = await getState(); const calReady = !!calendlyToken() && !!signingKey(); const calOn = calReady && !!cal.subscription;
+const day = (v?: string) => (v ? new Date(v).toLocaleString('en-US', { timeZone: timezone(cal), month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Never');
+const calRows = [
+  ['Status', calOn ? 'Connected: booked, moved and canceled calls update the pipeline on their own.' : calReady ? 'Ready to connect.' : 'Not set up.'],
+  ['Access token', calendlyToken() ? 'Set' : 'CALENDLY_TOKEN is not set'],
+  ['Signing key', signingKey() ? 'Set' : 'CALENDLY_WEBHOOK_SIGNING_KEY is not set'],
+  ['Calendly sends to', webhookUrl()],
+  ['Last booking received', day(cal.lastEvent)], ['Last full check', day(cal.lastSync)],
+];
 const captcha = turnstileOn() ? 'On: every public form asks Cloudflare Turnstile to confirm the visitor is a person.' : !env('PUBLIC_TURNSTILE_SITE_KEY') && !env('TURNSTILE_SECRET_KEY') ? 'OFF: PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY are not set.' : 'OFF: ' + (env('TURNSTILE_SECRET_KEY') ? 'PUBLIC_TURNSTILE_SITE_KEY' : 'TURNSTILE_SECRET_KEY') + ' is not set.';
 const provider = mailProvider(); const from = fromAddress(); const siteEmail = (await setting('site'))?.email || '';
 const mail = [
@@ -62,6 +72,22 @@ const mail = [
           <input name="ip" required class="inp" placeholder="203.0.113.25" aria-label="IP address" autocomplete="off" /><input name="note" class="inp" maxlength="200" placeholder="Note (optional)" aria-label="Note" />
           <div style="display:flex;gap:10px;align-items:center"><button class="dbtn dbtn--sm" type="submit">Block</button><span role="status" class="faint" style="font-size:12px"></span></div></form>
       </section>
+      <section class="panel" style="padding:22px;display:grid;gap:12px" id="calendly">
+        <h2 class="ph2">Calendly</h2>
+        <p class="cms-hint" style="margin:0">When someone books, moves or cancels a call, the deal’s next step and date follow, and the call shows on the Overview. A booking from someone new opens a deal in the first stage.</p>
+        <dl class="mailcfg">{calRows.map(([k, v], i) => <div><dt>{k}</dt><dd class={i > 0 && i < 3 && String(v).includes('not set') ? 'warn' : ''} style="overflow-wrap:anywhere">{v}</dd></div>)}</dl>
+        {!calReady && <p class="cms-hint" style="margin:0">To set up: in Calendly, open Integrations → API &amp; webhooks and create a personal access token. Add it to Replit Secrets as CALENDLY_TOKEN, add any long random phrase as CALENDLY_WEBHOOK_SIGNING_KEY, redeploy, then press Connect here.</p>}
+        <div id="cal-acts" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button type="button" class="dbtn dbtn--sm" data-cal="connect" disabled={!calReady}>{calOn ? 'Reconnect' : 'Connect'}</button>
+          <button type="button" class="dbtn dbtn--sm" data-cal="sync" disabled={!calOn}>Check for calls now</button>
+          {calOn && <button type="button" class="lnk-rm" data-cal="disconnect">Disconnect</button>}
+          <span role="status" aria-live="polite" class="faint" style="font-size:12px;flex-basis:100%"></span>
+        </div>
+        <form id="cal-tz" class="uform"><h3>Time zone for call times</h3>
+          <input name="timezone" class="inp" required value={timezone(cal)} aria-label="Time zone for call times" />
+          <span class="cms-hint">A zone name such as America/Chicago or America/New_York. Filled in from your Calendly account when you connect.</span>
+          <div style="display:flex;gap:10px;align-items:center"><button class="dbtn dbtn--sm" type="submit">Save time zone</button><span role="status" class="faint" style="font-size:12px"></span></div></form>
+      </section>
       <section class="panel" style="padding:22px">
         <form id="my-pw" class="uform"><h3 style="margin-top:0">Change your password</h3>
           <input name="current" type="password" required autocomplete="current-password" class="inp" placeholder="Current password" aria-label="Current password" />
@@ -87,6 +113,16 @@ const mail = [
     f.addEventListener('submit', async (e) => { e.preventDefault(); if (!f.reportValidity()) return; st.textContent = 'Saving…';
       try { await api('users', method, Object.fromEntries(new FormData(f))); f.reset(); st.textContent = ok; if (reload) location.reload(); } catch { st.textContent = ''; } });
   };
+  // Calendly: connect / check now / disconnect, and the time zone.
+  const calBox = document.getElementById('cal-acts')!, calSt = calBox.querySelector('[role=status]')!;
+  const calPost = async (body: Record<string, unknown>, st: Element) => { st.textContent = 'Working…';
+    const r = await fetch('/api/admin/calendly', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json().catch(() => ({}));
+    st.textContent = r.ok ? j.message || 'Done.' : j.error || 'That didn’t work. Try again.'; return r.ok; };
+  calBox.querySelectorAll<HTMLButtonElement>('[data-cal]').forEach((b) => b.addEventListener('click', async () => {
+    if (b.dataset.cal === 'disconnect' && !confirm('Disconnect Calendly? Booked calls will stop updating the pipeline until you connect again.')) return;
+    b.disabled = true; const ok = await calPost({ action: b.dataset.cal }, calSt); b.disabled = false; if (ok && b.dataset.cal !== 'sync') setTimeout(() => location.reload(), 1200); }));
+  const tzf = document.getElementById('cal-tz') as HTMLFormElement;
+  tzf.addEventListener('submit', (e) => { e.preventDefault(); calPost({ action: 'timezone', timezone: (tzf.elements.namedItem('timezone') as HTMLInputElement).value }, tzf.querySelector('[role=status]')!); });
   const mt = document.getElementById('mail-test') as HTMLFormElement; const mts = mt.querySelector('[role=status]')!;
   mt.addEventListener('submit', async (e) => { e.preventDefault(); if (!mt.reportValidity()) return; mts.textContent = 'Sending…';
     const r = await fetch('/api/admin/mail-test', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(mt))) });
