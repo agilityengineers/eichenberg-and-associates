@@ -4,7 +4,7 @@
 import schemaSql from '../../db/schema.sql?raw';
 import { db, dbConfigured, one, q } from './db';
 import { DEFAULTS, SINGLETON_COLLECTIONS, invalidate } from './content';
-import { DEFAULT_SETTINGS } from './settings';
+import { DEFAULT_SETTINGS, OLD_OFFERS, clearSettingsCache, normStage } from './settings';
 import { PERSONAS, BASE_QUESTIONS } from './personas.js';
 import { hashPassword, passwordOk } from './password';
 import { env } from './env';
@@ -50,6 +50,7 @@ async function boot() {
     console.log('[boot] seeded', PERSONAS.length, 'landing pages');
   }
   await applyCopyUpdates();
+  await applySalesProcess();
   invalidate();
 
   const email = env('ADMIN_EMAIL').toLowerCase(), pw = env('ADMIN_PASSWORD');
@@ -149,4 +150,39 @@ async function applyCopyUpdates() {
     if (changed) await q("update settings set data = $1, updated_at = now() where key = 'dashboard'", [JSON.stringify(dash!.data)]);
   }
   if (n) console.log('[boot] applied', n, 'copy update(s)');
+}
+
+// ---------- Sales process (November 2026) ----------
+// The pipeline used to be five fixed stages with a name and a question each. Stages now carry their call guide, gate and
+// capture fields, and can be added or removed in Settings. This runs once per database (marker row in `settings`): it
+// upgrades the stored stages in place, keeping any name or question the admin had already changed, and renames the offers
+// to the ones in the client's sales-process deck — but only while the stored offer list is still the one that shipped.
+const OLD_STAGES = [['Exploration', 'What are the reasons to talk?'], ['Discovery', 'What are the needs?'], ['Scoping', 'What could we do together?'], ['Preparation', 'What else do you need before we start?'], ['Continuation', 'What comes next for us?']];
+const OFFER_RENAMES: [string, string][] = [['Anchor + Role Readiness', 'OCM Leadership + Project Role Readiness'], ['Anchor', 'OCM Leadership'], ['Role Readiness', 'Project Role Readiness']];
+async function applySalesProcess() {
+  if (await one("select 1 from settings where key = 'sales_process_v2'")) return;
+  const row = await one<{ data: any }>("select data from settings where key = 'dashboard'");
+  const data = row?.data;
+  if (data && Array.isArray(data.stages) && data.stages.some((s: any) => !s?.id)) {
+    const untouched = data.stages.length === 5 && data.stages.every((s: any, i: number) => norm(s?.name) === norm(OLD_STAGES[i][0]) && norm(s?.question) === norm(OLD_STAGES[i][1]));
+    const signedFrom = Math.max(0, Number(data.signedFromStage || 4) - 1);
+    data.stages = data.stages.map((s: any, i: number) => {
+      const def: any = DEFAULT_SETTINGS.stages[i] || {}; const old = OLD_STAGES[i] || [];
+      return normStage({ ...def, id: def.id,
+        name: !s?.name || norm(s.name) === norm(old[0]) ? def.name || s?.name : s.name,
+        question: !s?.question || norm(s.question) === norm(old[1]) ? def.question ?? s?.question : s.question,
+        countsAsSigned: untouched ? !!def.countsAsSigned : i >= signedFrom });
+    });
+    delete data.signedFromStage;
+    const offers = data.lists?.offers;
+    if (Array.isArray(offers) && offers.length === OLD_OFFERS.length && offers.every((o: unknown, i: number) => norm(o) === norm(OLD_OFFERS[i]))) {
+      data.lists.offers = DEFAULT_SETTINGS.lists.offers;
+      for (const [from, to] of OFFER_RENAMES) await q('update deals set offer = $2 where offer = $1', [from, to]);
+    }
+    if (Array.isArray(data.lists?.sources) && !data.lists.sources.includes('Contact form')) data.lists.sources.push('Contact form');
+    await q("update settings set data = $1, updated_at = now() where key = 'dashboard'", [JSON.stringify(data)]);
+    console.log('[boot] sales process: stages upgraded' + (untouched ? ' to the four-stage process plus onboarding' : ' (custom stage names kept)'));
+  }
+  await q("insert into settings (key, data) values ('sales_process_v2', 'true') on conflict do nothing");
+  clearSettingsCache();
 }

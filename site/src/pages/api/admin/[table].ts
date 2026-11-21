@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { one, q } from '../../../lib/db';
 import { json } from '../../../lib/http';
+import { getSettings } from '../../../lib/settings';
 
 const str = (max = 300) => z.string().trim().max(max).transform((v) => v || null).nullable();
 const date = z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal('').transform(() => null), z.null()]);
@@ -11,7 +12,10 @@ const numOrNull = z.union([z.number(), z.string().trim().regex(/^-?\d+(\.\d+)?$/
 const uuidOrNull = z.union([z.string().uuid(), z.literal('').transform(() => null), z.null()]);
 
 const TABLES: Record<string, { cols: z.ZodRawShape; required?: string[]; stamp?: boolean }> = {
-  deals: { cols: { company: str(160), contact: str(200), stage: z.coerce.number().int().min(0).max(4), offer: str(120), fee_estimate: numOrNull, go_live: str(60), source: str(60), partner_id: uuidOrNull, grid: z.union([z.enum(['nn', 'nd', 'ln', 'ld']), z.literal('').transform(() => null), z.null()]), next_step: str(200), next_due: date, bd_hours: z.coerce.number().min(0).max(10000), notes: str(5000) }, required: ['company'], stamp: true },
+  deals: { cols: { company: str(160), contact: str(200), stage: z.coerce.number().int().min(0).max(11), offer: str(120), fee_estimate: numOrNull, go_live: str(60), source: str(60), partner_id: uuidOrNull, grid: z.union([z.enum(['nn', 'nd', 'ln', 'ld']), z.literal('').transform(() => null), z.null()]), next_step: str(200), next_due: date, bd_hours: z.coerce.number().min(0).max(10000), notes: str(5000),
+    status: z.enum(['open', 'not_fit', 'referred', 'later', 'lost']), closed_note: str(1000), referred_to: str(200), revisit_on: date,
+    gate: z.record(z.string().regex(/^[a-z0-9]{3,24}$/), z.boolean()).refine((o) => Object.keys(o).length <= 60), capture: z.record(z.string().regex(/^[a-z0-9]{3,24}$/), z.string().trim().max(2000)).refine((o) => Object.keys(o).length <= 120),
+    stakeholders: z.array(z.object({ who: z.string().trim().max(160), feels: z.string().trim().max(160), role: z.string().trim().max(160), drives: z.string().trim().max(600), needs: z.string().trim().max(600) }).strict()).max(40) }, required: ['company'], stamp: true },
   partners: { cols: { firm: str(160), platform: str(80), contact: str(160), email: str(200), status: z.coerce.number().int().min(0).max(2), last_touch: date, next_step: str(200), notes: str(5000) }, required: ['firm'] },
   subscribers: { cols: { email: z.string().email().max(200), source: str(160), in_profile: z.enum(['in', 'out', 'unknown', 'partner']) }, required: ['email'] },
   content_items: { cols: { month, title: str(300), status: z.coerce.number().int().min(0).max(2), cuts: z.coerce.number().int().min(1).max(20), cuts_done: z.coerce.number().int().min(0).max(20), newsletter: str(200), url: str(500) }, required: ['month', 'title'] },
@@ -19,6 +23,14 @@ const TABLES: Record<string, { cols: z.ZodRawShape; required?: string[]; stamp?:
   leads: { cols: {} },
 };
 
+const JSONB = new Set(['gate', 'capture', 'stakeholders']);   // node-postgres would send a JS array as a Postgres array, so these go as JSON text
+const param = (k: string, v: unknown) => (JSONB.has(k) ? JSON.stringify(v) : v);
+/** Deal rules that depend on Settings: the stage must exist, and closing or reopening stamps the date. */
+async function dealRules(row: Record<string, unknown>) {
+  if ('stage' in row && Number(row.stage) > (await getSettings()).stages.length - 1) return 'That stage no longer exists. Reload the page.';
+  if ('status' in row) { row.closed_at = row.status === 'open' ? null : new Date().toISOString(); if (row.status === 'open') { row.closed_note = null; row.referred_to = null; row.revisit_on = null; } }
+  return null;
+}
 const table = (t?: string) => (t && TABLES[t] ? t : null);
 const clean = (t: string, body: unknown, partial: boolean) => {
   const shape = z.object(TABLES[t].cols); const s = partial ? shape.partial() : shape.partial().required(Object.fromEntries((TABLES[t].required || []).map((k) => [k, true])) as any);
@@ -29,9 +41,11 @@ export const POST: APIRoute = async ({ params, request }) => {
   const t = table(params.table); if (!t || t === 'leads') return json({ error: 'No such table' }, 404);
   const parsed = clean(t, await request.json().catch(() => null), false);
   if (!parsed.success) return json({ error: 'Check the fields: ' + parsed.error.issues.map((i) => i.path.join('.')).join(', ') }, 400);
-  const row = parsed.data as Record<string, unknown>; const keys = Object.keys(row);
+  const row = parsed.data as Record<string, unknown>;
+  if (t === 'deals') { const bad = await dealRules(row); if (bad) return json({ error: bad }, 400); }
+  const keys = Object.keys(row);
   try {
-    const r = await q(`insert into ${t} (${keys.join(', ')}) values (${keys.map((_, i) => '$' + (i + 1)).join(', ')}) returning *`, keys.map((k) => row[k]));
+    const r = await q(`insert into ${t} (${keys.join(', ')}) values (${keys.map((_, i) => '$' + (i + 1)).join(', ')}) returning *`, keys.map((k) => param(k, row[k])));
     return json(r[0]);
   } catch (e: any) { return json({ error: e.code === '23505' ? 'That already exists.' : 'Could not save.' }, 400); }
 };
@@ -44,6 +58,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   if (!parsed.success) return json({ error: 'Check the fields: ' + parsed.error.issues.map((i) => i.path.join('.')).join(', ') }, 400);
   const row = parsed.data as Record<string, unknown>;
   if (t === 'partners' && 'status' in row && !('last_touch' in row)) row.last_touch = new Date().toISOString().slice(0, 10);   // advancing a partner counts as a touch
+  if (t === 'deals') { const bad = await dealRules(row); if (bad) return json({ error: bad }, 400); }
   if (t === 'deals' && 'bd_hours' in row) {   // log the extra hours so "BD hours this week" and the tripwire see them
     const prev = await one<{ bd_hours: string }>('select bd_hours from deals where id = $1', [id]);
     const delta = Number(row.bd_hours) - Number(prev?.bd_hours || 0);
@@ -51,7 +66,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   }
   const keys = Object.keys(row); if (!keys.length) return json({ ok: true });
   const sets = keys.map((k, i) => `${k} = $${i + 2}`).concat(TABLES[t].stamp ? ['updated_at = now()'] : []);
-  const r = await q(`update ${t} set ${sets.join(', ')} where id = $1 returning *`, [id, ...keys.map((k) => row[k])]);
+  const r = await q(`update ${t} set ${sets.join(', ')} where id = $1 returning *`, [id, ...keys.map((k) => param(k, row[k]))]);
   return r[0] ? json(r[0]) : json({ error: 'Not found' }, 404);
 };
 

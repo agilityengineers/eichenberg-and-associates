@@ -7,10 +7,11 @@ interface Props { title: string; eyebrow: string; active: string }
 const { title, eyebrow, active } = Astro.props;
 const user = Astro.locals.user!;
 const [n, hours, s] = await Promise.all([navCounts(), bdHours(7), getSettings()]);
-const nav: [string, string, string, string][] = [
-  ['overview', 'Overview', '/dashboard', ''], ['inbox', 'Lead inbox', '/dashboard/inbox', n.leads ? String(n.leads) : ''], ['pipeline', 'Pipeline', '/dashboard/pipeline', String(n.deals)],
-  ['forms', 'Form builder', '/dashboard/forms', ''], ['partners', 'Systems Integrator (SI) partners', '/dashboard/partners', n.active + ' active'], ['pages', 'Landing pages', '/dashboard/pages', String(n.pages)],
-  ['subscribers', 'Subscribers', '/dashboard/subscribers', String(n.subs)], ['content', 'Content calendar', '/dashboard/content', ''], ['website', 'Website content', '/dashboard/website', ''], ['settings', 'Settings', '/dashboard/settings', ''],
+type Item = [string, string, string, string];
+const nav: [string, Item[]][] = [
+  ['Sales', [['overview', 'Overview', '/dashboard', ''], ['inbox', 'Lead inbox', '/dashboard/inbox', n.leads ? String(n.leads) : ''], ['pipeline', 'Pipeline', '/dashboard/pipeline', String(n.deals)], ['partners', 'Systems Integrator (SI) partners', '/dashboard/partners', n.active + ' active']]],
+  ['Marketing', [['pages', 'Landing pages', '/dashboard/pages', String(n.pages)], ['forms', 'Form builder', '/dashboard/forms', ''], ['subscribers', 'Subscribers', '/dashboard/subscribers', String(n.subs)], ['content', 'Content calendar', '/dashboard/content', '']]],
+  ['Site', [['website', 'Website content', '/dashboard/website', ''], ['settings', 'Settings', '/dashboard/settings', '']]],
 ];
 const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 ---
@@ -20,11 +21,11 @@ const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 
   <a class="skip" href="#main">Skip to content</a>
   <aside class="db__side">
     <a href="/dashboard" class="db__brand"><img src="/images/mark-color.png" alt="" /><span><b>EICHENBERG</b><i>Sales dashboard</i></span></a>
-    <nav aria-label="Dashboard">{nav.map(([k, l, h, c]) => <a href={h} aria-current={active === k ? 'page' : undefined}><span>{l}</span>{c && <small>{c}</small>}</a>)}</nav>
+    <nav aria-label="Dashboard">{nav.map(([group, items]) => <><h2 class="db__grp">{group}</h2>{items.map(([k, l, h, c]) => <a href={h} aria-current={active === k ? 'page' : undefined}><span>{l}</span>{c && <small>{c}</small>}</a>)}</>)}</nav>
     <form method="post" action="/api/auth/logout" class="db__user"><b>{user.name || user.email}</b>{user.name && <span>{user.email}</span>}<button type="submit">Sign out</button></form>
   </aside>
   <main id="main" class="db__main">
-    <header class="db__hd"><div><p class="db__eb">{eyebrow}</p><h1 class="db__h1">{title}</h1></div><div class="db__meta">{today} · {quarterLabel()} · <b>{hours}h</b> biz-dev this week ({s.bdTargetText})</div></header>
+    <header class="db__hd"><div><p class="db__eb">{eyebrow}</p><h1 class="db__h1">{title}</h1></div><div class="db__meta">{today} · {quarterLabel()} · <b>{hours}h</b> business development this week ({s.bdTargetText})</div></header>
     <div class="db__view"><slot /></div>
   </main>
   <script src="../scripts/dashboard.ts"></script>
@@ -36,6 +37,7 @@ const today = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 
 .db__side nav{display:grid;gap:2px}
 .db__side nav a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;font-size:14px;font-weight:500;color:rgba(255,255,255,.72);border-left:3px solid transparent;transition:background .2s,color .2s}
 .db__side nav a:hover{background:rgba(255,255,255,.08);color:#fff}.db__side nav a[aria-current="page"]{color:#fff;background:rgba(255,255,255,.1);border-left-color:var(--teal)}
+.db__grp{margin:14px 12px 4px;font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);font-family:var(--sans)}.db__grp:first-child{margin-top:0}
 .db__side nav small{font-size:11px;font-weight:600;color:var(--teal)}
 .db__user{margin-top:auto;padding:14px 12px;border-top:1px solid rgba(255,255,255,.12);font-size:12px;color:rgba(255,255,255,.6);display:grid;gap:6px}.db__user b{color:#fff;font-weight:600}
 .db__user button{background:none;border:0;color:var(--teal);text-align:left;cursor:pointer;padding:0;font-size:12px;font-family:inherit}.db__user button:hover{text-decoration:underline}
@@ -84,6 +86,11 @@ textarea.cms-v,.cms-md{resize:vertical;line-height:1.45}.cms-md{font-family:ui-m
 .cms-list{gap:8px}.cms-lhd{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
 .cms-items{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .cms-item{position:relative;padding:12px 14px;border:1px solid rgba(18,15,56,.1);border-radius:10px;background:var(--paper);display:grid;gap:8px}
+.cms-fold>summary{cursor:pointer;font-weight:600;font-size:15px;color:var(--navy);padding:2px 0}.cms-fold[open]>summary{margin-bottom:10px}.cms-fold>summary:focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:4px}
+.cms-item:has(>.cms-fold){grid-template-columns:minmax(0,1fr) auto;align-items:start}.cms-item:has(>.cms-fold)>.cms-ictl{order:2}.cms-item:has(>.cms-fold[open]){grid-template-columns:minmax(0,1fr)}.cms-item:has(>.cms-fold[open])>.cms-ictl{order:0}
+.cms-f[hidden]{display:none}
+.cms-fold>.cms-obj{border:0;padding:0;background:none}.cms-fold>.cms-obj>.cms-body{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));align-items:start;gap:10px 14px}.cms-fold>.cms-obj>.cms-body>:is(.cms-list,.cms-obj,[data-kind=text]){grid-column:1/-1}
+.cms-item .cms-item{background:#fff}
 .cms-ictl{display:flex;gap:4px;align-items:center;justify-content:flex-end;min-height:0}.cms-ictl:empty{display:none}
 .cms-ictl button{border:0;background:transparent;cursor:pointer;color:var(--indigo);padding:2px 6px;font-size:12px;font-family:inherit}.cms-ictl .cms-rm{color:#B3261E;font-weight:600;margin-left:6px}
 .cms-itype{margin-right:auto;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--indigo)}
