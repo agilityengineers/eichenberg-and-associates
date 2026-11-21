@@ -116,6 +116,8 @@ create table if not exists deals (
   bd_hours numeric not null default 0,
   notes text, updated_at timestamptz not null default now()
 );
+-- Contact-form submissions from SI partners go to the partner tracker instead of the pipeline; this links the two.
+alter table leads add column if not exists partner_id uuid references partners(id) on delete set null;
 -- Sales process (November 2026): stages are now editable in Settings, so the fixed 0–4 range is gone; deals can be
 -- closed with a reason instead of deleted, and carry the gate ticks, captured answers and stakeholder map.
 alter table deals drop constraint if exists deals_stage_check;

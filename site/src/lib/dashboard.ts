@@ -10,7 +10,7 @@ export const bdCap = (fee: number | null) => (fee ? Math.round((Number(fee) * 0.
 
 export async function navCounts() {
   return (await one<{ leads: number; deals: number; active: number; pages: number; subs: number }>(`select
-    (select count(*) from leads where deal_id is null)::int as leads, (select count(*) from deals where status = 'open')::int as deals,
+    (select count(*) from leads where deal_id is null and partner_id is null)::int as leads, (select count(*) from deals where status = 'open')::int as deals,
     (select count(*) from partners where status = 2)::int as active, (select count(*) from landing_pages)::int as pages,
     (select count(*) from subscribers)::int as subs`))!;
 }
