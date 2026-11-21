@@ -10,6 +10,7 @@ import { fillText, paragraph } from '../../lib/email-template';
 import { env, siteUrl } from '../../lib/env';
 import { clientIp, ipHash, json } from '../../lib/http';
 import { refuse } from '../../lib/spam';
+import { getSettings } from '../../lib/settings';
 
 type Q = { key: string; label: string; type: string; required: boolean; options: string[] | null; step: number };
 
@@ -43,12 +44,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   }
   if (missing.length) return json({ error: 'Missing: ' + missing.join(', ') }, 400);
 
-  // Every submission opens an Exploration-stage deal so nothing is lost before the first call.
+  // Every submission opens a deal in the first stage of the sales process, so nothing is lost before the first call.
+  const firstStage = (await getSettings()).stages[0].name;
   const leadId = await tx(async (c) => {
     const lead = (await c.query("insert into leads (page_slug, name, email, company, title, answers, grid, grid_result, source, ip_hash, user_agent) values ($1,$2,$3,$4,$5,$6,$7,$8,'landing',$9,$10) returning id",
       [slug, d.name, d.email, d.company, d.title, JSON.stringify(answers), cell.id, cell.result, ipHash(ip), request.headers.get('user-agent')?.slice(0, 200) || null])).rows[0];
-    const deal = (await c.query("insert into deals (company, contact, lead_id, stage, grid, source, next_step, next_due) values ($1,$2,$3,0,$4,'Content','Exploration call', current_date + 5) returning id",
-      [d.company || d.name, d.name + (d.title ? ', ' + d.title : ''), lead.id, cell.id])).rows[0];
+    const deal = (await c.query("insert into deals (company, contact, lead_id, stage, grid, source, next_step, next_due) values ($1,$2,$3,0,$4,'Content',$5, current_date + 5) returning id",
+      [d.company || d.name, d.name + (d.title ? ', ' + d.title : ''), lead.id, cell.id, firstStage + ' call'])).rows[0];
     await c.query('update leads set deal_id = $1 where id = $2', [deal.id, lead.id]);
     if (page.magnet_title) await c.query("insert into subscribers (email, source) values ($1, $2) on conflict (lower(email)) do nothing", [d.email, page.magnet_title]);
     return lead.id as string;

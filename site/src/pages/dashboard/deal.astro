@@ -1,39 +1,197 @@
 ---
 import Dashboard from '../../layouts/Dashboard.astro';
 import { one, q } from '../../lib/db';
-import { getSettings } from '../../lib/settings';
-import { GRID_SHORT } from '../../lib/dashboard';
+import { getSettings, gateState } from '../../lib/settings';
+import { GRID_SHORT, shortDate } from '../../lib/dashboard';
+import { page } from '../../lib/content';
 const id = Astro.url.searchParams.get('id') || '';
 const d = /^[0-9a-f-]{36}$/.test(id) ? await one('select * from deals where id = $1', [id]) : null;
 if (!d) return Astro.redirect('/dashboard/pipeline');
 const [partners, s, lead] = await Promise.all([q('select id, firm from partners order by firm'), getSettings(), d.lead_id ? one('select * from leads where id = $1', [d.lead_id]) : null]);
-const due = d.next_due ? new Date(d.next_due).toISOString().slice(0, 10) : '';
+const iso = (v: unknown) => (v && !isNaN(+new Date(v as string)) ? new Date(v as string).toISOString().slice(0, 10) : '');
+const last = s.stages.length - 1, at = Math.min(d.stage, last);
+const gate: Record<string, boolean> = d.gate || {}, capture: Record<string, string> = d.capture || {};
+const people: Record<string, string>[] = Array.isArray(d.stakeholders) ? d.stakeholders : [];
+const sm = s.stakeholderMap, cols = [['who', sm.who], ['feels', sm.feels], ['role', sm.role], ['drives', sm.drives], ['needs', sm.needs]];
+const range = (offer: string | null) => s.offerRanges.filter((r) => r.offer && (offer || '').toLowerCase().includes(r.offer.toLowerCase()));
+const closed = d.status !== 'open';
+const reason = s.closeReasons.find((r) => r.value === d.status)?.label || d.status;
+const lines = (t: string) => t.split('\n').map((x) => x.trim()).filter(Boolean);
+// The lead's answers, with the question each one answers instead of the stored key.
+let labels: Record<string, string> = {};
+if (lead?.page_slug) labels = Object.fromEntries((await q('select key, label from form_questions where page_slug = $1', [lead.page_slug])).map((r) => [r.key, r.label]));
+else if (lead) { const f = (await page('contact')).form || {}; labels = { situation: f.situation, message: f.message }; }
+const firstGate = s.stages.findIndex((st) => st.gate.checks.length > 0);
 ---
-<Dashboard title={d.company} eyebrow="Pipeline · Edit deal" active="pipeline">
+<Dashboard title={d.company} eyebrow={'Pipeline · ' + (closed ? 'Closed deal' : s.stages[at].name)} active="pipeline">
+  {closed && <div class="panel closedbar" role="status"><p><span class="pill pill--grey">{reason}</span> {d.closed_at && <>Closed {shortDate(d.closed_at)}. </>}{d.closed_note}{d.referred_to && <> Referred to {d.referred_to}.</>}{d.revisit_on && <> Come back on {shortDate(d.revisit_on)}.</>}</p>
+    <button type="button" class="dbtn dbtn--sm" data-action="patch" data-table="deals" data-id={d.id} data-field="status" data-value="open">Reopen deal</button></div>}
   <div class="dlay">
-    <form class="panel panel--pad dform" data-save="deals" style="min-width:0"><input type="hidden" name="id" value={d.id} />
-      <div class="dgrid">
-        <div class="cms-f"><label for="d-co">Company</label><input id="d-co" name="company" class="cms-v" value={d.company} required /></div>
-        <div class="cms-f"><label for="d-ct">Contact</label><input id="d-ct" name="contact" class="cms-v" value={d.contact} /></div>
-        <div class="cms-f"><label for="d-st">Stage</label><select id="d-st" name="stage" class="cms-v">{s.stages.map((x, i) => <option value={i} selected={i === d.stage}>{x.name}</option>)}</select></div>
-        <div class="cms-f"><label for="d-of">Offer</label><input id="d-of" name="offer" class="cms-v" list="offers" value={d.offer} /><datalist id="offers">{s.lists.offers.map((o) => <option value={o} />)}</datalist></div>
-        <div class="cms-f"><label for="d-fee">Fee estimate ($)</label><input id="d-fee" name="fee_estimate" type="number" min="0" step="500" class="cms-v" value={d.fee_estimate ?? ''} /></div>
-        <div class="cms-f"><label for="d-gl">Go-live</label><input id="d-gl" name="go_live" class="cms-v" value={d.go_live} placeholder="e.g. Jan 12, 2027" /></div>
-        <div class="cms-f"><label for="d-src">Source</label><input id="d-src" name="source" class="cms-v" list="sources" value={d.source} /><datalist id="sources">{s.lists.sources.map((o) => <option value={o} />)}</datalist></div>
-        <div class="cms-f"><label for="d-pa">SI partner</label><select id="d-pa" name="partner_id" class="cms-v"><option value="">—</option>{partners.map((p) => <option value={p.id} selected={p.id === d.partner_id}>{p.firm}</option>)}</select></div>
-        <div class="cms-f"><label for="d-gr">Grid</label><select id="d-gr" name="grid" class="cms-v"><option value="">—</option>{Object.entries(GRID_SHORT).map(([k, v]) => <option value={k} selected={k === d.grid}>{v}</option>)}</select></div>
-        <div class="cms-f"><label for="d-bd">BD hours spent</label><input id="d-bd" name="bd_hours" type="number" min="0" step="0.5" class="cms-v" value={Number(d.bd_hours)} /><span class="cms-hint">Increases are logged as BD time for the week.</span></div>
-        <div class="cms-f"><label for="d-nx">Next step</label><input id="d-nx" name="next_step" class="cms-v" value={d.next_step} /></div>
-        <div class="cms-f"><label for="d-du">Due</label><input id="d-du" name="next_due" type="date" class="cms-v" value={due} /></div>
-        <div class="cms-f" style="grid-column:1/-1"><label for="d-no">Notes</label><textarea id="d-no" name="notes" rows="5" class="cms-v">{d.notes}</textarea></div>
-      </div>
-      <div class="cms-save"><a href="/dashboard/pipeline" class="faint" style="font-size:13px">← Back to pipeline</a><button type="button" class="lnk-rm" data-action="delete" data-table="deals" data-id={d.id} data-confirm="Delete this deal? The lead stays in the inbox." data-redirect="/dashboard/pipeline">Delete deal</button><span role="status" class="cms-st"></span><button class="dbtn dbtn--teal" type="submit">Save</button></div>
+    <form class="dform" id="deal-form" data-id={d.id} data-gate={JSON.stringify(gate)} data-capture={JSON.stringify(capture)} style="min-width:0" novalidate>
+      <section class="panel panel--pad">
+        <h2 class="ph2">Where this deal stands</h2>
+        <div class="dgrid">
+          <div class="cms-f"><label for="d-st">Stage</label><select id="d-st" name="stage" class="cms-v">{s.stages.map((x, i) => <option value={i} selected={i === at}>{i + 1}. {x.name}</option>)}</select></div>
+          <div class="cms-f"><label for="d-nx">Next step</label><input id="d-nx" name="next_step" class="cms-v" value={d.next_step} /></div>
+          <div class="cms-f"><label for="d-du">Due</label><input id="d-du" name="next_due" type="date" class="cms-v" value={iso(d.next_due)} /></div>
+          <div class="cms-f"><label for="d-of">Offer</label><input id="d-of" name="offer" class="cms-v" list="offers" value={d.offer} aria-describedby="d-of-h" /><datalist id="offers">{s.lists.offers.map((o) => <option value={o} />)}</datalist>
+            <span class="cms-hint" id="d-of-h" data-ranges={JSON.stringify(s.offerRanges)}>{range(d.offer).map((r) => `${r.offer}: ${r.range}`).join(' · ') || (s.offerRanges.length ? 'Pick an offer to see its price range.' : '')}</span></div>
+          <div class="cms-f"><label for="d-fee">Fee estimate ($)</label><input id="d-fee" name="fee_estimate" type="number" min="0" step="500" class="cms-v" value={d.fee_estimate ?? ''} /></div>
+          <div class="cms-f"><label for="d-gl">Go-live</label><input id="d-gl" name="go_live" class="cms-v" value={d.go_live} placeholder="e.g. Jan 12, 2027" /></div>
+        </div>
+      </section>
+
+      <section class="panel panel--pad">
+        <h2 class="ph2">The sales process</h2>
+        <p class="cms-hint" style="margin:6px 0 0">The call guide for each stage, with room for what you hear. The current stage is open.</p>
+        <div class="stages">{s.stages.map((st, i) => { const g = gateState(st, gate); const has = st.note || st.open || st.close || st.moves.length || st.capture.length || g.total; return <details class="stage" open={i === at} data-current={i === at ? '' : undefined}>
+          <summary><span class="stage__n">Stage {i + 1} of {s.stages.length}{st.callLength && ' · ' + st.callLength}</span><span class="stage__t">{st.name}</span><span class="stage__q">{st.question}</span>
+            {i === at && <span class="pill pill--indigo">Current</span>}{g.total > 0 && <span class={'pill ' + (g.passed ? 'pill--teal' : 'pill--grey')} data-gate-pill={st.id}>{g.passed ? `${st.gate.label || 'Gate'} passed` : `${st.gate.label || 'Gate'} ${g.done} of ${g.total}`}</span>}</summary>
+          <div class="stage__b">
+            {!has && <p class="cms-hint" style="margin:0">No guide for this stage yet. Add one in <a href="/dashboard/settings">Settings</a>.</p>}
+            {st.note && <p class="stage__note">{st.note}</p>}
+            {st.open && <p class="stage__oc">{st.open}</p>}
+            {st.moves.length > 0 && <ol class="moves">{st.moves.map((m, k) => <li><h3><span>{k + 1}</span>{m.title}{m.when && <small>{m.when}</small>}</h3>
+              {m.blocks.map((b) => <div class="blk"><p class="blk__l">{b.label}</p>{lines(b.text).length > 1 ? <ul>{lines(b.text).map((x) => <li>{x}</li>)}</ul> : <p>{b.text}</p>}</div>)}</li>)}</ol>}
+            {st.capture.length > 0 && <div class="dgrid cap">{st.capture.map((c) => <div class="cms-f" style={c.type === 'date' ? '' : 'grid-column:span 2'}><label for={'c-' + c.id}>{c.label}</label>
+              {c.type === 'date' ? <input id={'c-' + c.id} type="date" class="cms-v" data-capture={c.id} value={iso(capture[c.id])} /> : <textarea id={'c-' + c.id} rows="2" class="cms-v" data-capture={c.id}>{capture[c.id]}</textarea>}</div>)}</div>}
+            {g.total > 0 && <fieldset class="gate" data-gate-box={st.id} data-label={st.gate.label || 'Gate'}><legend>{st.gate.label || 'Gate'}{st.gate.intro && <span>{st.gate.intro}</span>}</legend>
+              <div class="gate__c">{st.gate.checks.map((c) => <label class="gate__i"><input type="checkbox" data-gate={c.id} checked={!!gate[c.id]} /><span><b>{c.label}</b>{c.description && <small>{c.description}</small>}</span></label>)}</div>
+              {st.gate.pass && <p class="gate__p">{st.gate.pass}</p>}
+              {st.gate.outcomes.length > 0 && <details class="sub"><summary>What the gate tells you to do</summary><table class="mini"><thead><tr><th>You have</th><th>Do this</th></tr></thead><tbody>{st.gate.outcomes.map((o) => <tr><td>{o.have}</td><td>{o.do}</td></tr>)}</tbody></table></details>}
+              {i === firstGate && s.routing.rows.length > 0 && <details class="sub"><summary>{s.routing.heading}</summary><div style="overflow-x:auto"><table class="mini"><thead><tr><th>Their situation</th><th>Offer</th><th>The longer call aims at</th></tr></thead><tbody>{s.routing.rows.map((r) => <tr><td>{r.situation}</td><td>{r.offer}</td><td>{r.aim}</td></tr>)}</tbody></table></div>{s.routing.note && <p class="cms-hint" style="margin:8px 0 0">{s.routing.note}</p>}</details>}
+            </fieldset>}
+            {st.close && <p class="stage__oc">{st.close}</p>}
+          </div>
+        </details>; })}</div>
+      </section>
+
+      <section class="panel panel--pad">
+        <details class="fold" open={people.length > 0}><summary><h2 class="ph2">{sm.heading}</h2><span class="pill pill--grey" id="sk-count">{people.length}</span></summary>
+          {sm.note && <p class="cms-hint" style="margin:10px 0 0">{sm.note}</p>}
+          <div style="overflow-x:auto;margin-top:12px"><table class="sk"><thead><tr>{cols.map(([, l]) => <th>{l}</th>)}<th aria-label="Remove"></th></tr></thead>
+            <tbody id="sk-rows">{people.map((p) => <tr>{cols.map(([k, l]) => <td><input class="cms-v" data-sk={k} value={p[k]} aria-label={l} /></td>)}<td><button type="button" class="lnk-rm" data-sk-rm>Remove</button></td></tr>)}</tbody></table></div>
+          <template id="sk-tpl"><tr>{cols.map(([k, l]) => <td><input class="cms-v" data-sk={k} aria-label={l} /></td>)}<td><button type="button" class="lnk-rm" data-sk-rm>Remove</button></td></tr></template>
+          <button type="button" class="cms-addbtn" id="sk-add" style="margin-top:10px">+ Add stakeholder</button>
+        </details>
+      </section>
+
+      <section class="panel panel--pad">
+        <h2 class="ph2">Details</h2>
+        <div class="dgrid">
+          <div class="cms-f"><label for="d-co">Company</label><input id="d-co" name="company" class="cms-v" value={d.company} required /></div>
+          <div class="cms-f"><label for="d-ct">Contact</label><input id="d-ct" name="contact" class="cms-v" value={d.contact} /></div>
+          <div class="cms-f"><label for="d-src">Lead source</label><input id="d-src" name="source" class="cms-v" list="sources" value={d.source} /><datalist id="sources">{s.lists.sources.map((o) => <option value={o} />)}</datalist></div>
+          <div class="cms-f"><label for="d-pa">SI partner</label><select id="d-pa" name="partner_id" class="cms-v"><option value="">—</option>{partners.map((p) => <option value={p.id} selected={p.id === d.partner_id}>{p.firm}</option>)}</select></div>
+          <div class="cms-f"><label for="d-gr">Who can lead / who can do</label><select id="d-gr" name="grid" class="cms-v"><option value="">—</option>{Object.entries(GRID_SHORT).map(([k, v]) => <option value={k} selected={k === d.grid}>{v}</option>)}</select></div>
+          <div class="cms-f"><label for="d-bd">Hours spent winning this deal</label><input id="d-bd" name="bd_hours" type="number" min="0" step="0.5" class="cms-v" value={Number(d.bd_hours)} /><span class="cms-hint">Increases are added to this week’s business-development hours.</span></div>
+          <div class="cms-f" style="grid-column:1/-1"><label for="d-no">Notes</label><textarea id="d-no" name="notes" rows="5" class="cms-v">{d.notes}</textarea></div>
+        </div>
+      </section>
+      <div class="cms-save dsave"><a href="/dashboard/pipeline" style="font-size:13px">← Back to pipeline</a><span role="status" aria-live="polite" class="cms-st"></span><button class="dbtn dbtn--teal" type="submit">Save</button></div>
     </form>
-    {lead && <aside class="panel panel--pad" style="display:grid;gap:10px;font-size:14px"><h2 class="ph2" style="font-size:20px">From the {lead.source === 'contact' ? 'contact form' : 'landing page'}</h2><p style="margin:0"><strong>{lead.name}</strong>{lead.title && <>, {lead.title}</>}<br /><a href={'mailto:' + lead.email}>{lead.email}</a></p>{lead.grid_result && <p style="margin:0" class="muted">Grid: {lead.grid_result}</p>}<dl style="margin:0;display:grid;gap:6px">{Object.entries(lead.answers || {}).map(([k, v]) => <div><dt class="faint" style="font-size:12px">{k}</dt><dd style="margin:0">{String(v)}</dd></div>)}</dl></aside>}
+
+    <div style="display:grid;gap:20px;align-content:start;min-width:0">
+      {lead && <aside class="panel panel--pad" style="display:grid;gap:10px;font-size:14px"><h2 class="ph2" style="font-size:20px">From the {lead.source === 'contact' ? 'contact form' : 'landing page'}</h2><p style="margin:0"><strong>{lead.name}</strong>{lead.title && <>, {lead.title}</>}<br /><a href={'mailto:' + lead.email}>{lead.email}</a></p>{lead.grid_result && <p style="margin:0" class="muted">{lead.grid_result}</p>}<dl style="margin:0;display:grid;gap:8px">{Object.entries(lead.answers || {}).map(([k, v]) => <div><dt class="muted" style="font-size:12px">{labels[k] || k}</dt><dd style="margin:0">{String(v)}</dd></div>)}</dl></aside>}
+      {!closed && <form class="panel panel--pad closef" id="close-form" data-id={d.id}>
+        <h2 class="ph2" style="font-size:20px">Close this deal</h2>
+        <p class="cms-hint" style="margin:0">Not going ahead, or not yet? Close it with a reason. It leaves the board but is kept under Closed deals, and you can reopen it.</p>
+        <div class="cms-f"><label for="cl-r">Reason</label><select id="cl-r" name="status" class="cms-v" required>{s.closeReasons.map((r) => <option value={r.value}>{r.label}</option>)}</select></div>
+        <div class="cms-f" data-for="referred" hidden><label for="cl-to">Referred to</label><input id="cl-to" name="referred_to" class="cms-v" /></div>
+        <div class="cms-f" data-for="later" hidden><label for="cl-on">Come back on</label><input id="cl-on" name="revisit_on" type="date" class="cms-v" /><span class="cms-hint">It shows on the Overview when the date arrives.</span></div>
+        <div class="cms-f"><label for="cl-n">Note (optional)</label><textarea id="cl-n" name="closed_note" rows="2" class="cms-v"></textarea></div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="dbtn dbtn--sm" type="submit">Close deal</button><span role="status" class="faint" style="font-size:12px"></span></div>
+      </form>}
+      <p style="margin:0;font-size:13px"><button type="button" class="lnk-rm" data-action="delete" data-table="deals" data-id={d.id} data-confirm="Delete this deal permanently? Its notes and answers are lost. To keep the record, close it with a reason instead. The lead stays in the inbox." data-redirect="/dashboard/pipeline">Delete permanently</button></p>
+    </div>
   </div>
 </Dashboard>
 <style>
-.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
-.dform .cms-save{background:#fff}
-.dlay{display:grid;gap:20px;grid-template-columns:minmax(0,2fr) minmax(240px,1fr);align-items:start}@media (max-width:1000px){.dlay{grid-template-columns:1fr}}
+.dform{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}.dform .ph2{font-size:22px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:14px}
+@media (max-width:520px){.dgrid .cms-f{grid-column:auto!important}}
+.dsave{background:var(--paper);padding:12px 0}
+.dlay{display:grid;gap:20px;grid-template-columns:minmax(0,2fr) minmax(240px,1fr);align-items:start}@media (max-width:1000px){.dlay{grid-template-columns:minmax(0,1fr)}}
+.closedbar{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 18px;margin-bottom:20px;font-size:14px}.closedbar p{margin:0}
+.closef{display:grid;gap:12px}
+.stages{display:grid;gap:10px;margin-top:14px}
+.stage{border:1px solid rgba(18,15,56,.12);border-radius:10px;background:var(--paper)}.stage[data-current]{border-color:var(--indigo);background:#fff}
+.stage>summary{cursor:pointer;padding:12px 14px;display:flex;gap:6px 12px;align-items:baseline;flex-wrap:wrap;list-style-position:outside}
+.stage>summary:focus-visible,.fold>summary:focus-visible,.sub>summary:focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:8px}
+.stage__n{flex-basis:100%;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--indigo)}
+.stage__t{font-family:var(--serif);font-size:21px;color:var(--navy)}.stage__q{font-size:14px;color:var(--muted);font-style:italic;margin-right:auto}
+.stage__b{padding:4px 14px 16px;display:grid;gap:14px}
+.stage__note{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5}
+.stage__oc{margin:0;padding:10px 12px;border-left:3px solid var(--teal);background:rgba(20,182,161,.08);font-size:14px;line-height:1.5;border-radius:0 6px 6px 0}
+.moves{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.moves>li{border:1px solid rgba(18,15,56,.1);border-radius:8px;padding:12px;background:#fff;display:grid;gap:10px;align-content:start}
+.moves h3{margin:0;font-size:15px;font-weight:600;color:var(--navy);display:flex;gap:8px;align-items:center;flex-wrap:wrap}.moves h3 span{flex:none;width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;display:grid;place-items:center}.moves h3 small{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.blk p,.blk ul{margin:0;font-size:14px;line-height:1.5}.blk ul{padding-left:18px;display:grid;gap:4px}.blk .blk__l{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--indigo);margin-bottom:3px}
+.cap{margin-top:0}
+.gate{margin:0;border:2px solid var(--teal);border-radius:10px;padding:12px 14px 14px;display:grid;gap:12px;background:#fff;min-width:0}
+.gate legend{padding:0 6px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--navy)}.gate legend span{margin-left:10px;font-weight:500;letter-spacing:0;text-transform:none;font-size:13.5px;color:var(--muted)}
+.gate__c{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.gate__i{display:flex;gap:10px;align-items:start;padding:10px;border:1px solid rgba(18,15,56,.12);border-radius:8px;cursor:pointer;font-size:14px}.gate__i:has(input:checked){background:rgba(20,182,161,.1);border-color:var(--teal)}
+.gate__i input{width:18px;height:18px;margin-top:2px;accent-color:var(--teal);flex:none}.gate__i b{display:block;color:var(--navy)}.gate__i small{display:block;margin-top:2px;font-size:12.5px;color:var(--muted);line-height:1.45}
+.gate__p{margin:0;font-size:14px;font-weight:600;color:var(--navy)}
+.sub>summary{cursor:pointer;font-size:13.5px;font-weight:600;color:var(--indigo)}.sub[open]>summary{margin-bottom:8px}
+.mini{width:100%;border-collapse:collapse;font-size:13.5px}.mini th{text-align:left;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:6px 10px 6px 0}.mini td{padding:8px 10px 8px 0;border-top:1px solid rgba(18,15,56,.08);vertical-align:top;line-height:1.45}
+.fold>summary{cursor:pointer;display:flex;gap:10px;align-items:center}.fold>summary h2{display:inline}
+.sk{width:100%;border-collapse:collapse;min-width:720px}.sk th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);padding:0 6px 6px 0}.sk td{padding:0 6px 6px 0;vertical-align:top}.sk .cms-v{font-size:14px;padding:8px 10px}
 </style>
+<script>
+  import { api } from '../../scripts/dashboard';
+  const form = document.getElementById('deal-form') as HTMLFormElement;
+  const st = form.querySelector('.cms-st')!;
+  const dirty = () => { form.dataset.dirty = '1'; st.textContent = 'Unsaved changes'; };
+  form.addEventListener('input', dirty);
+  addEventListener('beforeunload', (e) => { if (form.dataset.dirty) e.preventDefault(); });
+
+  // Stakeholder rows
+  const rows = document.getElementById('sk-rows')!, count = document.getElementById('sk-count')!;
+  document.getElementById('sk-add')!.addEventListener('click', () => { const tr = (document.getElementById('sk-tpl') as HTMLTemplateElement).content.firstElementChild!.cloneNode(true) as HTMLElement; rows.appendChild(tr); tr.querySelector('input')!.focus(); count.textContent = String(rows.children.length); dirty(); });
+  rows.addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest('[data-sk-rm]'); if (!b) return; const tr = b.closest('tr')!; if ([...tr.querySelectorAll('input')].some((x) => x.value) && !confirm('Remove this stakeholder?')) return; tr.remove(); count.textContent = String(rows.children.length); dirty(); });
+
+  // Gate ticks update the pill beside the stage name as you go.
+  form.querySelectorAll<HTMLElement>('[data-gate-box]').forEach((box) => box.addEventListener('change', () => {
+    const all = box.querySelectorAll<HTMLInputElement>('[data-gate]'), done = [...all].filter((x) => x.checked).length, pill = form.querySelector<HTMLElement>(`[data-gate-pill="${box.dataset.gateBox}"]`);
+    if (pill) { pill.textContent = done === all.length ? `${box.dataset.label} passed` : `${box.dataset.label} ${done} of ${all.length}`; pill.className = 'pill ' + (done === all.length ? 'pill--teal' : 'pill--grey'); }
+  }));
+
+  // Price-range hint follows the offer field.
+  const offer = document.getElementById('d-of') as HTMLInputElement, hint = document.getElementById('d-of-h')!;
+  const ranges: { offer: string; range: string }[] = JSON.parse(hint.dataset.ranges || '[]');
+  offer.addEventListener('input', () => { const hit = ranges.filter((r) => r.offer && offer.value.toLowerCase().includes(r.offer.toLowerCase())); hint.textContent = hit.map((r) => `${r.offer}: ${r.range}`).join(' · ') || (ranges.length ? 'Pick an offer to see its price range.' : ''); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!(form.elements.namedItem('company') as HTMLInputElement).value.trim()) { st.textContent = 'Add the company name.'; (form.elements.namedItem('company') as HTMLInputElement).focus(); return; }
+    const body: Record<string, unknown> = { id: form.dataset.id };
+    new FormData(form).forEach((v, k) => { body[k] = typeof v === 'string' ? v : ''; });
+    form.querySelectorAll<HTMLInputElement>('input[type=number][name]').forEach((c) => (body[c.name] = c.value === '' ? (c.name === 'bd_hours' ? 0 : null) : Number(c.value)));
+    // Start from what is stored, so answers to fields that are no longer in Settings are kept.
+    const gate = JSON.parse(form.dataset.gate || '{}'), capture = JSON.parse(form.dataset.capture || '{}');
+    form.querySelectorAll<HTMLInputElement>('[data-gate]').forEach((c) => (gate[c.dataset.gate!] = c.checked));
+    form.querySelectorAll<HTMLInputElement>('[data-capture]').forEach((c) => (capture[c.dataset.capture!] = c.value));
+    body.gate = gate; body.capture = capture;
+    body.stakeholders = [...rows.querySelectorAll('tr')].map((tr) => Object.fromEntries([...tr.querySelectorAll<HTMLInputElement>('[data-sk]')].map((i) => [i.dataset.sk!, i.value]))).filter((p) => Object.values(p).some((v) => String(v).trim()));
+    st.textContent = 'Saving…';
+    try { const was = form.querySelector<HTMLElement>('.stage[data-current]'); await api('deals', 'PATCH', body); delete form.dataset.dirty; st.textContent = 'Saved.';
+      const now = (form.elements.namedItem('stage') as HTMLSelectElement).value; if (was && [...form.querySelectorAll('.stage')].indexOf(was) !== Number(now)) location.reload(); }
+    catch { st.textContent = ''; }
+  });
+
+  // Close with a reason
+  const cf = document.getElementById('close-form') as HTMLFormElement | null;
+  if (cf) {
+    const sel = cf.elements.namedItem('status') as HTMLSelectElement;
+    const sync = () => cf.querySelectorAll<HTMLElement>('[data-for]').forEach((x) => (x.hidden = x.dataset.for !== sel.value)); sel.addEventListener('change', sync); sync();
+    cf.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (form.dataset.dirty && !confirm('You have unsaved changes on this deal. Close it without saving them?')) return;
+      const v = (n: string) => (cf.elements.namedItem(n) as HTMLInputElement).value;
+      const body: Record<string, unknown> = { id: cf.dataset.id, status: sel.value, closed_note: v('closed_note'), referred_to: sel.value === 'referred' ? v('referred_to') : '', revisit_on: sel.value === 'later' ? v('revisit_on') : '' };
+      try { await api('deals', 'PATCH', body); delete form.dataset.dirty; location.assign('/dashboard/pipeline'); } catch {}
+    });
+  }
+</script>

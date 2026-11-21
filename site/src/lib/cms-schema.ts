@@ -12,6 +12,8 @@ export type Field = {
   types?: { name: string; label: string; fields: Field[] }[];  // list of typed blocks
   fixed?: boolean;                                         // list rows can be edited but not added, removed or reordered
   singular?: string; readonly?: boolean;
+  hidden?: boolean;                                        // kept with the row but not shown (stable ids)
+  fold?: string;                                           // list of objects: collapse each row under the value of this key
 };
 export type DocType = {
   collection: string; slug?: string; label: string; group: string; description?: string; fields: Field[];
@@ -23,6 +25,7 @@ const str = (name: string, label: string, x: X = {}): Field => ({ name, label, w
 const text = (name: string, label: string, x: X = {}): Field => ({ name, label, widget: 'text', ...x });
 const num = (name: string, label: string, x: X = {}): Field => ({ name, label, widget: 'number', ...x });
 const bool = (name: string, label: string, x: X = {}): Field => ({ name, label, widget: 'boolean', ...x });
+const hid = (name: string): Field => ({ name, label: name, widget: 'string', hidden: true, optional: true });
 const img = (name: string, label: string, x: X = {}): Field => ({ name, label, widget: 'image', optional: true, ...x });
 const obj = (name: string, label: string, fields: Field[], x: X = {}): Field => ({ name, label, widget: 'object', fields, ...x });
 const rows = (name: string, label: string, fields: Field[], x: X = {}): Field => ({ name, label, widget: 'list', fields, ...x });
@@ -252,8 +255,27 @@ export const LANDING_FIELDS: Field[] = [
 // ---------- Dashboard → Settings ----------
 const level = { name: 'level', label: 'Status colour (manual rules)', widget: 'select' as const, options: [{ value: 'clear', label: 'Clear (teal)' }, { value: 'watch', label: 'Watch (amber)' }, { value: 'tripped', label: 'Tripped (red)' }] };
 export const SETTINGS_FIELDS: Field[] = [
-  rows('stages', 'Pipeline stages', [str('name', 'Stage'), str('question', 'Guiding question')], { fixed: true, hint: 'Five stages, left to right on the Pipeline board.' }),
-  num('signedFromStage', 'Deals count as signed from stage number', { min: 1, max: 5, hint: '1 = Exploration … 5 = Continuation. Used for “Signed so far” and the measures.' }),
+  rows('stages', 'Sales process: stages', [
+    hid('id'), str('name', 'Stage'), str('question', 'Guiding question'), str('callLength', 'Call length (shown as a tag)', { optional: true }),
+    bool('countsAsSigned', 'Deals here count as signed', { hint: 'Used for “Signed so far” and the measures on the Overview.' }),
+    text('note', 'Before-the-call note', { optional: true }), text('open', 'How to open', { optional: true }),
+    rows('moves', 'Call guide: the moves', [str('title', 'Move'), str('when', 'When (e.g. Min 0–4)', { optional: true }),
+      rows('blocks', 'What to do in this move', [str('label', 'Label (Ask, Listen for, Do, Say…)'), text('text', 'Lines, one per row')], { singular: 'block' })], { singular: 'move', fold: 'title' }),
+    text('close', 'How to close', { optional: true }),
+    rows('capture', 'What to record on the deal at this stage', [hid('id'), str('label', 'Field'),
+      { name: 'type', label: 'Kind', widget: 'select', options: [{ value: 'text', label: 'Text' }, { value: 'date', label: 'Date' }] }, bool('onCard', 'Show on the pipeline card')], { singular: 'field' }),
+    obj('gate', 'Gate before the next stage', [str('label', 'Name'), str('intro', 'Headline', { optional: true }),
+      rows('checks', 'Checks', [hid('id'), str('label', 'Check'), text('description', 'What counts', { optional: true })], { singular: 'check', hint: 'Leave empty for no gate after this stage.' }),
+      str('pass', 'When every check is ticked', { optional: true }),
+      rows('outcomes', 'What the gate tells you to do', [str('have', 'You have'), str('do', 'Do this')], { singular: 'row' })]),
+  ], { singular: 'stage', fold: 'name', hint: 'Left to right on the Pipeline board. Add, remove or reorder stages; deals follow their stage when you reorder. A stage that still holds deals can’t be removed.' }),
+  obj('cardFields', 'Pipeline cards show', [bool('contact', 'Contact'), bool('offer', 'Offer'), bool('source', 'Lead source'), bool('goLive', 'Go-live date'), bool('partner', 'SI partner'),
+    bool('leadDo', 'Who can lead / who can do'), bool('hours', 'Hours spent winning the deal'), bool('nextStep', 'Next step and due date'), bool('gate', 'Gate progress')]),
+  obj('routing', 'After the gate: match the situation to the offer', [str('heading', 'Heading'),
+    rows('rows', 'Rows', [str('situation', 'Their situation'), str('offer', 'Offer'), str('aim', 'The longer call aims at')], { singular: 'row' }), text('note', 'Note under the table', { optional: true })]),
+  rows('offerRanges', 'Offer price ranges (hint on the deal page)', [str('offer', 'Offer'), str('range', 'Range')], { singular: 'offer' }),
+  rows('closeReasons', 'Reasons for closing a deal', [str('value', 'Code', { readonly: true }), str('label', 'Label')], { fixed: true }),
+  obj('stakeholderMap', 'Stakeholder map (deal page)', [str('heading', 'Heading'), text('note', 'Note', { optional: true }), str('who', 'Column 1'), str('feels', 'Column 2'), str('role', 'Column 3'), str('drives', 'Column 4'), str('needs', 'Column 5')]),
   obj('kept', 'Kept figure (Overview)', [str('label', 'Label'), num('value', 'Amount ($)')]),
   obj('bridge', 'Bridge income (for the bridge-share tripwire)', [num('income', 'Bridge income this year ($)'), num('revenue', 'Total revenue this year ($)')]),
   str('bdTargetText', 'BD-hours target (header line)'),
