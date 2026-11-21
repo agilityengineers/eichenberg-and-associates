@@ -183,7 +183,8 @@ const field = (x: any) => ({ id: 'q-' + x.key, star: x.required ? '*' : '' });
       const first = String(fd.get('name') || '').trim().split(' ')[0] || 'there';
       document.getElementById('done-msg')!.textContent = m.done.replace('{first}', first);
       const bk = document.getElementById('booking'); const url = form.dataset.booking;
-      if (bk && url && /^https:\/\//.test(url)) { const f = document.createElement('iframe'); f.src = url + (url.includes('?') ? '&' : '?') + 'hide_gdpr_banner=1&name=' + encodeURIComponent(String(fd.get('name') || '')) + '&email=' + encodeURIComponent(String(fd.get('email') || '')); f.title = m.booking; f.loading = 'lazy'; bk.replaceChildren(f); }
+      if (bk && url && /^https:\/\//.test(url)) { const f = document.createElement('iframe'); f.src = url + (url.includes('?') ? '&' : '?') + 'hide_gdpr_banner=1&name=' + encodeURIComponent(String(fd.get('name') || '')) + '&email=' + encodeURIComponent(String(fd.get('email') || '')) + (j.id ? '&utm_source=website&utm_content=' + encodeURIComponent(j.id) : '');   // utm_content carries the lead id back on the booking, so the dashboard knows whose call it is
+        f.title = m.booking; f.loading = 'lazy'; bk.replaceChildren(f); }
       const dm = document.getElementById('done-magnet'); if (dm) dm.textContent = m.magnet.replace('{email}', String(fd.get('email') || ''));
       (window as any).eaTrack?.('generate_lead', { form: 'landing', landing_page: form.dataset.slug, grid: grid.dataset.grid });
       panels[3].focus?.();

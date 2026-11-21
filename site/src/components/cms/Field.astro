@@ -15,21 +15,24 @@ const items: any[] = f.widget === 'list' && Array.isArray(val) ? val : [];
 const dateVal = f.widget === 'date' && val && !isNaN(+new Date(val)) ? new Date(val).toISOString().slice(0, 10) : '';
 const isUpload = f.widget === 'image' || f.widget === 'file';
 ---
-{f.widget === 'object' ? (keyless
+{f.hidden ? <div class="cms-f" data-kind="string" data-key={key} hidden><input class="cms-v" type="hidden" value={val} /></div>
+: f.widget === 'object' ? (keyless
   ? <div class="cms-f cms-obj" data-kind="object"><div class="cms-body">{(f.fields || []).map((c) => <Self f={c} v={val?.[c.name]} />)}</div></div>
   : <fieldset class="cms-f cms-obj" data-kind="object" data-key={key}><legend>{f.label}</legend>{f.hint && <p class="cms-hint">{f.hint}</p>}<div class="cms-body">{(f.fields || []).map((c) => <Self f={c} v={val?.[c.name]} />)}</div></fieldset>)
 : f.widget === 'list' ? (
-  <div class="cms-f cms-list" data-kind="list" data-key={key} data-fixed={f.fixed ? '1' : undefined} data-scalar={f.of ? '1' : undefined}>
+  <div class="cms-f cms-list" data-kind="list" data-key={key} data-fold={f.fold} data-fixed={f.fixed ? '1' : undefined} data-scalar={f.of ? '1' : undefined}>
     <div class="cms-lhd"><span class="cms-lbl">{f.label}</span>{f.hint && <span class="cms-hint">{f.hint}</span>}</div>
     <ol class="cms-items">
       {items.map((item) => <li class="cms-item" data-type={f.types ? item?.type : undefined}>
         <div class="cms-ictl">{f.types && <span class="cms-itype">{typeOf(item?.type)?.label || item?.type}</span>}{!f.fixed && <><button type="button" data-move="-1" aria-label="Move up">▲</button><button type="button" data-move="1" aria-label="Move down">▼</button><button type="button" data-remove class="cms-rm">Remove</button></>}</div>
-        {f.of ? <Self f={f.of} v={item} keyless /> : <Self f={objOf(f.types ? typeOf(item?.type)?.fields || [] : f.fields || [])} v={item} keyless />}
+        {f.of ? <Self f={f.of} v={item} keyless /> : f.fold
+          ? <details class="cms-fold"><summary><span data-fold-title>{item?.[f.fold] || 'New ' + (f.singular || 'row')}</span></summary><Self f={objOf(f.fields || [])} v={item} keyless /></details>
+          : <Self f={objOf(f.types ? typeOf(item?.type)?.fields || [] : f.fields || [])} v={item} keyless />}
       </li>)}
     </ol>
     {!f.fixed && (f.types
       ? f.types.map((t) => <template data-type={t.name}><li class="cms-item" data-type={t.name}><div class="cms-ictl"><span class="cms-itype">{t.label}</span><button type="button" data-move="-1" aria-label="Move up">▲</button><button type="button" data-move="1" aria-label="Move down">▼</button><button type="button" data-remove class="cms-rm">Remove</button></div><Self f={objOf(t.fields)} v={blank(objOf(t.fields))} keyless /></li></template>)
-      : <template><li class="cms-item"><div class="cms-ictl"><button type="button" data-move="-1" aria-label="Move up">▲</button><button type="button" data-move="1" aria-label="Move down">▼</button><button type="button" data-remove class="cms-rm">Remove</button></div>{f.of ? <Self f={f.of} v={blank(f.of)} keyless /> : <Self f={objOf(f.fields || [])} v={blank(objOf(f.fields || []))} keyless />}</li></template>)}
+      : <template><li class="cms-item"><div class="cms-ictl"><button type="button" data-move="-1" aria-label="Move up">▲</button><button type="button" data-move="1" aria-label="Move down">▼</button><button type="button" data-remove class="cms-rm">Remove</button></div>{f.of ? <Self f={f.of} v={blank(f.of)} keyless /> : f.fold ? <details class="cms-fold" open><summary><span data-fold-title>New {f.singular || 'row'}</span></summary><Self f={objOf(f.fields || [])} v={blank(objOf(f.fields || []))} keyless /></details> : <Self f={objOf(f.fields || [])} v={blank(objOf(f.fields || []))} keyless />}</li></template>)}
     {!f.fixed && (f.types
       ? <div class="cms-add"><select data-add-type aria-label="Block type">{f.types.map((t) => <option value={t.name}>{t.label}</option>)}</select><button type="button" data-add class="cms-addbtn">+ Add {f.singular || 'block'}</button></div>
       : <button type="button" data-add class="cms-addbtn">+ Add {f.singular || 'row'}</button>)}

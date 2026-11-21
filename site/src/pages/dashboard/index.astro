@@ -2,39 +2,59 @@
 import Dashboard from '../../layouts/Dashboard.astro';
 import { q } from '../../lib/db';
 import { getSettings } from '../../lib/settings';
-import { money, tripwireStatus, LEVEL_COLOR } from '../../lib/dashboard';
+import { callTime, getState, timezone, upcomingCalls } from '../../lib/calendly';
+import { money, shortDate, tripwireStatus, LEVEL_COLOR, isAnchor, isAssessment, isRoleReadiness } from '../../lib/dashboard';
 const s = await getSettings();
-const signedFrom = Math.max(0, Number(s.signedFromStage || 4) - 1);
+const last = s.stages.length - 1, stageOf = (d: { stage: number }) => s.stages[Math.min(d.stage, last)];
 const [deals, [counts]] = await Promise.all([
-  q('select company, offer, stage, fee_estimate from deals'),
+  q("select company, offer, stage, fee_estimate from deals where status = 'open'"),
   q(`select (select count(*) from leads where created_at >= date_trunc('quarter', now()))::int as quarter_leads,
-            (select count(*) from leads l left join deals d on d.id = l.deal_id where l.created_at > now() - interval '7 days' and (l.deal_id is null or d.stage = 0))::int as new_leads,
+            (select count(*) from leads l left join deals d on d.id = l.deal_id where l.created_at > now() - interval '7 days' and l.partner_id is null and (l.deal_id is null or (d.stage = 0 and d.status = 'open')))::int as new_leads,
             (select count(*) from partners where status = 2)::int as active, (select count(*) from subscribers where in_profile = 'in')::int as in_profile`),
 ]);
-const signed = deals.filter((d) => d.stage >= signedFrom);
+const signed = deals.filter((d) => stageOf(d).countsAsSigned);
 const signedSum = signed.reduce((a, d) => a + Number(d.fee_estimate || 0), 0);
 const proposed = deals.reduce((a, d) => a + Number(d.fee_estimate || 0), 0);
 const share = s.bridge.revenue > 0 ? Math.round((s.bridge.income / s.bridge.revenue) * 100) + '%' : '—';
-const assessed = signed.filter((d) => /assess/i.test(d.offer || '')), anchors = new Set(signed.filter((d) => /anchor/i.test(d.offer || '')).map((d) => d.company));
+const assessed = signed.filter((d) => isAssessment(d.offer)), anchors = new Set(signed.filter((d) => isAnchor(d.offer)).map((d) => d.company));
 const actual: Record<string, [string, number]> = {
   exploration: [String(counts.quarter_leads), counts.quarter_leads],
   partners: [String(counts.active), counts.active],
   assess_to_anchor: [`${assessed.filter((d) => anchors.has(d.company)).length} of ${assessed.length}`, assessed.filter((d) => anchors.has(d.company)).length],
-  role_readiness: [String(signed.filter((d) => /role/i.test(d.offer || '')).length), signed.filter((d) => /role/i.test(d.offer || '')).length],
+  role_readiness: [String(signed.filter((d) => isRoleReadiness(d.offer)).length), signed.filter((d) => isRoleReadiness(d.offer)).length],
   subscribers: [String(counts.in_profile), counts.in_profile],
 };
 const color: Record<string, string> = { partners: 'var(--teal)', subscribers: 'var(--teal)' };
 const pct = (a: number, b: number) => Math.min(100, Math.round((a / (b || 1)) * 100)) + '%';
 const trips = await tripwireStatus(s);
+// Today: what needs attention now, so the first screen answers "what do I do next?"
+const [inbox, due, back] = await Promise.all([
+  q<{ n: number }>('select count(*)::int as n from leads where deal_id is null and partner_id is null'),
+  q("select id, company, stage, next_step, next_due, (next_due < current_date) as overdue from deals where status = 'open' and next_due is not null and next_due <= current_date + 7 order by next_due limit 12"),
+  q("select id, company, revisit_on, closed_note from deals where status = 'later' and revisit_on is not null and revisit_on <= current_date + 7 order by revisit_on limit 12"),
+]);
+const calls = await upcomingCalls(14), tz = timezone(await getState());
+const booked = new Set(calls.map((c) => c.deal_id));
+const dueRest = due.filter((d) => !booked.has(d.id) || d.overdue);   // a deal with a booked call is listed once, as the call
+const nothing = !inbox[0].n && !dueRest.length && !back.length && !calls.length;
 const kpis = [
   { k: s.kept.label, v: money(s.kept.value), sub: `Signed so far: ${money(signedSum)}${signed.length ? ' (' + signed.slice(0, 3).map((d) => d.company).join(', ') + (signed.length > 3 ? '…' : '') + ')' : ''}` },
-  { k: 'Proposed in pipeline', v: money(proposed), sub: `${deals.length} deals across five stages` },
-  { k: 'New leads this week', v: String(counts.new_leads), sub: 'Awaiting Exploration call' },
+  { k: 'Proposed in pipeline', v: money(proposed), sub: `${deals.length} open ${deals.length === 1 ? 'deal' : 'deals'} across ${s.stages.length} stages` },
+  { k: 'New leads this week', v: String(counts.new_leads), sub: `Awaiting the ${s.stages[0].name} call` },
   { k: 'Bridge income share', v: share, sub: 'Tripwire at a third of the year' },
 ];
 ---
 <Dashboard title="What 2027 needs to prove" eyebrow="Measures" active="overview">
   <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:20px">
+    <section class="panel panel--pad today" aria-labelledby="today-h">
+      <h2 class="ph2" id="today-h">Today</h2>
+      {nothing ? <p class="muted" style="margin:10px 0 0;font-size:14px">Nothing is due in the next week. New form submissions and next steps show up here.</p> : <ul>
+        {inbox[0].n > 0 && <li><span class="pill pill--indigo">New</span><a href="/dashboard/inbox"><strong>{inbox[0].n} form {inbox[0].n === 1 ? 'submission' : 'submissions'}</strong> waiting in the Lead inbox</a></li>}
+        {calls.map((c) => <li><span class="pill pill--teal">Call</span><a href={'/dashboard/deal?id=' + c.deal_id}><strong>{c.company}</strong> · {c.event_name}</a><span class="muted">{callTime(c.start_at, tz)}{c.name && ' · ' + c.name}</span></li>)}
+        {dueRest.map((d) => <li><span class={'pill ' + (d.overdue ? 'pill--red' : 'pill--grey')}>{d.overdue ? 'Overdue' : shortDate(d.next_due)}</span><a href={'/dashboard/deal?id=' + d.id}><strong>{d.company}</strong> · {d.next_step || 'Next step'}</a><span class="muted">{stageOf(d).name}{d.overdue && ' · due ' + shortDate(d.next_due)}</span></li>)}
+        {back.map((d) => <li><span class="pill pill--teal">Follow up</span><a href={'/dashboard/deal?id=' + d.id}><strong>{d.company}</strong> · come back {shortDate(d.revisit_on)}</a>{d.closed_note && <span class="muted">{d.closed_note}</span>}</li>)}
+      </ul>}
+    </section>
     <section class="kpis">{kpis.map((x) => <div class="kpi"><p class="k">{x.k}</p><p class="v">{x.v}</p><p class="s">{x.sub}</p></div>)}</section>
     <section class="panel panel--pad">
       <h2 class="ph2" style="font-size:26px;margin-bottom:6px">What 2027 needs to prove</h2>
@@ -45,12 +65,13 @@ const kpis = [
       <div class="panel panel--pad" style="background:var(--indigo);color:#fff;border:0"><h2 class="ph2" style="margin-bottom:14px">Five learning questions</h2><ol style="margin:0;padding-left:20px;display:grid;gap:8px;font-size:15px;line-height:1.45">{s.learningQuestions.map((x) => <li>{x}</li>)}</ol></div>
       <div class="panel panel--pad"><h2 class="ph2" style="margin-bottom:14px">Bridge-work tripwires</h2>
         <ul style="margin:0;padding:0;list-style:none;display:grid;gap:10px">{trips.map((t) => <li style="display:flex;gap:12px;align-items:start;font-size:14px;line-height:1.45"><span style={`flex:none;width:10px;height:10px;border-radius:50%;background:${LEVEL_COLOR[t.level] || LEVEL_COLOR.clear};margin-top:5px`}></span><span><strong>{t.rule}</strong>{t.status && <><br /><span class="muted">{t.status}</span></>}</span></li>)}</ul>
-        <form data-save="activities" data-method="POST" data-reload class="logbd"><label for="bd-h">Log BD time</label><input id="bd-h" name="hours" type="number" min="0.25" step="0.25" required class="inp" placeholder="Hours" style="width:90px" /><input name="note" class="inp" placeholder="What (optional)" style="flex:1;min-width:140px" aria-label="What" /><button class="dbtn dbtn--sm" type="submit">Add</button><span role="status" class="faint" style="font-size:12px"></span></form>
+        <form data-save="activities" data-method="POST" data-reload class="logbd"><label for="bd-h">Log business-development time</label><input id="bd-h" name="hours" type="number" min="0.25" step="0.25" required class="inp" placeholder="Hours" style="width:90px" /><input name="note" class="inp" placeholder="What (optional)" style="flex:1;min-width:140px" aria-label="What" /><button class="dbtn dbtn--sm" type="submit">Add</button><span role="status" class="faint" style="font-size:12px"></span></form>
       </div>
     </section>
   </div>
 </Dashboard>
 <style>
+.today ul{list-style:none;margin:12px 0 0;padding:0;display:grid}.today li{display:flex;gap:6px 12px;align-items:baseline;flex-wrap:wrap;padding:10px 0;border-top:1px solid rgba(18,15,56,.08);font-size:14.5px}.today li .muted{font-size:13px}.today li .pill{min-width:74px;text-align:center}
 .ms{display:grid;grid-template-columns:minmax(160px,1.4fr) minmax(120px,1fr) minmax(140px,2fr);gap:16px;align-items:center;padding:12px 0;border-top:1px solid rgba(18,15,56,.08)}
 @media (max-width:600px){.ms{grid-template-columns:minmax(0,1fr);gap:6px}}
 .ms__m{font-size:15px;font-weight:500}.ms__t{font-size:13px;color:var(--muted)}.ms__b{display:flex;align-items:center;gap:12px}.ms__b>span{font-size:14px;font-weight:600;min-width:64px;text-align:right}

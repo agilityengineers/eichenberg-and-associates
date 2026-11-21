@@ -3,7 +3,7 @@ const read = (f: HTMLElement): any => {
   const k = f.dataset.kind;
   if (k === 'object') { const o: Record<string, any> = {}; f.querySelectorAll<HTMLElement>(':scope > .cms-body > .cms-f').forEach((c) => { if (c.dataset.key) o[c.dataset.key] = read(c); }); return o; }
   if (k === 'list') return [...f.querySelectorAll<HTMLElement>(':scope > .cms-items > .cms-item')].map((li) => {
-    const v = read(li.querySelector<HTMLElement>(':scope > .cms-f')!); return li.dataset.type ? { type: li.dataset.type, ...v } : v; })
+    const v = read(li.querySelector<HTMLElement>(':scope > .cms-f, :scope > .cms-fold > .cms-f')!); return li.dataset.type ? { type: li.dataset.type, ...v } : v; })
     .filter((v) => !(f.dataset.scalar && typeof v === 'string' && !v.trim()));
   const el = f.querySelector<HTMLInputElement>('.cms-v'); if (!el) return null;
   if (k === 'boolean') return el.checked;
@@ -41,7 +41,8 @@ document.addEventListener('change', async (e) => {
     v.value = j.url; if (prev) { prev.src = j.url; prev.hidden = false; } dirty(box); }
   catch (err: any) { alert(err.message); } finally { label.firstChild!.textContent = was; input.value = ''; }
 });
-document.addEventListener('input', (e) => { const t = e.target as HTMLElement; if (t.closest('[data-cms-form]')) dirty(t); if (t.matches('.cms-up .cms-v')) { const p = t.parentElement!.querySelector<HTMLImageElement>('.cms-prev'); if (p) { p.src = (t as HTMLInputElement).value; p.hidden = !(t as HTMLInputElement).value; } } });
+document.addEventListener('input', (e) => { const t = e.target as HTMLElement; if (t.closest('[data-cms-form]')) dirty(t); { const fold = t.closest<HTMLElement>('.cms-fold'), key = fold?.closest<HTMLElement>('.cms-list')?.dataset.fold; // keep a folded row's title in step with its name
+    if (fold && key && t.closest('.cms-f')?.getAttribute('data-key') === key && t.closest('.cms-fold') === fold && t.closest('.cms-item') === fold.parentElement) fold.querySelector(':scope > summary [data-fold-title]')!.textContent = (t as HTMLInputElement).value || 'Untitled'; } if (t.matches('.cms-up .cms-v')) { const p = t.parentElement!.querySelector<HTMLImageElement>('.cms-prev'); if (p) { p.src = (t as HTMLInputElement).value; p.hidden = !(t as HTMLInputElement).value; } } });
 
 const dirty = (el: Element) => { const f = el.closest<HTMLFormElement>('[data-cms-form]'); if (f) { f.dataset.dirty = '1'; const st = f.querySelector('.cms-st'); if (st) st.textContent = 'Unsaved changes'; } };
 addEventListener('beforeunload', (e) => { if (document.querySelector('[data-cms-form][data-dirty]')) e.preventDefault(); });
