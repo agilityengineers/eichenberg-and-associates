@@ -1,0 +1,21 @@
+{
+  "title": "How we’ll decide together",
+  "description": "Four steps from a first call to a proposal, with one decision point after the first call.",
+  "eyebrow": "Eichenberg & Associates",
+  "heading": "How we’ll decide together",
+  "stepWord": "Step",
+  "minutesWord": "min",
+  "leaveLabel": "You leave with",
+  "steps": [
+    { "minutes": "15", "name": "First call", "question": "Is there a reason to talk?", "description": "We look at where your go-live stands and what’s at stake.", "leave": "A clear yes or no on a longer conversation." },
+    { "minutes": "60", "name": "Discovery", "question": "What are the needs, and whose?", "description": "We hear from the people closest to the go-live, including your sponsor and program lead.", "leave": "A shared picture of the risks." },
+    { "minutes": "60", "name": "Scoping", "question": "What could we do together?", "description": "We agree on the results, approach and investment.", "leave": "Agreement on scope and price, and a time to review the proposal." },
+    { "minutes": "60", "name": "Proposal", "question": "What else do you need before we start?", "description": "I present the proposal to you and your approver. We confirm approvals and procurement.", "leave": "The proposal, a decision date and a kickoff plan." }
+  ],
+  "fitTag": "Fit?",
+  "decisionLabel": "Decision point:",
+  "decisionText": "Do we both see a fit? If yes, we schedule the longer conversation. Either of us can stop at any point.",
+  "bookLabel": "Book a 15-min call",
+  "replayLabel": "Replay",
+  "focusHint": "Select a step to focus on it."
+}

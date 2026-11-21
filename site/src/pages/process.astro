@@ -1,0 +1,118 @@
+---
+// Unlisted page: an animated walk through "How we'll decide together". Reachable only by its link — it is not in the
+// menu, footer or sitemap, and carries noindex. Copy is edited at Dashboard → Website content.
+import Base from '../layouts/Base.astro';
+import { page } from '../lib/content';
+const [c, contact] = await Promise.all([page('process'), page('contact')]);
+const steps: { minutes: string; name: string; question: string; description: string; leave: string }[] = Array.isArray(c.steps) ? c.steps : [];
+const bookUrl = /^https:\/\//.test(String(contact.booking?.url || '')) ? String(contact.booking.url) : '';
+// Line icons, one pair per step (large beside the name, small beside the description). Extra steps reuse the last pair.
+const ICONS: [string, string][] = [
+  ['<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M14.05 2a9 9 0 0 1 8 7.94"/><path d="M14.05 6A5 5 0 0 1 18 10"/>', '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>'],
+  ['<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 8h8"/><path d="M8 12h5"/>'],
+  ['<rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>', '<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/>'],
+  ['<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/>', '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>'],
+];
+const icon = (i: number, k: 0 | 1) => ICONS[Math.min(i, ICONS.length - 1)][k];
+// When each piece enters (seconds). The first step, then the decision point, then the rest in turn.
+const at = (i: number) => (i === 0 ? 0.35 : 2.0 + (i - 1) * 0.75);
+const bandAt = 2.0 + Math.max(0, steps.length - 2) * 0.75 + 0.9;
+---
+<Base title={c.title} description={c.description} noindex>
+  <section class="wrap pp" id="pp" style={`--n:${Math.max(1, steps.length - 1)}`}>
+    <header class="pp__hd"><p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="font-size:clamp(40px,5.6vw,76px);animation-delay:.1s">{c.heading}</h1></header>
+    <ol class="pp__steps">
+      {steps.map((s, i) => <>
+        <li class="pp__card" data-step style={`--d:${at(i)}s`}>
+          <button type="button" class="pp__top" aria-pressed="false"><span>{c.stepWord} {i + 1}</span><span aria-hidden="true">·</span><span>{s.minutes} {c.minutesWord}</span></button>
+          <div class="pp__body">
+            <svg class="pp__ic" viewBox="0 0 24 24" aria-hidden="true" set:html={icon(i, 0)} />
+            <h2>{s.name}</h2>
+            <p class="pp__q">{s.question}</p>
+            <div class="pp__d"><span><svg viewBox="0 0 24 24" aria-hidden="true" set:html={icon(i, 1)} /></span><p>{s.description}</p></div>
+            <div class="pp__leave"><p class="pp__ll">{c.leaveLabel}</p><p>{s.leave}</p></div>
+          </div>
+        </li>
+        {i === 0 && steps.length > 1 && <li class="pp__gate" role="presentation"><span class="pp__bar"></span><span class="pp__fit">{c.fitTag}</span></li>}
+      </>)}
+    </ol>
+    <p class="pp__band" style={`--d:${bandAt}s`}><strong>{c.decisionLabel}</strong> {c.decisionText}</p>
+    <div class="pp__foot" style={`--d:${bandAt + 0.4}s`}>
+      {bookUrl && <a href={bookUrl} class="btn btn--teal" target="_blank" rel="noopener">{c.bookLabel}</a>}
+      <button type="button" class="pp__replay" id="pp-replay"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>{c.replayLabel}</button>
+      <span class="pp__hint">{c.focusHint}</span>
+    </div>
+  </section>
+</Base>
+<style>
+.pp{padding-top:clamp(48px,6vw,88px);padding-bottom:clamp(56px,7vw,104px);display:grid;gap:clamp(24px,3vw,36px)}
+.pp__hd{display:grid;gap:10px;padding-bottom:20px;border-bottom:3px solid var(--navy)}.pp__hd p{margin:0}
+.pp__steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr) auto repeat(var(--n),minmax(0,1fr));column-gap:clamp(12px,1.6vw,24px);align-items:stretch}
+.pp__card{min-width:0;display:flex;flex-direction:column;background:#fff;border:2px solid var(--indigo);border-radius:10px;overflow:hidden;position:relative;transition:opacity .3s,transform .3s,box-shadow .3s}
+.pp__top{all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:center;gap:10px;padding:16px 12px;background:var(--navy);color:#fff;font-family:var(--sans);font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.pp__top:focus-visible{outline:3px solid var(--teal);outline-offset:-3px}
+.pp__body{flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 18px 18px;text-align:center}
+.pp__ic{width:44px;height:44px;fill:none;stroke:var(--navy);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.pp__body h2{margin:0;font-family:var(--sans);font-weight:700;font-size:clamp(24px,2.2vw,30px);line-height:1.1;color:var(--navy)}
+.pp__q{margin:0;width:100%;padding:16px 0;border-block:1px solid rgba(18,15,56,.14);font-size:19px;line-height:1.3;color:var(--navy);min-height:5.1em;display:grid;place-items:center;text-wrap:balance}
+.pp__d{display:flex;gap:14px;align-items:center;text-align:left;width:100%;flex:1}.pp__d p{margin:0;font-size:15.5px;line-height:1.45;color:var(--ink);min-width:0}
+.pp__d span{flex:none;width:52px;height:52px;border-radius:50%;background:var(--paper);display:grid;place-items:center}.pp__d svg{width:24px;height:24px;fill:none;stroke:var(--navy);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.pp__leave{width:100%;background:var(--paper);border-radius:6px;padding:14px 12px;display:grid;gap:4px;min-height:6.6em;align-content:center}.pp__leave p{margin:0;font-size:15.5px;line-height:1.35;font-weight:500;color:var(--navy)}
+.pp__leave .pp__ll{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--indigo)}
+/* the decision point: a teal bar between step 1 and step 2 that runs down into the band */
+.pp__gate{position:relative;width:56px;display:grid;place-items:center}
+.pp__bar{position:absolute;top:0;bottom:calc(-1 * clamp(24px,3vw,36px));left:50%;width:14px;margin-left:-7px;background:var(--teal);transform-origin:top}
+.pp__fit{position:relative;background:var(--teal);color:var(--navy);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;padding:14px 12px;border-radius:10px;white-space:nowrap}
+.pp__band{margin:0;background:var(--teal);color:var(--navy);border-radius:6px;padding:18px 22px;text-align:center;font-size:clamp(16px,1.5vw,19px);line-height:1.45;position:relative}
+.pp__foot{display:flex;gap:14px 20px;align-items:center;flex-wrap:wrap}
+.pp__replay{display:inline-flex;gap:8px;align-items:center;font:inherit;font-size:15px;font-weight:600;color:var(--navy);background:none;border:1px solid rgba(18,15,56,.3);border-radius:6px;padding:11px 16px;cursor:pointer}.pp__replay:hover{border-color:var(--navy)}
+.pp__replay[hidden]{display:none}
+.pp__replay svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pp__hint{font-size:14px;color:var(--muted)}
+/* spotlight: one step forward, the rest back */
+.pp.has-focus .pp__card:not(.is-focus){opacity:.38}
+.pp__card.is-focus{box-shadow:0 22px 44px rgba(18,15,56,.2);transform:translateY(-6px)}
+.pp__card{cursor:pointer}
+/* the walkthrough (only when the script has started it; without it everything is simply visible) */
+@keyframes ppRise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes ppDraw{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes ppPop{0%{opacity:0;transform:scale(.4)}70%{opacity:1;transform:scale(1.12)}100%{opacity:1;transform:none}}
+@keyframes ppLine{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pp.play .pp__card{animation:ppRise .65s cubic-bezier(.2,.7,.2,1) var(--d) both}
+.pp.play .pp__bar{animation:ppDraw .7s ease-in-out 1.05s both}
+.pp.play .pp__fit{animation:ppPop .5s cubic-bezier(.2,.7,.2,1) 1.55s both}
+.pp.play .pp__band,.pp.play .pp__foot{animation:ppRise .6s ease-out var(--d) both}
+/* a short line crosses each gap just before the next step arrives */
+.pp__card+.pp__card::before,.pp__gate+.pp__card::before{content:"";position:absolute;z-index:1;top:27px;right:100%;width:clamp(12px,1.6vw,24px);height:3px;margin-right:2px;background:var(--teal);transform-origin:left}
+@media (min-width:901px){.pp__gate+.pp__card::before{width:calc(clamp(12px,1.6vw,24px) + 21px)}}
+.pp.play .pp__card+.pp__card::before,.pp.play .pp__gate+.pp__card::before{animation:ppLine .3s linear calc(var(--d) - .25s) both}
+.pp__card{overflow:visible}.pp__top{border-radius:8px 8px 0 0}
+@media (max-width:900px){
+  .pp__steps{grid-template-columns:minmax(0,1fr);row-gap:22px}
+  .pp__gate{width:auto;height:56px}
+  .pp__bar{top:-22px;bottom:-22px}
+  .pp__card+.pp__card::before,.pp__gate+.pp__card::before{top:auto;bottom:100%;right:auto;left:50%;width:3px;height:22px;margin:0 0 2px -1.5px;transform-origin:top}
+  @keyframes ppLine{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  .pp__q{min-height:0}.pp__leave{min-height:0}
+  .pp__band{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){.pp__card.is-focus{transform:none}}
+</style>
+<script is:inline>
+(function () {
+  var root = document.getElementById('pp'); if (!root) return;
+  var cards = [].slice.call(root.querySelectorAll('[data-step]'));
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function play() { root.classList.remove('play'); void root.offsetWidth; root.classList.add('play'); }
+  function focus(card) {
+    var on = card && !card.classList.contains('is-focus');
+    cards.forEach(function (c) { c.classList.remove('is-focus'); c.querySelector('.pp__top').setAttribute('aria-pressed', 'false'); });
+    root.classList.toggle('has-focus', !!on);
+    if (on) { card.classList.add('is-focus'); card.querySelector('.pp__top').setAttribute('aria-pressed', 'true'); }
+  }
+  cards.forEach(function (c) { c.addEventListener('click', function () { focus(c); }); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') focus(null); });
+  var replay = document.getElementById('pp-replay');
+  if (still) { if (replay) replay.hidden = true; } else { play(); if (replay) replay.addEventListener('click', function () { focus(null); play(); }); }
+})();
+</script>

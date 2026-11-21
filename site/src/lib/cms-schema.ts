@@ -145,6 +145,13 @@ export const DOCS: DocType[] = [
     str('newsletterNote', 'Small note after the text', { optional: true }), str('emailLabel', 'Email label'), str('emailPlaceholder', 'Email placeholder'),
     str('subscribeLabel', 'Button label'), str('subscribing', 'While sending'), str('subscribed', 'Success message'), str('subscribeError', 'Error message'),
   ] },
+  { collection: 'pages', slug: 'process', group: 'Pages', label: 'How we’ll decide together (unlisted, at /process)', description: 'An animated walk through the four steps. It is not in the menu, footer or sitemap and search engines are asked not to list it: share the link /process. The booking button uses the Calendly link set on the Contact page.', fields: [
+    ...meta, str('eyebrow', 'Eyebrow'), str('heading', 'Heading'),
+    str('stepWord', 'Word before the step number'), str('minutesWord', 'Word after the minutes'), str('leaveLabel', 'Label above what they leave with'),
+    rows('steps', 'Steps', [str('minutes', 'Minutes'), str('name', 'Step name'), str('question', 'Question'), text('description', 'What happens'), text('leave', 'You leave with')], { singular: 'step', hint: 'The decision point sits after the first step.' }),
+    str('fitTag', 'Decision tag'), str('decisionLabel', 'Decision line: bold lead-in'), text('decisionText', 'Decision line'),
+    str('bookLabel', 'Booking button label'), str('replayLabel', 'Replay button label'), str('focusHint', 'Hint under the steps'),
+  ] },
   { collection: 'pages', slug: 'contact', group: 'Pages', label: 'Contact', description: 'The “Where are you?” choices are under Dashboard → Settings → Pick-lists.', fields: [
     ...meta, str('eyebrow', 'Eyebrow'), str('heading', 'Heading'), text('lead', 'Lead'),
     str('emailLabel', 'Email label'), str('phoneLabel', 'Phone label'), str('linkedinLabel', 'LinkedIn label'), str('linkedinText', 'LinkedIn link text'),
