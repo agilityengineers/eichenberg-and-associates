@@ -10,7 +10,7 @@ export const bdCap = (fee: number | null) => (fee ? Math.round((Number(fee) * 0.
 
 export async function navCounts() {
   return (await one<{ leads: number; deals: number; active: number; pages: number; subs: number }>(`select
-    (select count(*) from leads where deal_id is null)::int as leads, (select count(*) from deals)::int as deals,
+    (select count(*) from leads where deal_id is null)::int as leads, (select count(*) from deals where status = 'open')::int as deals,
     (select count(*) from partners where status = 2)::int as active, (select count(*) from landing_pages)::int as pages,
     (select count(*) from subscribers)::int as subs`))!;
 }
@@ -29,5 +29,9 @@ export async function tripwireStatus(s: Settings) {
     return { rule: t.rule, level: t.level || 'clear', status: t.status || '' };
   });
 }
+/** Offers are matched by name for the measures and the card colour: the anchor engagement is “OCM Leadership”. */
+export const isAnchor = (offer: string | null) => /anchor|ocm leadership/i.test(offer || '');
+export const isAssessment = (offer: string | null) => /assess/i.test(offer || '');
+export const isRoleReadiness = (offer: string | null) => /role readiness/i.test(offer || '');
 export const LEVEL_COLOR: Record<string, string> = { clear: '#14B6A1', watch: '#E0A82E', tripped: '#B3261E' };
 export { q };
