@@ -7,7 +7,7 @@ import { blockedSenders } from '../../lib/spam';
 const filter = Astro.url.searchParams.get('page') || 'all';
 const [pages, s] = await Promise.all([q('select slug, eyebrow from landing_pages order by slug'), getSettings()]);
 const where = filter === 'all' ? '' : filter === 'contact' ? "where l.source = 'contact'" : 'where l.page_slug = $1';
-const leads = await q(`select l.*, d.stage from leads l left join deals d on d.id = l.deal_id ${where} order by l.created_at desc limit 300`, where.includes('$1') ? [filter] : []);
+const leads = await q(`select l.*, d.stage, d.status as deal_status from leads l left join deals d on d.id = l.deal_id ${where} order by l.created_at desc limit 300`, where.includes('$1') ? [filter] : []);
 // Senders are recognised by the hashed address stored with each submission: how many each has sent, and who is blocked.
 const counts = new Map((await q<{ ip_hash: string; n: number }>('select ip_hash, count(*)::int as n from leads where ip_hash is not null group by ip_hash')).map((r) => [r.ip_hash, r.n]));
 const blocked = new Set((await blockedSenders()).map((b) => b.ip_hash));
@@ -27,7 +27,7 @@ const key = (l: { page_slug: string | null; answers: Record<string, string> }) =
       <span style="margin-left:auto;font-size:13px;color:var(--faint)" id="sel-count" role="status" aria-live="polite" data-total={leads.length}>{leads.length} submissions</span>
       <button type="button" class="dbtn dbtn--sm" id="sel-del" disabled>Delete selected</button>
     </div>
-    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th style="width:1%"><input type="checkbox" id="sel-all" aria-label="Select all submissions on this page" disabled={!leads.length} /></th><th>Received</th><th>Lead</th><th>Page</th><th>Grid</th><th>Key answer</th><th></th></tr></thead><tbody>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th style="width:1%"><input type="checkbox" id="sel-all" aria-label="Select all submissions on this page" disabled={!leads.length} /></th><th>Received</th><th>Lead</th><th>Page</th><th>Lead / do</th><th>Key answer</th><th></th></tr></thead><tbody>
       {leads.map((l) => <tr>
         <td><input type="checkbox" class="sel" value={l.id} aria-label={'Select the submission from ' + l.name} /></td>
         <td style="white-space:nowrap;color:var(--muted)">{when(new Date(l.created_at))}</td>
@@ -35,7 +35,7 @@ const key = (l: { page_slug: string | null; answers: Record<string, string> }) =
         <td><span class="pill pill--indigo">{label(l.page_slug)}</span></td>
         <td style="font-size:13px;color:var(--muted);white-space:nowrap">{GRID_SHORT[l.grid] || '—'}</td>
         <td style="color:var(--muted);max-width:280px">{key(l) || '—'}</td>
-        <td style="white-space:nowrap">{l.deal_id ? <a href="/dashboard/pipeline" style="font-size:13px;color:var(--teal);font-weight:600">In {s.stages[l.stage ?? 0]?.name} ✓</a> : <button class="dbtn dbtn--sm" data-action="convert" data-id={l.id}>Add to pipeline</button>}
+        <td style="white-space:nowrap">{l.deal_id ? <a href={'/dashboard/deal?id=' + l.deal_id} style="font-size:13px;color:var(--teal);font-weight:600">{l.deal_status && l.deal_status !== 'open' ? 'Closed: ' + (s.closeReasons.find((r) => r.value === l.deal_status)?.label || l.deal_status) : 'In ' + s.stages[Math.min(l.stage ?? 0, s.stages.length - 1)]?.name + ' ✓'}</a> : l.partner_id ? <a href="/dashboard/partners" style="font-size:13px;color:#0E7C6E;font-weight:600">In SI partners ✓</a> : <button class="dbtn dbtn--sm" data-action="convert" data-id={l.id}>Add to pipeline</button>}
           {l.ip_hash && <div class="snd">{(counts.get(l.ip_hash) || 1) > 1 && <span>{counts.get(l.ip_hash)} from this sender</span>}{blocked.has(l.ip_hash) ? <span class="pill pill--indigo">Blocked</span> : <button type="button" class="lnk-rm" data-block={l.id} data-name={l.name} data-n={counts.get(l.ip_hash) || 1}>Block sender</button>}</div>}</td>
       </tr>)}
       {!leads.length && <tr><td colspan="7" style="padding:40px;text-align:center;color:var(--faint)">No submissions yet.</td></tr>}

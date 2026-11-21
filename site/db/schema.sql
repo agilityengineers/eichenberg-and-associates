@@ -109,13 +109,26 @@ create table if not exists deals (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   company text not null, contact text, lead_id uuid references leads(id) on delete set null,
-  stage smallint not null default 0 check (stage between 0 and 4),   -- index into Settings → pipeline stages
+  stage smallint not null default 0,   -- index into Settings → pipeline stages
   offer text, fee_estimate numeric, go_live text, source text,
   partner_id uuid references partners(id) on delete set null, grid text,
   next_step text, next_due date,
   bd_hours numeric not null default 0,
   notes text, updated_at timestamptz not null default now()
 );
+-- Contact-form submissions from SI partners go to the partner tracker instead of the pipeline; this links the two.
+alter table leads add column if not exists partner_id uuid references partners(id) on delete set null;
+-- Sales process (November 2026): stages are now editable in Settings, so the fixed 0–4 range is gone; deals can be
+-- closed with a reason instead of deleted, and carry the gate ticks, captured answers and stakeholder map.
+alter table deals drop constraint if exists deals_stage_check;
+alter table deals add column if not exists status text not null default 'open';        -- open | not_fit | referred | later | lost
+alter table deals add column if not exists closed_note text;
+alter table deals add column if not exists referred_to text;
+alter table deals add column if not exists revisit_on date;
+alter table deals add column if not exists closed_at timestamptz;
+alter table deals add column if not exists gate jsonb not null default '{}';           -- { gate check id: true }
+alter table deals add column if not exists capture jsonb not null default '{}';        -- { capture field id: text }
+alter table deals add column if not exists stakeholders jsonb not null default '[]';   -- [{ who, feels, role, drives, needs }]
 do $$ begin
   if not exists (select 1 from pg_constraint where conname = 'leads_deal_fk') then
     alter table leads add constraint leads_deal_fk foreign key (deal_id) references deals(id) on delete set null;
