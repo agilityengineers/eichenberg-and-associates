@@ -120,6 +120,8 @@ Both are set at *Dashboard → Website content → Site-wide → Google Analytic
 
 ## Persona landing pages + sales dashboard
 
+**Unlisted process page:** `/process` is an animated walk through “How we’ll decide together”. It is not in the menu, footer or sitemap and carries `noindex`; share the link. Its text is edited at Dashboard → Website content, and its booking button uses the Calendly link set on the Contact page.
+
 Five unlisted campaign pages at `/for/<slug>` (`operations`, `sponsor-90-days`, `pmo`, `integration`, `si-partners`), each with a 4-step guided form (about you → situation → the "who can lead it / who can do it" grid → outcome + Calendly + lead magnet). Copy and questions are seeded from `src/lib/personas.js` and edited in the dashboard. Each page can have its own hero photo (*Dashboard → Landing pages → Hero background image*; `public/images/hero-operations.jpg`, `hero-pmo.jpg` and `hero-integration.jpg` are the defaults, the other two pages use the home-page photo).
 
 Dashboard views: **Overview** (Today list, KPIs, measures vs targets, learning questions, tripwires, log BD time), **Lead inbox**, **Pipeline** (the sales process: stages, gates, call guides, capture fields and card contents are all edited in Settings; deals close with a reason instead of being deleted; the deal page carries the stage call guide, gate checklist and stakeholder map), **Form builder**, **Systems Integrator (SI) partners**, **Landing pages** (copy, fee toggle, magnet, Calendly URL, publish), **Subscribers**, **Content calendar**, **Website content**, and **Settings** (stage names and questions, measures and targets, tripwire rules, the KPI "Kept" figure, pick-lists for offers/sources/situations, who can sign in).
