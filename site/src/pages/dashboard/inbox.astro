@@ -28,14 +28,14 @@ const key = (l: { page_slug: string | null; answers: Record<string, string> }) =
       <button type="button" class="dbtn dbtn--sm" id="sel-del" disabled>Delete selected</button>
     </div>
     <div style="overflow-x:auto"><table class="tbl"><thead><tr><th style="width:1%"><input type="checkbox" id="sel-all" aria-label="Select all submissions on this page" disabled={!leads.length} /></th><th>Received</th><th>Lead</th><th>Page</th><th>Lead / do</th><th>Key answer</th><th></th></tr></thead><tbody>
-      {leads.map((l) => <tr>
+      {leads.map((l) => <tr data-open={'/dashboard/lead?id=' + l.id} title="Double-click to open">
         <td><input type="checkbox" class="sel" value={l.id} aria-label={'Select the submission from ' + l.name} /></td>
         <td style="white-space:nowrap;color:var(--muted)">{when(new Date(l.created_at))}</td>
-        <td><strong style="display:block">{l.name}</strong><span class="muted">{[l.title, l.company].filter(Boolean).join(', ')}</span><br /><a href={'mailto:' + l.email} style="font-size:13px">{l.email}</a></td>
+        <td><a href={'/dashboard/lead?id=' + l.id} style="display:block;font-weight:600;color:var(--ink)">{l.name}</a><span class="muted">{[l.title, l.company].filter(Boolean).join(', ')}</span><br /><a href={'mailto:' + l.email} style="font-size:13px">{l.email}</a></td>
         <td><span class="pill pill--indigo">{label(l.page_slug)}</span></td>
         <td style="font-size:13px;color:var(--muted);white-space:nowrap">{GRID_SHORT[l.grid] || '—'}</td>
         <td style="color:var(--muted);max-width:280px">{key(l) || '—'}</td>
-        <td style="white-space:nowrap">{l.deal_id ? <a href={'/dashboard/deal?id=' + l.deal_id} style="font-size:13px;color:var(--teal);font-weight:600">{l.deal_status && l.deal_status !== 'open' ? 'Closed: ' + (s.closeReasons.find((r) => r.value === l.deal_status)?.label || l.deal_status) : 'In ' + s.stages[Math.min(l.stage ?? 0, s.stages.length - 1)]?.name + ' ✓'}</a> : l.partner_id ? <a href="/dashboard/partners" style="font-size:13px;color:#0E7C6E;font-weight:600">In SI partners ✓</a> : <button class="dbtn dbtn--sm" data-action="convert" data-id={l.id}>Add to pipeline</button>}
+        <td style="white-space:nowrap"><a class="lnk-open" href={'/dashboard/lead?id=' + l.id} aria-label={'Open the submission from ' + l.name} style="display:block;margin-bottom:6px">Open</a>{l.deal_id ? <a href={'/dashboard/deal?id=' + l.deal_id} style="font-size:13px;color:var(--teal);font-weight:600">{l.deal_status && l.deal_status !== 'open' ? 'Closed: ' + (s.closeReasons.find((r) => r.value === l.deal_status)?.label || l.deal_status) : 'In ' + s.stages[Math.min(l.stage ?? 0, s.stages.length - 1)]?.name + ' ✓'}</a> : l.partner_id ? <a href="/dashboard/partners" style="font-size:13px;color:#0E7C6E;font-weight:600">In SI partners ✓</a> : <button class="dbtn dbtn--sm" data-action="convert" data-id={l.id}>Add to pipeline</button>}
           {l.ip_hash && <div class="snd">{(counts.get(l.ip_hash) || 1) > 1 && <span>{counts.get(l.ip_hash)} from this sender</span>}{blocked.has(l.ip_hash) ? <span class="pill pill--indigo">Blocked</span> : <button type="button" class="lnk-rm" data-block={l.id} data-name={l.name} data-n={counts.get(l.ip_hash) || 1}>Block sender</button>}</div>}</td>
       </tr>)}
       {!leads.length && <tr><td colspan="7" style="padding:40px;text-align:center;color:var(--faint)">No submissions yet.</td></tr>}

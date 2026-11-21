@@ -32,3 +32,10 @@ document.querySelectorAll<HTMLFormElement>('form[data-save]').forEach((f) => f.a
   try { await api(f.dataset.save!, (f.dataset.method as any) || 'PATCH', body); if (st) st.textContent = 'Saved.'; if (f.dataset.reload !== undefined) location.reload(); }
   catch { if (st) st.textContent = ''; }
 }));
+
+// Any row or card with data-open opens its record on a double-click (the visible Edit / Open link does the same for
+// keyboards and touch screens). Double-clicks on a control inside it are left alone.
+document.addEventListener('dblclick', (e) => {
+  const t = e.target as HTMLElement; if (t.closest('a,button,input,select,textarea,label,summary')) return;
+  const el = t.closest<HTMLElement>('[data-open]'); if (el?.dataset.open) location.assign(el.dataset.open);
+});

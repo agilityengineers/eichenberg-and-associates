@@ -1,0 +1,61 @@
+---
+import Dashboard from '../../layouts/Dashboard.astro';
+import { one, q } from '../../lib/db';
+import { getSettings } from '../../lib/settings';
+import { page } from '../../lib/content';
+import { blockedSenders } from '../../lib/spam';
+const id = Astro.url.searchParams.get('id') || '';
+const l = /^[0-9a-f-]{36}$/.test(id) ? await one('select l.*, d.stage, d.status as deal_status, d.company as deal_company, p.firm as partner_firm, lp.eyebrow as page_name from leads l left join deals d on d.id = l.deal_id left join partners p on p.id = l.partner_id left join landing_pages lp on lp.slug = l.page_slug where l.id = $1', [id]) : null;
+if (!l) return Astro.redirect('/dashboard/inbox');
+const s = await getSettings();
+// Each answer is shown under the question it answers.
+let labels: Record<string, string> = {};
+if (l.page_slug) labels = Object.fromEntries((await q('select key, label from form_questions where page_slug = $1', [l.page_slug])).map((r) => [r.key, r.label]));
+else { const f = (await page('contact')).form || {}; labels = { situation: f.situation, message: f.message }; }
+const blocked = l.ip_hash ? (await blockedSenders()).some((b) => b.ip_hash === l.ip_hash) : false;
+const received = new Date(l.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+const where = l.deal_id ? (l.deal_status && l.deal_status !== 'open' ? 'Closed: ' + (s.closeReasons.find((r) => r.value === l.deal_status)?.label || l.deal_status) : 'In ' + s.stages[Math.min(l.stage ?? 0, s.stages.length - 1)].name) : '';
+---
+<Dashboard title={l.name} eyebrow="Lead inbox · Form submission" active="inbox">
+  <div class="rlay">
+    <div style="display:grid;gap:20px;min-width:0">
+      <form class="panel panel--pad" data-save="leads" style="display:grid;gap:14px"><input type="hidden" name="id" value={l.id} />
+        <h2 class="ph2">Contact details</h2>
+        <p class="cms-hint" style="margin:0">Correct a typo or fill in what’s missing. {l.deal_id ? 'The deal made from this submission is updated too, unless it has already been changed there.' : l.partner_id ? 'The SI partner entry made from this submission is updated too, unless it has already been changed there.' : ''}</p>
+        <div class="rgrid">
+          <div class="cms-f"><label for="l-n">Name</label><input id="l-n" name="name" class="cms-v" value={l.name} required /></div>
+          <div class="cms-f"><label for="l-e">Email</label><input id="l-e" name="email" type="email" class="cms-v" value={l.email} required /></div>
+          <div class="cms-f"><label for="l-c">Company</label><input id="l-c" name="company" class="cms-v" value={l.company} /></div>
+          <div class="cms-f"><label for="l-t">Title</label><input id="l-t" name="title" class="cms-v" value={l.title} /></div>
+        </div>
+        <div class="cms-save"><a href="/dashboard/inbox" style="font-size:13px">← Back to the Lead inbox</a><span role="status" aria-live="polite" class="cms-st"></span><button class="dbtn dbtn--teal" type="submit">Save</button></div>
+      </form>
+      <section class="panel panel--pad" style="display:grid;gap:12px">
+        <h2 class="ph2">What they sent</h2>
+        <p class="cms-hint" style="margin:0">Kept exactly as submitted{l.page_name ? ` on the ${l.page_name} page` : l.page_slug ? '' : ' through the contact form'}, {received}.</p>
+        {l.grid_result && <p style="margin:0"><span class="muted" style="font-size:12px;display:block">Who can lead / who can do</span>{l.grid_result}</p>}
+        <dl style="margin:0;display:grid;gap:12px">{Object.entries(l.answers || {}).map(([k, v]) => <div><dt class="muted" style="font-size:12px">{labels[k] || k}</dt><dd style="margin:0;white-space:pre-wrap;overflow-wrap:anywhere">{String(v)}</dd></div>)}</dl>
+        {!Object.keys(l.answers || {}).length && !l.grid_result && <p class="muted" style="margin:0">No answers beyond the contact details.</p>}
+      </section>
+    </div>
+    <aside class="panel panel--pad" style="display:grid;gap:14px;font-size:14px;align-content:start">
+      <h2 class="ph2" style="font-size:20px">Where it stands</h2>
+      {l.deal_id ? <p style="margin:0"><span class="pill pill--teal">{where}</span><br /><a href={'/dashboard/deal?id=' + l.deal_id} style="font-weight:600;display:inline-block;margin-top:8px">Open the deal: {l.deal_company}</a></p>
+        : l.partner_id ? <p style="margin:0"><span class="pill pill--indigo2">In SI partners</span><br /><a href={'/dashboard/partner?id=' + l.partner_id} style="font-weight:600;display:inline-block;margin-top:8px">Open the partner: {l.partner_firm}</a></p>
+        : <div style="display:grid;gap:8px"><p style="margin:0" class="muted">Not in the pipeline yet.</p><button class="dbtn dbtn--sm" data-action="convert" data-id={l.id} style="justify-self:start">Add to pipeline</button></div>}
+      <p style="margin:0"><a href={'mailto:' + l.email}>Email {l.name.split(' ')[0]}</a></p>
+      <div style="display:grid;gap:8px;padding-top:12px;border-top:1px solid rgba(18,15,56,.08);justify-items:start">
+        {l.ip_hash && (blocked ? <span class="pill pill--indigo">Sender blocked</span> : <button type="button" class="lnk-rm" id="blk" data-lead={l.id} data-name={l.name}>Block sender</button>)}
+        <button type="button" class="lnk-rm" data-action="delete" data-table="leads" data-id={l.id} data-confirm="Delete this submission? This cannot be undone. A deal already in the pipeline is kept." data-redirect="/dashboard/inbox">Delete submission</button>
+      </div>
+    </aside>
+  </div>
+</Dashboard>
+<script>
+  import { api } from '../../scripts/dashboard';
+  const b = document.getElementById('blk');
+  b?.addEventListener('click', async () => {
+    if (!confirm(`Block the sender of “${b.dataset.name}”? The contact, landing-page and newsletter forms will refuse anything more from their address. You can undo this in Settings → Spam protection.`)) return;
+    try { await api('blocklist', 'POST', { leadId: b.dataset.lead, purge: false }); location.reload(); } catch {}
+  });
+</script>
