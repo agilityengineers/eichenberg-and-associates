@@ -8,7 +8,7 @@ const last = s.stages.length - 1, stageOf = (d: { stage: number }) => s.stages[M
 const [deals, [counts]] = await Promise.all([
   q("select company, offer, stage, fee_estimate from deals where status = 'open'"),
   q(`select (select count(*) from leads where created_at >= date_trunc('quarter', now()))::int as quarter_leads,
-            (select count(*) from leads l left join deals d on d.id = l.deal_id where l.created_at > now() - interval '7 days' and (l.deal_id is null or (d.stage = 0 and d.status = 'open')))::int as new_leads,
+            (select count(*) from leads l left join deals d on d.id = l.deal_id where l.created_at > now() - interval '7 days' and l.partner_id is null and (l.deal_id is null or (d.stage = 0 and d.status = 'open')))::int as new_leads,
             (select count(*) from partners where status = 2)::int as active, (select count(*) from subscribers where in_profile = 'in')::int as in_profile`),
 ]);
 const signed = deals.filter((d) => stageOf(d).countsAsSigned);
@@ -28,7 +28,7 @@ const pct = (a: number, b: number) => Math.min(100, Math.round((a / (b || 1)) * 
 const trips = await tripwireStatus(s);
 // Today: what needs attention now, so the first screen answers "what do I do next?"
 const [inbox, due, back] = await Promise.all([
-  q<{ n: number }>('select count(*)::int as n from leads where deal_id is null'),
+  q<{ n: number }>('select count(*)::int as n from leads where deal_id is null and partner_id is null'),
   q("select id, company, stage, next_step, next_due, (next_due < current_date) as overdue from deals where status = 'open' and next_due is not null and next_due <= current_date + 7 order by next_due limit 12"),
   q("select id, company, revisit_on, closed_note from deals where status = 'later' and revisit_on is not null and revisit_on <= current_date + 7 order by revisit_on limit 12"),
 ]);
