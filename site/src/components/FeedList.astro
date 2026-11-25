@@ -32,8 +32,8 @@ const more = String(feeds.readMore || 'Read the post');
 </div>
 {(import.meta.env.DEV || Astro.locals.user) && errors.length > 0 && <p class="note" style="margin:10px 0 0">Feed problems (only you can see this): {errors.join(' · ')}</p>}
 <style is:global>
-.feed--cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
-.feed--grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:24px}
+.feed--cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:12px}
+.feed--grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:24px}
 .feed__item{display:grid;align-content:start;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 28px;color:var(--ink);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s}
 .feed__item:hover{transform:translateY(-4px);box-shadow:0 20px 36px rgba(18,15,56,.1);color:var(--ink)}
 .feed__item.rise{animation-fill-mode:backwards}   /* `both` would pin transform:none after the entrance and cancel the hover lift */

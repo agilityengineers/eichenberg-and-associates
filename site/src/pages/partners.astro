@@ -12,7 +12,7 @@ const c = await page('partners');
   </section>
   <section class="wrap" style="padding-bottom:clamp(64px,8vw,104px)">
     <h2 class="eyebrow" style="margin-bottom:24px">{c.coverHeading}</h2>
-    <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+    <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))">
       <div class="indigo cov__box" data-reveal="left"><img src="/images/mark-half-left-white.png" alt="" aria-hidden="true" class="cov__mark" style="right:-8px;opacity:.1" /><h3 class="h3" style="margin-bottom:20px">{c.youCoverLabel}</h3><ul class="cov">{c.youCover.map((i: string) => <li set:html={si(i)} />)}</ul></div>
       <div class="dark cov__box" data-reveal="right"><img src="/images/mark-half-right-teal.png" alt="" aria-hidden="true" class="cov__mark" style="left:-8px;opacity:.18" /><h3 class="h3" style="margin-bottom:20px;color:var(--teal)">{c.weCoverLabel}</h3><ul class="cov">{c.weCover.map((i: string) => <li set:html={si(i)} />)}</ul></div>
     </div>
@@ -24,5 +24,5 @@ const c = await page('partners');
 <style>
 .cov__box{padding:36px 32px;border-radius:10px;position:relative;overflow:hidden;transition-duration:.9s}.cov__box>:not(img){position:relative}.cov__box>.cov__mark{position:absolute;top:-10%;height:120%;width:auto;pointer-events:none}
 .cov{margin:0;padding-left:20px;display:grid;gap:10px;font-size:17px;line-height:1.5}
-.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:40px}.why h3{margin:0 0 10px;font-family:var(--serif);font-weight:400;font-size:28px}.why p{margin:0;font-size:16px;line-height:1.55;color:var(--muted)}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:40px}.why h3{margin:0 0 10px;font-family:var(--serif);font-weight:400;font-size:28px}.why p{margin:0;font-size:16px;line-height:1.55;color:var(--muted)}
 </style>

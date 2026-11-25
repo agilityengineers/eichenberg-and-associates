@@ -36,4 +36,6 @@ const { banner, consent: c } = await analytics();
 .cb button{padding:10px 18px;border-radius:6px;font-weight:600;font-size:14px;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
 .cb__yes{background:var(--teal);color:var(--navy);border:1px solid var(--teal)}.cb__yes:hover{background:#fff;border-color:#fff}
 .cb__no{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5)}.cb__no:hover{border-color:#fff}
+/* Phones: a slimmer sheet so the banner doesn't sit on the hero. */
+@media (max-width:560px){.cb{left:8px;right:8px;bottom:8px;gap:10px;padding:12px 14px}.cb p{flex-basis:100%;font-size:13px;line-height:1.4}.cb__btns{width:100%}.cb__btns button{flex:1;padding:11px 12px}}
 </style>

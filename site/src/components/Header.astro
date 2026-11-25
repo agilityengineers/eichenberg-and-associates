@@ -32,8 +32,14 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 .burger span{display:block;width:22px;height:2px;background:var(--navy)}
 @media (max-width:860px){
   .burger{display:flex}.menu{display:none;width:100%;flex-direction:column;align-items:stretch;gap:2px;padding:8px 0 12px}
-  .menu.open{display:flex}.menu a:not(.cta){display:block;padding:12px}.cta{margin:8px 0 0;text-align:center}
+  .menu.open{display:flex}.menu a:not(.cta){display:block;padding:12px}.cta{display:block;margin:8px 0 0;text-align:center}
 }
+/* Narrow phones: scale the lockup so the logo and the menu button share one row (the header is sticky). */
+@media (max-width:400px){
+  .nav{gap:12px}.brand{gap:10px}.brand img{height:44px}
+  .brand__t span:first-child{font-size:17px}.brand__t span:last-child{font-size:10px;margin-top:5px}
+}
+@media (max-width:340px){.brand img{height:38px}.brand__t span:first-child{font-size:15px;letter-spacing:.18em}.brand__t span:last-child{font-size:9px;letter-spacing:.26em}}
 </style>
 <script>
   const b = document.querySelector('.burger'); const m = document.getElementById('menu');

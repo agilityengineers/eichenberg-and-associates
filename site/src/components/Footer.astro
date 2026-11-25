@@ -8,10 +8,10 @@ const year = new Date().getFullYear();
 type L = { label: string; href: string };
 ---
 <footer class="dark ft">
-  <img src="/images/mark-half-right-teal.png" alt="" aria-hidden="true" class="ft__mark" />
+  <img src="/images/mark-half-right-teal.png" alt="" aria-hidden="true" class="ft__mark" loading="lazy" decoding="async" />
   <div class="wrap ft__grid">
     <div class="ft__brand">
-      <img src="/images/logo-white.png" alt={site.name} width="160" height="116" />
+      <img src="/images/logo-white.png" alt={site.name} width="160" height="116" loading="lazy" decoding="async" />
       <p>{f.tagline}</p>
       <p class="label" style="color:var(--teal)">{site.certification}</p>
     </div>
@@ -31,4 +31,6 @@ type L = { label: string; href: string };
 .ft ul{list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:15px}.ft a{color:#fff}.ft a:hover{color:var(--teal)}
 .ft__bar{position:relative;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-top:20px;padding-bottom:32px;border-top:1px solid rgba(255,255,255,.1);font-size:13px;color:rgba(255,255,255,.6)}.ft__bar a{color:rgba(255,255,255,.6)}
 .ft__btn{font:inherit;color:rgba(255,255,255,.6);background:none;border:0;padding:0;cursor:pointer}.ft__btn:hover{color:var(--teal)}
+/* Touch-sized link rows on phones and tablets. */
+@media (max-width:860px){.ft ul{gap:0}.ft ul a{display:inline-block;padding:9px 0}.ft__h{margin-bottom:6px}.ft__bar a,.ft__btn{display:inline-block;padding:8px 0}.ft__bar{padding-top:12px;padding-bottom:24px}}
 </style>
