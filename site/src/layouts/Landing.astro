@@ -25,7 +25,7 @@ const year = new Date().getFullYear();
   <main id="main"><slot /></main>
   <footer class="lft">
     <div class="lwrap lft__in">
-      <img src="/images/logo-white.png" alt={site.name} width="120" height="87" />
+      <img src="/images/logo-white.png" alt={site.name} width="120" height="87" loading="lazy" decoding="async" />
       <span>© {year} {site.name} · <a href="/privacy">{site.footer.privacyLabel}</a> · <a href="/terms">{site.footer.termsLabel}</a> · {ga.banner && <><button type="button" class="lft__btn" data-cookie-settings>{ga.consent.manageLabel}</button> · </>}{l.footerNote}</span>
     </div>
   </footer>
@@ -42,6 +42,8 @@ const year = new Date().getFullYear();
 .lbrand{display:flex;align-items:center;gap:12px;color:var(--navy)}.lbrand img{display:block;height:33px;width:auto}
 .lbrand>span{display:flex;flex-direction:column;line-height:1}.lbrand>span span:first-child{font-weight:600;letter-spacing:.22em;font-size:14px}.lbrand>span span:last-child{font-weight:500;letter-spacing:.3em;font-size:8.5px;margin-top:4px;color:var(--indigo)}
 .lhdr__cta{display:inline-block;padding:10px 18px;font-size:14px;font-weight:600;color:#fff;background:var(--navy);border-radius:6px;transition:background .2s}.lhdr__cta:hover{background:var(--indigo);color:#fff}
+/* Phones: the lockup keeps its size and never collides with the button; a long label wraps onto a full-width second row instead of three cramped lines. */
+@media (max-width:520px){.lhdr__in{flex-wrap:wrap;gap:10px 16px}.lbrand{flex:none}.lhdr__cta{flex:0 1 auto;margin-left:auto;padding:10px 14px;font-size:13px;line-height:1.25;text-align:center;text-wrap:balance}}
 .lft{background:var(--navy);color:rgba(255,255,255,.7);font-size:13px}.lft a{color:rgba(255,255,255,.7)}.lft a:hover{color:var(--teal)}
 .lft__btn{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}.lft__btn:hover{color:var(--teal)}
 .lft__in{padding-top:28px;padding-bottom:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}.lft__in img{width:120px;height:auto}

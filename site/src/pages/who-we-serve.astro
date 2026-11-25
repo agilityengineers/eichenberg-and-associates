@@ -12,7 +12,7 @@ const sits = await getDocs('situations');
       <p class="eyebrow rise">{c.eyebrow}</p><h1 class="display word" style="max-width:14ch;animation-delay:.1s">{c.heading}</h1>
       <p class="lead rise" style="margin-top:28px;animation-delay:.3s" set:html={si(c.lead)} />
     </div>
-    <div style="position:relative;border-top:1px solid rgba(255,255,255,.12)"><dl class="wrap dl icp" style="padding-top:32px;padding-bottom:32px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">{c.facts.map((f: { label: string; text: string }) => <div><dt class="label" style="color:var(--teal)">{f.label}</dt><dd set:html={si(f.text)} /></div>)}</dl></div>
+    <div style="position:relative;border-top:1px solid rgba(255,255,255,.12)"><dl class="wrap dl icp" style="padding-top:32px;padding-bottom:32px;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr))">{c.facts.map((f: { label: string; text: string }) => <div><dt class="label" style="color:var(--teal)">{f.label}</dt><dd set:html={si(f.text)} /></div>)}</dl></div>
   </section>
   <section class="wrap" style="padding-top:clamp(64px,8vw,104px);padding-bottom:clamp(64px,8vw,104px)">
     <div style="display:grid;gap:12px">{sits.map((s) => <article class="cell sit card" data-reveal>
@@ -29,6 +29,6 @@ const sits = await getDocs('situations');
 <style>
 .who__mark{position:absolute;right:6%;top:-10%;height:120%;width:auto;opacity:.07;pointer-events:none;animation:driftL 2s cubic-bezier(.2,.7,.2,1) both}
 .icp dd{font-size:16px;line-height:1.5;color:rgba(255,255,255,.88)}
-.sit{border:1px solid var(--line);padding:clamp(32px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px 48px}.sit:hover{transform:none;box-shadow:0 24px 40px rgba(18,15,56,.1)}
+.sit{border:1px solid var(--line);padding:clamp(32px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:32px 48px}.sit:hover{transform:none;box-shadow:0 24px 40px rgba(18,15,56,.1)}
 .sit__msg{margin:0;padding:18px 22px;border-left:2px solid var(--teal);background:var(--paper);font-family:var(--serif);font-size:20px;line-height:1.35}
 </style>
